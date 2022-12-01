@@ -1,0 +1,139 @@
+{
+    "properties": {
+     "displayName": "Contoso Organizational Resources Tags-HubRG",
+     "policyType": "Custom",
+     "description": "Contoso Organizational Resources Tags-HubRG",
+     "metadata": {
+      "category": "Tags",
+      "version": "1.0.0",
+      "createdBy": "redacted",
+      "createdOn": "2021-08-03T00:29:05.4516672Z",
+      "updatedBy": null,
+      "updatedOn": null
+     },
+     "parameters": {
+      "Environment": {
+       "type": "string",
+       "metadata": {
+        "displayName": "Environment_Tag",
+        "description": "Environment_Tag"
+       },
+       "allowedValues": [
+        "PoC",
+        "Dev",
+        "Test",
+        "Production",
+        "QA"
+       ],
+       "defaultValue": "PoC"
+      },
+      "Department": {
+       "type": "string",
+       "metadata": {
+        "displayName": "Department_Tag",
+        "description": "Department_Tag"
+       },
+       "allowedValues": [
+        "IT",
+        "Finance",
+        "Marketing",
+        "HR"
+       ],
+       "defaultValue": "IT"
+      },
+      "Owner": {
+       "type": "string",
+       "metadata": {
+        "displayName": "Owner_Tag",
+        "description": "Owner_Tag"
+       },
+       "defaultValue": "DevOpsTeam"
+      },
+      "CostCenter": {
+       "type": "string",
+       "metadata": {
+        "displayName": "CostCenter_Tag",
+        "description": "CostCenter_Tag"
+       },
+       "allowedValues": [
+        "10500",
+        "20500",
+        "30500",
+        "40500",
+        "50500"
+       ],
+       "defaultValue": "40500"
+      },
+      "ApplicationName": {
+       "type": "string",
+       "metadata": {
+        "displayName": "ApplicationName_Tag",
+        "description": "ApplicationName_Tag"
+       },
+       "defaultValue": "SampleApp"
+      }
+     },
+     "policyDefinitions": [
+      {
+       "policyDefinitionReferenceId": "Environment",
+       "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/<guid>",
+       "parameters": {
+        "tagName": {
+         "value": "[parameters('Environment')]"
+        }
+       },
+       "groupNames": []
+      },
+      {
+       "policyDefinitionReferenceId": "Department",
+       "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/<guid>",
+       "parameters": {
+        "tagName": {
+         "value": "[parameters('Department')]"
+        }
+       },
+       "groupNames": []
+      },
+      {
+       "policyDefinitionReferenceId": "Owner",
+       "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/<guid>",
+       "parameters": {
+        "tagName": {
+         "value": "[parameters('Owner')]"
+        }
+       },
+       "groupNames": []
+      },
+      {
+       "policyDefinitionReferenceId": "CostCenter",
+       "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/<guid>",
+       "parameters": {
+        "tagName": {
+         "value": "CostCenter"
+        },
+        "tagValue": {
+         "value": "[parameters('CostCenter')]"
+        }
+       },
+       "groupNames": []
+      },
+      {
+       "policyDefinitionReferenceId": "ApplicationName",
+       "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/<guid>",
+       "parameters": {
+        "tagName": {
+         "value": "ApplicationName"
+        },
+        "tagValue": {
+         "value": "[parameters('ApplicationName')]"
+        }
+       },
+       "groupNames": []
+      }
+     ],
+     "policyDefinitionGroups": []
+    },
+    "id": "/providers/Microsoft.Management/managementGroups/Contoso-Org-MG/providers/Microsoft.Authorization/policySetDefinitions/02a8e0f099164a6f829e7399",
+    "type": "Microsoft.Authorization/policySetDefinitions",
+    "name": "02a8e0f099164a6f829e7399"
+   }

@@ -1,0 +1,84 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "jmpServerObj": {
+      "type": "object",
+      "metadata": {
+        "description": "Jump server object."
+      }
+    },
+    "storageObj": {
+      "type": "object",
+      "metadata": {
+        "description": "Storage account object for diagnostics logging."
+      }
+    },
+    "hubJumpServerNicId": {
+      "type": "string",
+      "metadata": {
+        "description": "NIC resource id for jump server."
+      }
+    }
+  },
+  "resources": [
+    {
+      "comments": "14.17.00.createDevServer",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('jmpServerObj').hubJumpServerName]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('jmpServerObj').location]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('jmpServerObj').hubJumpServerSize]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('jmpServerObj').hubJumpServerName]",
+          "adminUsername": "[parameters('jmpServerObj').credObj.adminUserName]",
+          "adminPassword": "[parameters('jmpServerObj').credObj.adminPassword]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('jmpServerObj').imagePublisher]",
+            "offer": "[parameters('jmpServerObj').imageOffer]",
+            "sku": "[parameters('jmpServerObj').imageSku]",
+            "version": "[parameters('jmpServerObj').imageVersion]"
+          },
+          "osDisk": {
+            "name": "[parameters('jmpServerObj').diskNameOs]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageObj').saSku]"
+            }
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[parameters('jmpServerObj').diskNameData]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 32,
+              "managedDisk": {
+                "storageAccountType": "[parameters('storageObj').saSku]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[parameters('hubJumpServerNicId')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[parameters('storageObj').diagHubStorageUri]"
+          }
+        }
+      }
+    }
+  ]
+}

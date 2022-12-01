@@ -1,0 +1,109 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "lnxPrefix": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "adminUserName": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "lnxAvSetId": {
+      "type": "string"
+    },
+    "lnx01nicId": {
+      "type": "string"
+    },
+    "saSku": {
+      "type": "string"
+    },
+    "diagStorageUri": {
+      "type": "string"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "diskNameSuffix": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "lnx01name": "[concat(parameters('lnxPrefix'),1)]",
+    "lnxVmSize": "[parameters('vmSize')]",
+    "imagePublisher": "OpenLogic",
+    "imageOffer": "CentOS",
+    "imageSku": "8_4",
+    "version": "latest",
+    "diskNameOs": "[toUpper(concat(variables('lnx01name'),parameters('diskNameSuffix').syst))]",
+    "diskNameData": "[toUpper(concat(variables('lnx01name'),parameters('diskNameSuffix').data))]"
+  },
+  "resources": [
+    {
+      "comments": "14.17.00.createlnxServer",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('lnx01name')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('lnxVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('lnx01name')]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSku')]",
+            "version": "[variables('version')]"
+          },
+          "osDisk": {
+            "name": "[variables('diskNameOs')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('saSku')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[variables('diskNameData')]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 32,
+              "managedDisk": {
+                "storageAccountType": "[parameters('saSku')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[parameters('lnx01nicId')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[parameters('diagStorageUri')]"
+          }
+        },
+        "availabilitySet": {
+          "id": "[parameters('lnxAvSetId')]"
+        }
+      }
+    }
+  ]
+}

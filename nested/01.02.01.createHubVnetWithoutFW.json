@@ -1,0 +1,54 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "hubVnetObj": {
+        "type": "object"
+      },
+      "hubJmpSubnetNSGId1": {
+        "type": "string"
+      }
+    },
+    "variables": {
+      "hubVnetName": "[parameters('hubVnetObj').hubVnetName]",
+      "hubJmpSubnetName": "[parameters('hubVnetObj').hubJmpSubnetName]",
+      "subnetRefJmp": "[resourceid('Microsoft.Network/virtualNetworks/subnets',variables('hubVnetName'),variables('hubJmpSubnetName'))]"
+    },
+    "resources": [
+      {
+        "comments": "01.02.01.createHubVnetWithoutFW.json",
+        "name": "[parameters('hubVnetObj').hubVnetName]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2018-12-01",
+        "location": "[parameters('hubVnetObj').location]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "[parameters('hubVnetObj').hubVnetAddressSpace]"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "[parameters('hubVnetObj').hubJmpSubnetName]",
+              "properties": {
+                "addressPrefix": "[parameters('hubVnetObj').hubJmpSubnetRange]",
+                "networkSecurityGroup": {
+                  "id": "[parameters('hubJmpSubnetNSGId1')]"
+              }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "outputs": {
+      "subnetJmpId": {
+        "type": "string",
+        "value": "[variables('subnetRefJmp')]"
+      },
+      "vnetGuid": {
+        "type": "string",
+        "value": "[resourceId('Microsoft.Network/virtualNetworks',variables('hubVnetName'))]"
+      }
+    }
+  }

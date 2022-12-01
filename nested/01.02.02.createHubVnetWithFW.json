@@ -1,0 +1,111 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "hubVnetObj": {
+        "type": "object"
+      },
+      "routeTableObj": {
+        "type": "object"
+      },
+      "hubFwObj": {
+        "type": "object"
+      },
+      "hubJmpSubnetNSGId1": {
+        "type": "string"
+      }
+    },
+    "variables": {
+      "hubVnetName": "[parameters('hubVnetObj').hubVnetName]",
+      "hubJmpSubnetName": "[parameters('hubVnetObj').hubJmpSubnetName]",
+      "hubAfwSubnetName": "[parameters('hubFwObj').fwSubnetName]",
+      "subnetRefJmp": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('hubVnetName'),variables('hubJmpSubnetName'))]",
+      "subnetRefAfw": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('hubVnetName'),variables('hubAfwSubnetName'))]"
+    },
+    "resources": [
+      {
+        "comments": "01.02.01.createHubVnetWithoutFW.json",
+        "name": "[parameters('hubVnetObj').hubVnetName]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2018-12-01",
+        "location": "[parameters('hubVnetObj').location]",
+        "tags": {},
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "[parameters('hubVnetObj').hubVnetAddressSpace]"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "[parameters('hubVnetObj').hubJmpSubnetName]",
+              "properties": {
+                "addressPrefix": "[parameters('hubVnetObj').hubJmpSubnetRange]",
+                "networkSecurityGroup": {
+                  "id": "[parameters('hubJmpSubnetNSGId1')]"
+              },
+                "routeTable": {
+                  "id": "[resourceId('Microsoft.Network/routeTables',parameters('routeTableObj').hubRouteTable)]"
+                }
+               }
+            },
+            {
+              "name": "[parameters('hubFwObj').fwSubnetName]",
+              "properties": {
+                "addressPrefix": "[parameters('hubFwObj').fwSubnetRange]"
+              }
+            }
+          ]
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Network/routeTables',parameters('routeTableObj').hubRouteTable)]"
+        ]
+      },
+      {
+        "type": "Microsoft.Network/routeTables",
+        "name": "[parameters('routeTableObj').hubRouteTable]",
+        "apiVersion": "2018-02-01",
+        "location": "[resourceGroup().location]",
+        "tags": {},
+        "copy": {
+          "name": "Route-Copy",
+          "count": 1
+        },
+        "properties": {
+          "disableBgpRoutePropagation": "[parameters('routeTableObj').hubRouteDisablePropagation]",
+          "routes": [
+            {
+              "name": "[parameters('routeTableObj').hubRouteToAfwName]",
+              "properties": {
+                "addressPrefix": "[parameters('routeTableObj').hubRouteToAfwAddrPrefix]",
+                "nextHopType": "[parameters('routeTableObj').hubRouteNextHopType]",
+                "nextHopIpAddress": "[parameters('routeTableObj').hubFwPrvIp]"
+              }
+            },
+            {
+              "name": "[parameters('routeTableObj').hubRTS]",
+              "properties": {
+                "addressPrefix": "[parameters('routeTableObj').hubRTSAddrPrefix]",
+                "nextHopType": "[parameters('routeTableObj').hubRouteNextHopType]",
+                "nextHopIpAddress": "[parameters('routeTableObj').hubFwPrvIp]"
+              }
+            },
+          ]
+        }
+      }
+    ],
+    "outputs": {
+      "subnetJmpId": {
+        "type": "string",
+        "value": "[variables('subnetRefJmp')]"
+      },
+      "subnetAfwId": {
+        "type": "string",
+        "value": "[variables('subnetRefAfw')]"
+      },
+      "vnetGuid": {
+        "type": "string",
+        "value": "[resourceId('Microsoft.Network/virtualNetworks',variables('hubVnetName'))]"
+      }
+    }
+  }

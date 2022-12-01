@@ -1,0 +1,84 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "resources": [
+        {
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "sku": {
+                    "Name": "Free"
+                }
+            },
+            "apiVersion": "2020-01-13-preview",
+            "tags": {
+
+            },
+            "location": "eastus2",
+            "type": "Microsoft.Automation/automationAccounts",
+            "name": "testAutoAcct",
+            "comments": "09.12.00.createAutoAcct"
+        },
+        {
+            "dependsOn": [
+                "testAutoAcct"
+            ],
+            "properties": {
+                "description": "Stop 1800 Weekdays LOCAL",
+                "startTime": "2022-10-28T18:00:00-00:00",
+                "expiryTime": "9999-12-31T00:00:00-00:00",
+                "interval": "1",
+                "frequency": "Week",
+                "timeZone": "UTC",
+                "advancedSchedule": {
+                    "weekDays": [
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday"
+                    ]
+                }
+            },
+            "apiVersion": "2015-10-31",
+            "tags": {
+                "displayName": "Startup Schedule"
+            },
+            "location": "eastus2",
+            "type": "Microsoft.Automation/automationAccounts/schedules",
+            "name": "testAutoAcct/Start 0800 Weekdays LOCAL",
+            "comments": "09.12.01.createAutoAcctScheduleStartup"
+        },
+        {
+            "dependsOn": [
+                "testAutoAcct"
+            ],
+            "properties": {
+                "description": "Stop 1800 Weekdays LOCAL",
+                "startTime": "2022-10-28T18:00:00-00:00",
+                "expiryTime": "9999-12-31T00:00:00-00:00",
+                "interval": "1",
+                "frequency": "Week",
+                "timeZone": "UTC",
+                "advancedSchedule": {
+                    "weekDays": [
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday"
+                    ]
+                }
+            },
+            "apiVersion": "2015-10-31",
+            "tags": {
+                "displayName": "Shutdown Schedule"
+            },
+            "location": "eastus2",
+            "type": "Microsoft.Automation/automationAccounts/schedules",
+            "name": "testAutoAcct/Stop 1800 Weekdays LOCAL",
+            "comments": "09.12.02.createAutoAcctScheduleShutdown"
+        }
+    ]
+}

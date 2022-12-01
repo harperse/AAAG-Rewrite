@@ -1,0 +1,8 @@
+﻿id,prefix,pocFirstName,pocLastName,pocDisplayName,pocUserName,customerFirstName,customerLastName,customerDisplayName,customerUserName,aadSecurityGroup,rbacRole,rbacType,scope,method
+1,adm,Jay,Adams,Jay Adams,adm.jay.adams,cfn01,cln01,Cfn01 Cln01,adm.cfn01.cln01,Contoso Cloud Operators,Contoso Azure VM Operator,Custom (Azure),Subscription,scripted
+2,adm,Maria,Perez,Maria Perez,adm.maria.perez,cfn02,cln02,Cfn02 Cln02,adm.cfn02.cln02,Contoso Security Administrators,Security Admin,Built-in (Azure),"Subscription, Management Group",scripted
+3,adm,Alex,Smith,Alex Smith,adm.alex.smith,cfn03,cln03,Cfn03 Cln03,adm.cfn03.cln03,Contoso Cloud Administrators,Owner,Built-in (Azure),"Subscription, Management Group",scripted
+4,adm,Simon,Lee,Simon Lee,adm.simon.lee,cfn04,cln04,Cfn04 Cln04,adm.cfn04.cln04,Contoso Monitoring Administrators,Log Analytics Contributor,Built-in (Azure),"Subscription, Management Group",scripted
+5,adm,Martha,Cooper,Martha Cooper,adm.martha.cooper,cfn05,cln05,Cfn05 Cln05,adm.cfn05.cln05,Contoso Monitoring Operators,Log Analytics Reader,Built-in (Azure),"Subscription, Management Group",scripted
+6,adm,Sam,Terry,Sam Terry,adm.sam.terry,cfn06,cln06,Cfn06 Cln06,adm.cfn06.cln06,Contoso Network Administrators,Network Contributor,Built-in (Azure),"Subscription, Management Group",scripted
+7,adm,Lisa,Wood,Lisa Wood,adm.lisa.wood,cfn07,cln07,Cfn07 Cln07,adm.cfn07.cln07,Contoso Infrastructure Administrators,"Virtual Machine Contributor,Storage Account Contributor,Backup Operator",Built-in (Azure),"Subscription, Management Group",scripted

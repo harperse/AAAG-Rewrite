@@ -1,0 +1,49 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "ipObj": {
+      "type": "object"
+    },
+    "hubDeploymentOption": {
+      "type": "string",
+    }
+  },
+  "variables": {
+    "publicIpLabel": "[if(equals(toLower(parameters('hubDeploymentOption')), 'deployhubwithfw'), parameters('ipObj').afwDomainNameLabelPrefix, parameters('ipObj').jmpDomainNameLabelPrefix)]"
+  },
+  "resources": [
+    {
+      "comments": "01.00.00.createHubPublicIP.json",
+      "name": "[variables('publicIplabel')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2017-10-01",
+      "location": "[parameters('ipObj').location]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('ipObj').jmpPublicIPAddressType]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('publicIplabel')]",
+          "fqdn": "[concat(variables('publicIplabel'),parameters('ipObj').fqdnLocationSuffix)]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "jmpPublicIpResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIplabel'))]"
+    },
+    "jmpServerPublicIpFqdn": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIplabel')),'2017-10-01').dnsSettings.fqdn]",
+      "type": "string"
+    },
+    "jmpServerPublicIpAddr": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIplabel')),'2017-10-01').ipAddress]",
+      "type": "string"
+    }
+  }
+}

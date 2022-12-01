@@ -1,0 +1,48 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nsgObj": {
+      "type": "object",
+      "metadata": {
+        "description": "NSG object to provision"
+      }
+    }
+  },
+  "variables": {
+    "nsgName": "[parameters('nsgObj').hubJumpSubnetNSG]"
+  },
+  "resources": [
+    {
+      "comments": "01.01.00.createHubNSG.json",
+      "name": "[parameters('nsgObj').hubJumpSubnetNSG]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "[parameters('nsgObj').nsgRule.name]",
+            "properties": {
+              "access": "[parameters('nsgObj').nsgRule.properties.access]",
+              "description": "[parameters('nsgObj').nsgRule.properties.description]",
+              "destinationAddressPrefix": "[parameters('nsgObj').nsgRule.properties.destinationAddressPrefix]",
+              "destinationPortRange": "[parameters('nsgObj').nsgRule.properties.destinationPortRange]",
+              "direction": "[parameters('nsgObj').nsgRule.properties.direction]",
+              "priority": "[parameters('nsgObj').nsgRule.properties.priority]",
+              "protocol": "[parameters('nsgObj').nsgRule.properties.protocol]",
+              "sourceAddressPrefix": "[parameters('nsgObj').nsgRule.properties.sourceAddressPrefix]",
+              "sourcePortRange": "[parameters('nsgObj').nsgRule.properties.sourcePortRange]"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "nsgResourceId1": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]"
+    }
+  }
+}

@@ -1,0 +1,121 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsWorkspaceName": {
+      "type": "string"
+    },
+    "alaRegionFullName": {
+      "type": "string"
+    },
+    "autoAcctId": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Automation Account resource ID"
+      }
+    }
+  },
+  "variables": {
+    "Updates": {
+      "name": "[concat('Updates', '(', parameters('omsWorkspaceName'), ')')]",
+      "galleryName": "Updates"
+    },
+    "ChangeTracking": {
+      "name": "[concat('ChangeTracking', '(', parameters('omsWorkspaceName'), ')')]",
+      "galleryName": "ChangeTracking"
+    },
+    "AgentHealthAssessment": {
+      "name": "[concat('AgentHealthAssessment', '(', parameters('omsWorkspaceName'), ')')]",
+      "galleryName": "AgentHealthAssessment"
+    }
+  },
+  "resources": [
+    {
+      "comments": "10.13.00.createOmsWorkspace",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "name": "[parameters('omsWorkspaceName')]",
+      "apiVersion": "2015-11-01-preview",
+      "location": "[parameters('alaRegionFullName')]",
+      "tags": {},
+      "properties": {
+        "source": "Azure",
+        "sku": {
+          "name": "PerGB2018"
+        }
+      },
+      "resources": []
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces/linkedServices",
+      "apiVersion": "2020-08-01",
+      "name": "[concat(parameters('omsWorkspaceName'), '/automation')]",
+      "dependsOn": [
+        "[parameters('omsWorkspaceName')]"
+      ],
+      "properties": {
+        "resourceId": "[parameters('autoAcctId')]"
+      }
+    },
+    {
+      "type": "Microsoft.OperationsManagement/solutions",
+      "apiVersion": "2015-11-01-preview",
+      "name": "[variables('Updates').name]",
+      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('Updates').name)]",
+      "location": "[parameters('alaRegionFullName')]",
+      "dependsOn": [
+        "[parameters('omsWorkspaceName')]"
+      ],
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      },
+      "plan": {
+        "name": "[variables('Updates').name]",
+        "publisher": "Microsoft",
+        "promotionCode": "",
+        "product": "[concat('OMSGallery/', variables('Updates').galleryName)]"
+      },
+      "condition": true
+    },
+    {
+      "type": "Microsoft.OperationsManagement/solutions",
+      "apiVersion": "2015-11-01-preview",
+      "name": "[variables('ChangeTracking').name]",
+      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('ChangeTracking').name)]",
+      "location": "[parameters('alaRegionFullName')]",
+      "dependsOn": [
+        "[parameters('omsWorkspaceName')]"
+      ],
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      },
+      "plan": {
+        "name": "[variables('ChangeTracking').name]",
+        "publisher": "Microsoft",
+        "promotionCode": "",
+        "product": "[concat('OMSGallery/', variables('ChangeTracking').galleryName)]"
+      },
+      "condition": true
+    },
+    {
+      "type": "Microsoft.OperationsManagement/solutions",
+      "apiVersion": "2015-11-01-preview",
+      "name": "[variables('AgentHealthAssessment').name]",
+      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('AgentHealthAssessment').name)]",
+      "location": "[parameters('alaRegionFullName')]",
+      "dependsOn": [
+        "[parameters('omsWorkspaceName')]"
+      ],
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      },
+      "plan": {
+        "name": "[variables('AgentHealthAssessment').name]",
+        "publisher": "Microsoft",
+        "promotionCode": "",
+        "product": "[concat('OMSGallery/', variables('AgentHealthAssessment').galleryName)]"
+      },
+      "condition": true
+    }       
+  ],
+  "outputs": {}
+}

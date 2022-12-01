@@ -1,0 +1,8 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "itemDisplayName": "Activate Azure with Administration and Governance",
+    "description": "This template creates a POC infrastructure consisting of two networks in a hub-and-spoke model.",
+    "summary": "Create a POC infrastructure to perform the exercises for the AAAG offering.",
+    "githubUsername": "autocloudarc",
+    "dateUpdated": "2019-11-13"
+ }

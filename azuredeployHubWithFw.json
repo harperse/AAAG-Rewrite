@@ -1,0 +1,848 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "hubDeploymentOption": {
+      "type": "string",
+      "metadata": {
+        "description": "<PLACE-HOLDER ONLY> RESERVED FOR POTENTIAL FUTURE USE: Allows automation of hub network deployment with or without Azure Firewall."
+      },
+      "allowedValues": [
+        "DeployAppOnly",
+        "DeployHubWithoutFW",
+        "DeployHubWithFW"
+      ],
+      "defaultValue": "DeployAppOnly"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive DSC scripts."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation when the template is deployed."
+      }
+    },
+    "storageDnsSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "The storage suffix for the storage account name depending on the AzureEnvironment value (AzureCloud or AzureUSGovernment)"
+      }
+    },
+    "dnsNameLabelSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "The DNS name label suffix for public IP addresses depending on the Cloud environment; AzureCloud or AzureUSGovernment"
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrative user name for virtual machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Secure password"
+      }
+    },
+    "hubLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group location."
+      }
+    },
+    "randomInfix": {
+      "type": "string",
+      "metadata": {
+        "description": "Random infix for public IP DNS label."
+      }
+    },
+    "AutomationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the Azure automation account that will be provisioned."
+      }
+    },
+    "aaaRegionFullName": {
+      "type": "string",
+      "metadata": {
+        "description": "The region for the Azure automation account that will be provisioned."
+      }
+    },
+    "azureLogAnalyticsWorkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the log analytics workspace that will be used for logging and diagnostics operations."
+      }
+    },
+    "alaRegionFullName": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics (OMS) region."
+      }
+    },
+    "hubJumpServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the dev/jump server for this infrastructure."
+      }
+    },
+    "hubFwName": {
+      "type": "string"
+    },
+    "hubJumpServerNic": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for network interface card of jump server."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The globally unique storage account name for the storage account that will be provisioned"
+      }
+    },
+    "staHubName": {
+      "type": "string",
+      "metadata": {
+        "description": "The globally unique storage account name for the hub storage account."
+      }
+    },
+    "storageContainerName": {
+      "type": "string",
+      "metadata": {
+        "description": "The storage container in which the staged artifacts are uploaded to."
+      }
+    },
+    "localMachinePublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "The public IP address of the local machine, which can be use for JIT access."
+      }
+    },
+    "hubVnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Hub virtual network"
+      }
+    },
+    "hubVnetAddressSpace": {
+      "type": "string",
+      "metadata": {
+        "description": "Address space for Hub virtual network"
+      }
+    },
+    "hubJmpSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Jump server subnet name"
+      }
+    },
+    "hubJmpSubnetRange": {
+      "type": "string",
+      "metadata": {
+        "description": "Jump server subnet address range"
+      }
+    },
+    "hubPublicIp": {
+      "type": "string",
+      "metadata": {
+        "description": "Public IP for Firewall service"
+      }
+    },
+    "hubJumpServerSize": {
+      "type": "string",
+      "metadata": {
+        "description": "VM Size for jump server"
+      }
+    },
+    "hubJumpSubnetNSG": {
+      "type": "string",
+      "metadata": {
+        "description": "Basic NSG that will be associated directly to the NIC of the Jump Server"
+      }
+    },
+    "hubFwSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet name for Azure Firewall"
+      },
+      "defaultValue": "AzureFirewallSubnet"
+    },
+    "hubFwSubnetRange": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet range for Azure Firewall"
+      }
+    },
+    "hubRouteTable": {
+      "type": "string",
+      "metadata": {
+        "description": "Route table for Jump server subnet to use user defined route for Azure Firewall NVA"
+      }
+    },
+    "hubRouteDisablePropagation": {
+      "type": "bool",
+      "metadata": {
+        "description": "Virtual network gateway route propagation for hub route table."
+      }
+    },
+    "hubRouteToAfwName": {
+      "type": "string",
+      "metadata": {
+        "description": "Route name."
+      }
+    },
+    "hubRouteToAfwAddrPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Destination address space in CIDR notation to route to:"
+      }
+    },
+    "hubRouteNextHopType": {
+      "type": "string",
+      "metadata": {
+        "description": "VirtualAppliance"
+      }
+    },
+    "hubFwPrvIp": {
+      "type": "string",
+      "metadata": {
+        "description": "Private IP address of the Azure Firewall"
+      }
+    },
+    "hubRouteToAfwNextHopAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "Next hop interface IP address to route to, i.e. private IP for Network Virtual Appliance (NVA)"
+      }
+    },
+    "hubRTS": {
+      "type": "string",
+      "metadata": {
+        "description": "Route name for route to spoke"
+      }
+    },
+    "hubRTSAddrPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Route to spoke address prefix "
+      }
+    },
+    "hubFwNatRuleCollName": {
+      "type": "string",
+      "metadata": {
+        "description": "NAT rule collection name."
+      }
+    },
+    "hubFwNatRuleCollPriority": {
+      "type": "int",
+      "metadata": {
+        "description": "NAT rule collection priority."
+      }
+    },
+    "hubFwNatRuleCollAction": {
+      "type": "string"
+    },
+    "hubFwNatRule01Name": {
+      "type": "string",
+      "metadata": {
+        "description": "NAT rule 1 name."
+      }
+    },
+    "hubFwNatRule01Protocol": {
+      "type": "string",
+      "metadata": {
+        "description": "NAT rule 1 protocol."
+      }
+    },
+    "hubFwNatRule01SourceAddr": {
+      "type": "string",
+      "metadata": {
+        "description": "NAT rule 1 source address."
+      }
+    },
+    "hubFwNatRule01DestPort": {
+      "type": "string",
+      "metadata": {
+        "description": "NAT rule 1 desination port."
+      }
+    },
+    "hubFwNatRule01TransAddr": {
+      "type": "string",
+      "metadata": {
+        "description": "NAT rule 1 desination translated address (Jump server private IP)."
+      }
+    },
+    "hubFwNatRule01TransPort": {
+      "type": "string",
+      "metadata": {
+        "description": "NAT rule 1 desination translated port (Jump server port)."
+      }
+    },
+    "hubFwNetworkRuleCollName": {
+      "type": "string"
+    },
+    "hubFwNetworkRulePriority": {
+      "type": "int"
+    },
+    "hubFwNetworkRuleCollAction": {
+      "type": "string"
+    },
+    "hubFwNetworkRule01Name": {
+      "type": "string"
+    },
+    "hubFwNetworkRule01Protocol": {
+      "type": "string"
+    },
+    "hubFwNetworkRule01SourceAddr": {
+      "type": "string"
+    },
+    "hubFwNetworkRule01DestAddr": {
+      "type": "string"
+    },
+    "hubFwNetworkRule01DestPort": {
+      "type": "array"
+    },
+    "hubFwNetworkRuleCollName02": {
+      "type": "string"
+    },
+    "hubFwNetworkRulePriority02": {
+      "type": "int"
+    },
+    "hubFwNetworkRuleCollAction02": {
+      "type": "string"
+    },
+    "hubFwNetworkRule02Name": {
+      "type": "string"
+    },
+    "hubFwNetworkRule02Protocol": {
+      "type": "string"
+    },
+    "hubFwNetworkRule02SourceAddr": {
+      "type": "string"
+    },
+    "hubFwNetworkRule02DestAddr": {
+      "type": "string"
+    },
+    "hubFwNetworkRule02DestPort": {
+      "type": "string"
+    },
+    "hubFwNetworkRule03Name": {
+      "type": "string"
+    },
+    "hubFwNetworkRule03Protocol": {
+      "type": "string"
+    },
+    "hubFwNetworkRule03SourceAddr": {
+      "type": "string"
+    },
+    "hubFwNetworkRule03DestAddr": {
+      "type": "string"
+    },
+    "hubFwNetworkRule03DestPort": {
+      "type": "string"
+    },
+    "hubFwAppRuleCollName": {
+      "type": "string"
+    },
+    "hubFwAppRulePriority": {
+      "type": "int"
+    },
+    "hubFwAppRuleAction": {
+      "type": "string"
+    },
+    "hubFwAppRule01Name": {
+      "type": "string"
+    },
+    "hubFwAppRule01SourceAddr": {
+      "type": "array"
+    },
+    "hubFwAppRule01fqdnTags": {
+      "type": "array"
+    },
+    "hubFwAppRule02Name": {
+      "type": "string"
+    },
+    "hubFwAppRule02SourceAddr": {
+      "type": "array"
+    },
+    "hubFwAppRule02Protocol": {
+      "type": "string"
+    },
+    "hubFwAppRule02Port": {
+      "type": "int"
+    },
+    "hubFwAppRule02TargetFqdn": {
+      "type": "array"
+    },
+    "azureEnvironment": {
+      "type": "string",
+      "metadata": {
+        "description": "<PLACE-HOLDER ONLY> RESERVED FOR POTENTIAL FUTURE USE: The Cloud environment, either AzureCloud or AzureUSGovernment will be used."
+      },
+      "allowedValues": [
+        "AzureCloud",
+        "AzureUSGovernment"
+      ],
+      "defaultValue": "AzureCloud"
+    },
+    "startupScheduleName": {
+      "type": "string",
+      "metadata": {
+        "description": "Startup Schedule Name"
+      }
+    },
+    "shutdownScheduleName": {
+      "type": "string",
+      "metadata": {
+        "description": "Shutdown Schedule Name"
+      }
+    },
+    "scheduledStopTime": {
+      "type": "string",
+      "metadata": {
+        "description": "Scheduled Stop Time"
+      }
+    },
+    "scheduledStartTime": {
+      "type": "string",
+      "metadata": {
+        "description": "Scheduled Start Time"
+      }
+    },
+    "scheduledExpiryTime": {
+      "type": "string",
+      "metadata": {
+        "description": "Scheduled Start Time"
+      }
+    }
+  },
+  "variables": {
+    "adminUserName": "[parameters('adminUserName')]",
+    "adminPassword": "[parameters('adminPassword')]",
+    "storageObj": {
+      "stageLocation": "[concat(parameters('_artifactsLocation'),'/',parameters('storageContainerName'))]",
+      "saSku": "Standard_LRS",
+      "diagStorageUri": "[concat('https://',parameters('storageAccountName'),parameters('storageDnsSuffix'))]",
+      "diagHubStorageUri": "[concat('https://',parameters('staHubName'),parameters('storageDnsSuffix'))]"
+    },
+    "ipObj": {
+      "jmpPublicIPAddressName": "[toUpper(parameters('hubPublicIp'))]",
+      "jmpDomainNameLabelPrefix": "[toLower(concat(parameters('hubJumpServerName'),'-',parameters('randomInfix'),'-pip'))]",
+      "afwDomainNameLabelPrefix": "[toLower(concat(parameters('hubFwName'),'-',parameters('randomInfix'),'-pip'))]",
+      "jmpPublicIPAddressType": "Static",
+      "fqdnLocationSuffix": "[toLower(concat('.',parameters('hubLocation'),parameters('dnsNameLabelSuffix')))]",
+      "location": "[resourceGroup().location]",
+      "prvIpJumpServer": "[concat(substring(variables('hubVnetObj').hubJmpSubnetRange,0,8),'4')]",
+      "prvIpAllocationMethod": "Static",
+      "prvIPAddressVersion": "IPv4",
+      "createhubPublicIPUri": "[uri(variables('storageObj').stageLocation,concat('nested/01.00.00.createHubPublicIP.json',parameters('_artifactsLocationSasToken')))]"
+    },
+    "hubVnetObj": {
+      "hubVnetName": "[parameters('hubVnetName')]",
+      "hubVnetAddressSpace": "[parameters('hubVnetAddressSpace')]",
+      "hubJmpSubnetName": "[parameters('hubJmpSubnetName')]",
+      "hubJmpSubnetRange": "[parameters('hubJmpSubnetRange')]",
+      "hubJumpSubnetNSG": "[parameters('hubJumpSubnetNSG')]",
+      "location": "[resourceGroup().location]",
+      "createHubVnetWithFWUri": "[uri(variables('storageObj').stageLocation,concat('nested/01.02.02.createHubVnetWithFW.json',parameters('_artifactsLocationSasToken')))]"
+    },
+    "sourceAddressPrefix": "[concat(parameters('localMachinePublicIP'),'/32')]",
+    "nsgObj": {
+      "hubJumpSubnetNSG": "[parameters('hubJumpSubnetNSG')]",
+      "location": "[resourceGroup().location]",
+      "nsgRule": {
+        "name": "AllowRdpInbound",
+        "properties": {
+          "access": "Allow",
+          "description": "Allow inbound RDP from internet",
+          "destinationAddressPrefix": "VirtualNetwork",
+          "destinationPortRange": "3389",
+          "direction": "Inbound",
+          "priority": 100,
+          "protocol": "Tcp",
+          "sourceAddressPrefix": "[variables('sourceAddressPrefix')]",
+          "sourcePortRange": "*"
+        }
+      },
+      "createHubNSGUri": "[uri(variables('storageObj').stageLocation,concat('nested/01.01.00.createHubNSG.json',parameters('_artifactsLocationSasToken')))]"
+    },
+    "nicObj": {
+      "hubJumpServerNic": "[parameters('hubJumpServerNic')]",
+      "location": "[resourceGroup().location]",
+      "createHubJmpServerFwNicUri": "[uri(variables('storageObj').stageLocation,concat('nested/01.04.01.createHubJmpServerFwNic.json',parameters('_artifactsLocationSasToken')))]"
+    },
+    "jmpServerObj": {
+      "credObj": {
+        "adminUserName": "[variables('adminUserName')]",
+        "adminPassword": "[variables('adminPassword')]"
+      },
+      "hubJumpServerName": "[parameters('hubJumpServerName')]",
+      "hubJumpServerSize": "[parameters('hubJumpServerSize')]",
+      "location": "[resourceGroup().location]",
+      "imagePublisher": "MicrosoftWindowsServer",
+      "imageOffer": "WindowsServer",
+      "imageSku": "2019-Datacenter-smalldisk",
+      "imageVersion": "latest",
+      "diskNameOs": "[toUpper(concat(parameters('hubJumpServerName'),'-DSK-SYST'))]",
+      "diskNameData": "[toUpper(concat(parameters('hubJumpServerName'),'-DSK-DTA1'))]",
+      "createHubJumpServerUri": "[uri(variables('storageObj').stageLocation,concat('nested/01.05.00.createHubJmpServer.json',parameters('_artifactsLocationSasToken')))]"
+    },
+    "routeTableObj": {
+      "hubRouteTable": "[parameters('hubRouteTable')]",
+      "hubRouteDisablePropagation": "[parameters('hubRouteDisablePropagation')]",
+      "hubRouteToAfwName": "[parameters('hubRouteToAfwName')]",
+      "hubRTS": "[parameters('hubRTS')]",
+      "hubRTSAddrPrefix": "[parameters('hubRTSAddrPrefix')]",
+      "hubRouteToAfwAddrPrefix": "[parameters('hubRouteToAfwAddrPrefix')]",
+      "hubRouteNextHopType": "[parameters('hubRouteNextHopType')]",
+      "hubFwPrvIp": "[parameters('hubFwPrvIp')]",
+      "hubRouteToAfwNextHopAddress": "[parameters('hubRouteToAfwNextHopAddress')]"
+    },
+    "hubFwObj": {
+      "fwSubnetName": "[parameters('hubFwSubnetName')]",
+      "fwSubnetRange": "[parameters('hubFwSubnetRange')]",
+      "fwName": "[parameters('hubFwName')]",
+      "hubFwPrvIp": "[parameters('hubFwPrvIp')]",
+      "fwNetworkRuleCollection": [
+        {
+          "collection01": {
+            "Name": "[parameters('hubFwNetworkRuleCollName')]",
+            "Priority": "[parameters('hubFwNetworkRulePriority')]",
+            "Action": "[parameters('hubFwNetworkRuleCollAction')]",
+            "rule01": {
+              "Name": "[parameters('hubFwNetworkRule01Name')]",
+              "Protocol": "[parameters('hubFwNetworkRule01Protocol')]",
+              "SourceAddr": "[parameters('hubFwNetworkRule01SourceAddr')]",
+              "DestAddr": "[parameters('hubFwNetworkRule01DestAddr')]",
+              "DestPort": "[parameters('hubFwNetworkRule01DestPort')]"
+            }
+          }
+        },
+        {
+          "collection02": {
+            "Name": "[parameters('hubFwNetworkRuleCollName02')]",
+            "Priority": "[parameters('hubFwNetworkRulePriority02')]",
+            "Action": "[parameters('hubFwNetworkRuleCollAction02')]",
+            "rule01": {
+              "Name": "[parameters('hubFwNetworkRule02Name')]",
+              "Protocol": "[parameters('hubFwNetworkRule02Protocol')]",
+              "SourceAddr": "[parameters('hubFwNetworkRule02SourceAddr')]",
+              "DestAddr": "[parameters('hubFwNetworkRule02DestAddr')]",
+              "DestPort": "[parameters('hubFwNetworkRule02DestPort')]"
+            },
+            "rule02": {
+              "Name": "[parameters('hubFwNetworkRule03Name')]",
+              "Protocol": "[parameters('hubFwNetworkRule03Protocol')]",
+              "SourceAddr": "[parameters('hubFwNetworkRule03SourceAddr')]",
+              "DestAddr": "[parameters('hubFwNetworkRule03DestAddr')]",
+              "DestPort": "[parameters('hubFwNetworkRule03DestPort')]"
+            }
+          }
+        }
+      ],
+      "fwAppRuleCollection": [
+        {
+          "collection01": {
+            "Name": "[parameters('hubFwAppRuleCollName')]",
+            "Priority": "[parameters('hubFwNetworkRulePriority')]",
+            "Action": "[parameters('hubFwAppRuleAction')]",
+            "rule01": {
+              "Name": "[parameters('hubFwAppRule01Name')]",
+              "SourceAddr": "[parameters('hubFwAppRule01SourceAddr')]",
+              "fqdnTags": "[parameters('hubFwAppRule01fqdnTags')]"
+            },
+            "rule02": {
+              "Name": "[parameters('hubFwAppRule02Name')]",
+              "SourceAddr": "[parameters('hubFwAppRule02SourceAddr')]",
+              "Protocol": "[parameters('hubFwAppRule02Protocol')]",
+              "Port": "[parameters('hubFwAppRule02Port')]",
+              "TargetFqdn": "[parameters('hubFwAppRule02TargetFqdn')]"
+            }
+          }
+        }
+      ],
+      "fwNatRuleCollection": [
+        {
+          "collection01": {
+            "Name": "[parameters('hubFwNatRuleCollName')]",
+            "Priority": "[parameters('hubFwNatRuleCollPriority')]",
+            "Action": "[parameters('hubFwNatRuleCollAction')]",
+            "rule01": {
+              "Name": "[parameters('hubFwNatRule01Name')]",
+              "Protocol": "[parameters('hubFwNatRule01Protocol')]",
+              "SourceAddr": "[parameters('hubFwNatRule01SourceAddr')]",
+              "DestPort": "[parameters('hubFwNatRule01DestPort')]",
+              "TransAddr": "[parameters('hubFwNatRule01TransAddr')]",
+              "TransPort": "[parameters('hubFwNatRule01TransPort')]"
+            }
+          }
+        }
+      ],
+      "createHubAzureFwUri": "[uri(variables('storageObj').stageLocation,concat('nested/01.02.03.createHubAzureFw.json',parameters('_artifactsLocationSasToken')))]"
+    },
+    "autoAcctName": "[parameters('AutomationAccountName')]",
+    "createAutoAcctUri": "[uri(variables('storageObj').stageLocation,concat('nested/09.12.00.createAutoAcct.json',parameters('_artifactsLocationSasToken')))]",
+    "omsWorkspaceName": "[parameters('azureLogAnalyticsWorkspaceName')]",
+    "createOmsWorkspaceUri": "[uri(variables('storageObj').stageLocation,concat('nested/10.13.00.createOmsWorkspace.json',parameters('_artifactsLocationSasToken')))]",
+    "automationSchedule": {
+      "startupScheduleName": "[parameters('startupScheduleName')]",
+      "shutdownScheduleName": "[parameters('shutdownScheduleName')]",
+      "scheduledStopTime": "[parameters('scheduledStopTime')]",
+      "scheduledStartTime": "[parameters('scheduledStartTime')]",
+      "scheduledExpiryTime": "[parameters('scheduledExpiryTime')]"
+    }
+  },
+  "resources": [
+    {
+      "comments": "01.00.00.createHubPublicIP.json",
+      "name": "01.00.00.linkedDeploymentCreateHubPublicIP",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "properties": {
+        "templateLink": {
+          "uri": "[variables('ipObj').createhubPublicIPUri]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "ipObj": {
+            "value": "[variables('ipObj')]"
+          },
+          "hubDeploymentOption": {
+            "value": "[parameters('hubDeploymentOption')]"
+          }
+        },
+        "mode": "Incremental",
+        "debugSetting": {
+          "detailLevel": "requestContent, responseContent"
+        }
+      }
+    },
+    {
+      "comments": "01.01.00.createHubNSG.json",
+      "name": "01.01.00.linkedDeploymentCreateHubNSG",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "properties": {
+        "templateLink": {
+          "uri": "[variables('nsgObj').createHubNSGUri]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nsgObj": {
+            "value": "[variables('nsgObj')]"
+          }
+        },
+        "mode": "Incremental",
+        "debugSetting": {
+          "detailLevel": "requestContent, responseContent"
+        }
+      }
+    },
+    {
+      "comments": "01.02.02.createHubVnetWithFW.json",
+      "name": "01.02.02.linkedDeploymentCreateHubVnetWithFW",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-11-01",
+      "dependsOn": [
+        "01.00.00.linkedDeploymentCreateHubPublicIP",
+        "01.01.00.linkedDeploymentCreateHubNSG"
+      ],
+      "properties": {
+        "templateLink": {
+          "uri": "[variables('hubVnetObj').createHubVnetWithFWUri]"
+        },
+        "parameters": {
+          "hubVnetObj": {
+            "value": "[variables('hubVnetObj')]"
+          },
+          "routeTableObj": {
+            "value": "[variables('routeTableObj')]"
+          },
+          "hubFwObj": {
+            "value": "[variables('hubFwObj')]"
+          },
+          "hubJmpSubnetNSGId1": {
+            "value": "[reference('01.01.00.linkedDeploymentCreateHubNSG').outputs.nsgResourceId1.value]"
+          }
+        },
+        "mode": "Incremental",
+        "debugSetting": {
+          "detailLevel": "requestContent, responseContent"
+        }
+      }
+    },
+    {
+      "comments": "01.02.03.createHubAzureFw.json",
+      "name": "01.02.03.linkedDeploymentCreateHubAzureFw",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-11-01",
+      "dependsOn": [
+        "01.02.02.linkedDeploymentCreateHubVnetWithFW"
+      ],
+      "properties": {
+        "templateLink": {
+          "uri": "[variables('hubFwObj').createHubAzureFwUri]"
+        },
+        "parameters": {
+          "hubFwObj": {
+            "value": "[variables('hubFwObj')]"
+          },
+          "hubVnetObj": {
+            "value": "[variables('hubVnetObj')]"
+          },
+          "jmpPublicIpResourceId": {
+            "value": "[reference('01.00.00.linkedDeploymentCreateHubPublicIP').outputs.jmpPublicIpResourceId.value]"
+          },
+          "jmpPublicIpAddr": {
+            "value": "[reference('01.00.00.linkedDeploymentCreateHubPublicIP').outputs.jmpServerPublicIpAddr.value]"
+          },
+          "localPIP": {
+            "value": "[parameters('localMachinePublicIP')]"
+          }
+        },
+        "mode": "Incremental",
+        "debugSetting": {
+          "detailLevel": "requestContent, responseContent"
+        }
+      }
+    },
+    {
+      "comments": "01.04.01.createHubJmpServerFwNic.json",
+      "name": "01.04.01.linkedDeploymentCreateHubJmpServerFwNic",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [
+        "01.02.02.linkedDeploymentCreateHubVnetWithFW"
+      ],
+      "properties": {
+        "templateLink": {
+          "uri": "[variables('nicObj').createHubJmpServerFwNicUri]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nicObj": {
+            "value": "[variables('nicObj')]"
+          },
+          "ipObj": {
+            "value": "[variables('ipObj')]"
+          },
+          "subnetJmpId": {
+            "value": "[reference('01.02.02.linkedDeploymentCreateHubVnetWithFW').outputs.subnetJmpId.value]"
+          }
+        },
+        "mode": "Incremental",
+        "debugSetting": {
+          "detailLevel": "requestContent, responseContent"
+        }
+      }
+    },
+    {
+      "comments": "01.05.00.createHubJmpServer",
+      "name": "01.05.00.linkedDeploymentCreateHubJmpServer",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [
+        "01.01.00.linkedDeploymentCreateHubNSG",
+        "01.04.01.linkedDeploymentCreateHubJmpServerFwNic"
+      ],
+      "properties": {
+        "templateLink": {
+          "uri": "[variables('jmpServerObj').createHubJumpServerUri]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "jmpServerObj": {
+            "value": "[variables('jmpServerObj')]"
+          },
+          "storageObj": {
+            "value": "[variables('storageObj')]"
+          },
+          "hubJumpServerNicId": {
+            "value": "[reference('01.04.01.linkedDeploymentCreateHubJmpServerFwNic').outputs.hubJumpServerNicId.value]"
+          }
+        },
+        "mode": "Incremental",
+        "debugSetting": {
+          "detailLevel": "requestContent, responseContent"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('hubDeploymentOption'),'DeployHubWithFW')]",
+      "comments": "09.12.00.createAutoAcct",
+      "name": "09.12.00.linkedDeploymentCreateAutoAcct",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [],
+      "properties": {
+        "templateLink": {
+          "uri": "[variables('createAutoAcctUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "autoAcctName": {
+            "value": "[variables('autoAcctName')]"
+          },
+          "location": {
+            "value": "[parameters('aaaRegionFullName')]"
+          },
+          "automationSchedule": {
+            "value": "[variables('automationSchedule')]"
+          }
+        },
+        "mode": "Incremental",
+        "debugSetting": {
+          "detailLevel": "requestContent, responseContent"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('hubDeploymentOption'),'DeployHubWithFW')]",
+      "comments": "10.13.00.createOmsWorkspace",
+      "name": "10.13.00.linkedDeploymentCreateOmsWorkspace",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', '09.12.00.linkedDeploymentCreateAutoAcct')]"
+      ],
+      "properties": {
+        "templateLink": {
+          "uri": "[variables('createOmsWorkspaceUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsWorkspaceName": {
+            "value": "[variables('omsWorkspaceName')]"
+          },
+          "alaRegionFullName": {
+            "value": "[parameters('alaRegionFullName')]"
+          },
+          "autoAcctId": {
+            "value": "[reference('09.12.00.linkedDeploymentCreateAutoAcct').outputs.autoAcctId.value]"
+          }
+        },
+        "mode": "Incremental",
+        "debugSetting": {
+          "detailLevel": "requestContent, responseContent"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "jmpServerPublicIpFqdn": {
+      "type": "string",
+      "value": "[reference('01.00.00.linkedDeploymentCreateHubPublicIP').outputs.jmpServerPublicIpFqdn.value]"
+    },
+    "nsgResourceId1": {
+      "type": "string",
+      "value": "[reference('01.01.00.linkedDeploymentCreateHubNSG').outputs.nsgResourceId1.value]"
+    }
+  }
+}

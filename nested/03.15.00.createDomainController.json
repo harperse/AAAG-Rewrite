@@ -1,0 +1,151 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adsPrefix": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "adminUserName": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "adsAvSetId": {
+      "type": "string"
+    },
+    "ads01nicId": {
+      "type": "string"
+    },
+    "saSku": {
+      "type": "string"
+    },
+    "diagStorageUri": {
+      "type": "string"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "dscArtifactsUrl": {
+      "type": "string"
+    },
+    "dscUrlSasToken": {
+      "type": "string"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "diskNameSuffix": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "ads01name": "[concat(parameters('adsPrefix'),1)]",
+    "adsVmSize": "[parameters('vmSize')]",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "imageSku": "2019-Datacenter-Core-smalldisk",
+    "diskNameOs": "[toUpper(concat(variables('ads01name'),parameters('diskNameSuffix').syst))]",
+    "diskNameData": "[toUpper(concat(variables('ads01name'),parameters('diskNameSuffix').data))]"
+  },
+    "resources": [
+      {
+        "comments": "03.15.00.createDC01",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[variables('ads01name')]",
+        "apiVersion": "2017-03-30",
+        "location": "[parameters('location')]",
+        "properties": {
+          "hardwareProfile": {
+            "vmSize": "[variables('adsVmSize')]"
+          },
+          "osProfile": {
+            "computerName": "[variables('ads01name')]",
+            "adminUsername": "[parameters('adminUserName')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "[variables('imagePublisher')]",
+              "offer": "[variables('imageOffer')]",
+              "sku": "[variables('imageSku')]",
+              "version": "latest"
+            },
+            "osDisk": {
+              "name": "[variables('diskNameOs')]",
+              "caching": "ReadWrite",
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "[parameters('saSku')]"
+              }
+            },
+            "dataDisks": [
+              {
+                "lun": 0,
+                "name": "[variables('diskNameData')]",
+                "caching": "None",
+                "createOption": "Empty",
+                "diskSizeGB": 32,
+                "managedDisk": {
+                  "storageAccountType": "[parameters('saSku')]"
+                }
+              }
+            ]
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[parameters('ads01nicId')]"
+              }
+            ]
+          },
+          "diagnosticsProfile": {
+            "bootDiagnostics": {
+              "enabled": true,
+              "storageUri": "[parameters('diagStorageUri')]"
+            }
+          },
+          "availabilitySet": {
+            "id": "[parameters('adsAvSetId')]"
+          }
+        }
+      },
+      {
+        "comments": "03.15.01.configureDC01.DesiredStateConfiguration",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(variables('ads01name'),'/03.15.01.configureDC01')]",
+        "apiVersion": "2017-03-30",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines',variables('ads01name'))]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Powershell",
+          "type": "DSC",
+          "typeHandlerVersion": "2.83",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "modulesUrl": "[concat(parameters('dscArtifactsUrl'),'/dsc/adsCnfgInstall.ps1.zip',parameters('dscUrlSasToken'))]",
+            "configurationFunction": "adsCnfgInstall.ps1\\adsCnfgInstall",
+            "Properties": {
+              "domainName": "[parameters('domainName')]",
+              "dataDiskNumber": "2",
+              "dataDiskDriveLetter": "F",
+              "domainAdminCredentials": {
+                "userName": "[parameters('adminUserName')]",
+                "password": "PrivateSettingsRef:domainAdminPassword"
+              }
+            }
+          },
+          "protectedSettings": {
+            "Items": {
+              "domainAdminPassword": "[parameters('adminPassword')]"
+            }
+          }
+        }
+      }
+    ]
+  }

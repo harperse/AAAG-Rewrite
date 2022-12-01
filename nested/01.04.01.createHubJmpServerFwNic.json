@@ -1,0 +1,58 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nicObj": {
+      "type": "object",
+      "metadata": {
+        "description": "Jump server NIC."
+      }
+    },
+    "ipObj": {
+      "type": "object",
+      "metadata": {
+        "description": "IP properties"
+      }
+    },
+    "subnetJmpId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource id for Jump server subnet"
+      }
+    }
+  },
+  "resources": [
+    {
+      "comments": "01.04.01.createHubJmpServerFwNic",
+      "name": "[parameters('nicObj').hubJumpServerNic]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('nicObj').location]",
+      "apiVersion": "2018-11-01",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "[parameters('ipObj').prvIpJumpServer]",
+              "privateIPAllocationMethod": "[parameters('ipObj').prvIpAllocationMethod]",
+              "privateIPAddressVersion": "[parameters('ipObj').prvIPAddressVersion]",
+              "subnet": {
+                "id": "[parameters('subnetJmpId')]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false
+      }
+    }
+  ],
+  "outputs": {
+    "hubJumpServerNicId": {
+      "value": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicObj').hubJumpServerNic)]",
+      "type": "string"
+    }
+  }
+}

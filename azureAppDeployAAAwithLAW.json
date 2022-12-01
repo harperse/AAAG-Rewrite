@@ -1,0 +1,249 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive DSC scripts."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation when the template is deployed."
+      }
+    },
+    "storageDnsSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "The storage suffix for the storage account name depending on the AzureEnvironment value (AzureCloud or AzureUSGovernment)"
+      }
+    },
+    "dnsNameLabelSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "The DNS name label suffix for public IP addresses depending on the Cloud environment; AzureCloud or AzureUSGovernment"
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrative user name for virtual machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Secure password"
+      }
+    },
+      "location": {
+        "type": "string",
+        "metadata": {
+          "description": "resource group location."
+        }
+      },
+      "randomInfix": {
+        "type": "string",
+        "metadata": {
+          "description": "Random infix used to construct unique resource values within the same subscription, consisting of 8 numeric and lower-case characters only."
+        },
+        "minLength": 8,
+        "maxLength": 8
+      },
+      "AutomationAccountName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name for the Azure automation account that will be provisioned."
+        }
+      },
+      "aaaRegionFullName": {
+        "type": "string",
+        "metadata": {
+          "description": "The region for the Azure automation account that will be provisioned."
+        }
+      },
+      "azureLogAnalyticsWorkspaceName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name for the log analytics workspace that will be used for logging and diagnostics operations."
+        }
+      },
+      "alaRegionFullName": {
+        "type": "string",
+        "metadata": {
+          "description": "Log Analytics (OMS) region."
+        }
+      },
+      "recoveryServicesVaultName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name for the recovery services vault for backup and site recovery operations."
+        }
+      },
+      "regionCode": {
+        "type": "string",
+        "metadata": {
+          "description": "The geo-political region code for this deployment."
+        }
+      },
+      "devServerName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name of the dev/jump server for this infrastructure."
+        }
+      },
+      "storageAccountName": {
+        "type": "string",
+        "metadata": {
+          "description": "The globally unique storage account name for the storage account that will be provisioned"
+        }
+      },
+      "storageContainerName": {
+        "type": "string",
+        "metadata": {
+          "description": "The storage container name where artifacts will be."
+        }
+      },
+      "deploymentOption": {
+        "type": "string",
+        "metadata": {
+          "description": "<PLACE-HOLDER ONLY> RESERVED FOR POTENTIAL FUTURE USE: Allows automation of hub network deployment with or without Azure Firewall."
+        },
+        "allowedValues": [
+          "DeployAppOnly",
+          "DeployHubWithoutFW",
+          "DeployHubWithFW"
+        ],
+        "defaultValue": "DeployAppOnly"
+      },
+      "azureEnvironment": {
+        "type": "string",
+        "metadata": {
+          "description": "<PLACE-HOLDER ONLY> RESERVED FOR POTENTIAL FUTURE USE: The Cloud environment, either AzureCloud or AzureUSGovernment will be used."
+        },
+        "allowedValues": [
+          "AzureCloud",
+          "AzureUSGovernment"
+        ],
+        "defaultValue": "AzureCloud"
+      },
+      "vmSize": {
+        "type": "string",
+        "metadata": {
+          "description": "Size of VM, i.e. Standard_"
+        }
+      },
+      "appVnetName": {
+        "type": "string",
+        "metadata": {
+          "description": "App/Spoke VNET name"
+        }
+      },
+      "startupScheduleName": {
+        "type": "string",
+        "metadata": {
+          "description": "Startup Schedule Name"
+        }
+      },
+      "shutdownScheduleName": {
+        "type": "string",
+        "metadata": {
+          "description": "Shutdown Schedule Name"
+        }
+      },
+      "scheduledStopTime": {
+        "type": "string",
+        "metadata": {
+          "description": "Scheduled Stop Time"
+        }
+      },
+      "scheduledStartTime": {
+        "type": "string",
+        "metadata": {
+          "description": "Scheduled Start Time"
+        }
+      },
+      "scheduledExpiryTime": {
+        "type": "string",
+        "metadata": {
+          "description": "Scheduled Start Time"
+        }
+      }
+  },
+  "variables": {
+    "stageLocation": "[concat(parameters('_artifactsLocation'),'/',parameters('storageContainerName'))]",
+    "automationSchedule": {
+      "startupScheduleName": "[parameters('startupScheduleName')]",
+      "shutdownScheduleName": "[parameters('shutdownScheduleName')]",
+      "scheduledStopTime": "[parameters('scheduledStopTime')]",
+      "scheduledStartTime": "[parameters('scheduledStartTime')]",
+      "scheduledExpiryTime": "[parameters('scheduledExpiryTime')]"
+    },
+    "autoAcctName": "[parameters('AutomationAccountName')]",
+    "createAutoAcctUri": "[uri(variables('stageLocation'),concat('nested/09.12.00.createAutoAcct.json',parameters('_artifactsLocationSasToken')))]",
+    "omsWorkspaceName": "[parameters('azureLogAnalyticsWorkspaceName')]",
+    "createOmsWorkspaceUri": "[uri(variables('stageLocation'),concat('nested/10.13.00.createOmsWorkspace.json',parameters('_artifactsLocationSasToken')))]",
+  },
+  "resources": [
+    {
+      "comments": "09.12.00.createAutoAcct",
+      "name": "09.12.00.linkedDeploymentCreateAutoAcct",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [],
+      "properties": {
+        "templateLink": {
+          "uri": "[variables('createAutoAcctUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "autoAcctName": {
+            "value": "[variables('autoAcctName')]"
+          },
+          "location": {
+            "value": "[parameters('aaaRegionFullName')]"
+          },
+          "automationSchedule": {
+            "value": "[variables('automationSchedule')]"
+          }
+        },
+        "mode": "Incremental",
+        "debugSetting": {
+          "detailLevel": "requestContent, responseContent"
+        }
+      }
+    },
+    {
+      "comments": "10.13.00.createOmsWorkspace",
+      "name": "10.13.00.linkedDeploymentCreateOmsWorkspace",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [
+        "09.12.00.linkedDeploymentCreateAutoAcct"
+      ],
+      "properties": {
+        "templateLink": {
+          "uri": "[variables('createOmsWorkspaceUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsWorkspaceName": {
+            "value": "[variables('omsWorkspaceName')]"
+          },
+          "alaRegionFullName": {
+            "value": "[parameters('alaRegionFullName')]"
+          },
+          "autoAcctId": {
+            "value": "[reference('09.12.00.linkedDeploymentCreateAutoAcct').outputs.autoAcctId.value]"
+          }
+        },
+        "mode": "Incremental",
+        "debugSetting": {
+          "detailLevel": "requestContent, responseContent"
+        }
+      }
+    }
+  ]
+}

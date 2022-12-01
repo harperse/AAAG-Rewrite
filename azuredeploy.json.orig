@@ -1,0 +1,908 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive DSC scripts."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation when the template is deployed."
+      }
+    },
+    "storageDnsSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "The storage suffix for the storage account name depending on the AzureEnvironment value (AzureCloud or AzureUSGovernment)"
+      }
+    },
+    "dnsNameLabelSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "The DNS name label suffix for public IP addresses depending on the Cloud environment; AzureCloud or AzureUSGovernment"
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrative user name for virtual machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Secure password"
+      }
+    },
+      "location": {
+        "type": "string",
+        "metadata": {
+          "description": "resource group location."
+        }
+      },
+      "randomInfix": {
+        "type": "string",
+        "metadata": {
+          "description": "Random infix used to construct unique resource values within the same subscription, consisting of 8 numeric and lower-case characters only."
+        },
+        "minLength": 8,
+        "maxLength": 8
+      },
+      "AutomationAccountName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name for the Azure automation account that will be provisioned."
+        }
+      },
+      "aaaRegionFullName": {
+        "type": "string",
+        "metadata": {
+          "description": "The region for the Azure automation account that will be provisioned."
+        }
+      },
+      "azureLogAnalyticsWorkspaceName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name for the log analytics workspace that will be used for logging and diagnostics operations."
+        }
+      },
+      "alaRegionFullName": {
+        "type": "string",
+        "metadata": {
+          "description": "Log Analytics (OMS) region."
+        }
+      },
+      "recoveryServicesVaultName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name for the recovery services vault for backup and site recovery operations."
+        }
+      },
+      "regionCode": {
+        "type": "string",
+        "metadata": {
+          "description": "The geo-political region code for this deployment."
+        }
+      },
+      "devServerName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name of the dev/jump server for this infrastructure."
+        }
+      },
+      "storageAccountName": {
+        "type": "string",
+        "metadata": {
+          "description": "The globally unique storage account name for the storage account that will be provisioned"
+        }
+      },
+      "storageContainerName": {
+        "type": "string",
+        "metadata": {
+          "description": "The storage container name where artifacts will be."
+        }
+      },
+      "deploymentOption": {
+        "type": "string",
+        "metadata": {
+          "description": "<PLACE-HOLDER ONLY> RESERVED FOR POTENTIAL FUTURE USE: Allows automation of hub network deployment with or without Azure Firewall."
+        },
+        "allowedValues": [
+          "DeployAppOnly",
+          "DeployHubWithoutFW",
+          "DeployHubWithFW"
+        ],
+        "defaultValue": "DeployAppOnly"
+      },
+      "azureEnvironment": {
+        "type": "string",
+        "metadata": {
+          "description": "<PLACE-HOLDER ONLY> RESERVED FOR POTENTIAL FUTURE USE: The Cloud environment, either AzureCloud or AzureUSGovernment will be used."
+        },
+        "allowedValues": [
+          "AzureCloud",
+          "AzureUSGovernment"
+        ],
+        "defaultValue": "AzureCloud"
+      },
+      "vmSize": {
+        "type": "string",
+        "metadata": {
+          "description": "Size of VM, i.e. Standard_"
+        }
+      },
+      "appVnetName": {
+        "type": "string",
+        "metadata": {
+          "description": "App/Spoke VNET name"
+        }
+      },
+      "startupScheduleName": {
+        "type": "string",
+        "metadata": {
+          "description": "Startup Schedule Name"
+        }
+      },
+      "shutdownScheduleName": {
+        "type": "string",
+        "metadata": {
+          "description": "Shutdown Schedule Name"
+        }
+      },
+      "scheduledStopTime": {
+        "type": "string",
+        "metadata": {
+          "description": "Scheduled Stop Time"
+        }
+      },
+      "scheduledStartTime": {
+        "type": "string",
+        "metadata": {
+          "description": "Scheduled Start Time"
+        }
+      },
+      "scheduledExpiryTime": {
+        "type": "string",
+        "metadata": {
+          "description": "Scheduled Start Time"
+        }
+      },
+      "includeAds": {
+         "type": "string",
+         "metadata": {
+              "description": "Should replica domain controllers be deployed? [yes|no]"
+          }
+      }
+    },
+    "variables": {
+      "adminUserName": "[parameters('adminUserName')]",
+      "adminPassword": "[parameters('adminPassword')]",
+      "saName": "[parameters('storageAccountName')]",
+      "stageLocation": "[concat(parameters('_artifactsLocation'),'/',parameters('storageContainerName'))]",
+      "saSku": "Standard_LRS",
+      "saUrlSuffix": "[parameters('storageDnsSuffix')]",
+      "diagStorageUri": "[concat('https://',variables('saName'),variables('saUrlSuffix'))]",
+      "createPublicIPUri": "[uri(variables('stageLocation'),concat('nested/04.36.00.createPublicIP.json',parameters('_artifactsLocationSasToken')))]",
+      "devPublicIPAddressName": "[toLower(concat(parameters('devServerName'),'-pip'))]",
+      "devDomainNameLabelPrefix": "[concat(variables('devPublicIPAddressName'),'-',parameters('randomInfix'))]",
+      "devPublicIPAddressType": "Static",
+      "fqdnAzureSuffix": "[parameters('dnsNameLabelSuffix')]",
+      "fqdnLocationSuffix": "[concat(variables('devPublicIPAddressName'),'.',parameters('location'),variables('fqdnAzureSuffix'))]",
+      "avSetSuffix": "NP-AVS-01",
+      "avSet": [
+        "[concat(parameters('regionCode'),'-ADC-',variables('avSetSuffix'))]",
+        "[concat(parameters('regionCode'),'-WES-',variables('avSetSuffix'))]",
+        "[concat(parameters('regionCode'),'-SQL-',variables('avSetSuffix'))]",
+        "[concat(parameters('regionCode'),'-DEV-',variables('avSetSuffix'))]",
+        "[concat(parameters('regionCode'),'-LNX-',variables('avSetSuffix'))]"
+      ],
+      "createAvSetUri": "[uri(variables('stageLocation'),concat('nested/05.08.00.createAvSet.json',parameters('_artifactsLocationSasToken')))]",
+      "subnet01": "[concat(parameters('regionCode'),'-ADC-NP-SUB-01')]",
+      "subnet02": "[concat(parameters('regionCode'),'-SRV-NP-SUB-02')]",
+      "nsgADDS": "[concat(parameters('regionCode'),'-ADC-NP-NSG-01')]",
+      "nsgSRVS": "[concat(parameters('regionCode'),'-SRV-NP-NSG-02')]",
+      "nsgCollection": [
+        "[variables('nsgADDS')]",
+        "[variables('nsgSRVS')]"
+      ],
+      "createNSGUri": "[uri(variables('stageLocation'),concat('nested/06.06.00.createNSG.json',parameters('_artifactsLocationSasToken')))]",
+      "netPrefix": "10.20.10",
+      "netSuffixVNET": ".0/26",
+      "netSuffixADDS": ".0/28",
+      "netSuffixSRVS": ".16/28",
+      "vnet1Name": "[parameters('appVnetName')]",
+      "vnet1Location": "[parameters('location')]",
+      "vnet1AddressPrefix": "[concat(variables('netPrefix'),variables('netSuffixVNET'))]",
+      "subnet1Name": "[variables('subnet01')]",
+      "subnet1Prefix": "[concat(variables('netPrefix'),variables('netSuffixADDS'))]",
+      "subnet2Name": "[variables('subnet02')]",
+      "subnet2Prefix": "[concat(variables('netPrefix'),variables('netSuffixSRVS'))]",
+      "createVnetUri": "[uri(variables('stageLocation'),concat('nested/07.03.00.createVnet.json',parameters('_artifactsLocationSasToken')))]",
+      "vnet": {
+        "name": "[variables('vnet1Name')]",
+        "location": "[variables('vnet1Location')]",
+        "addressPrefix": "[variables('vnet1AddressPrefix')]"
+      },
+      "automationSchedule": {
+        "startupScheduleName": "[parameters('startupScheduleName')]",
+        "shutdownScheduleName": "[parameters('shutdownScheduleName')]",
+        "scheduledStopTime": "[parameters('scheduledStopTime')]",
+        "scheduledStartTime": "[parameters('scheduledStartTime')]",
+        "scheduledExpiryTime": "[parameters('scheduledExpiryTime')]"
+      },
+      "subnetNameCollection": [
+        "[variables('subnet1Name')]",
+        "[variables('subnet2Name')]"
+      ],
+      "subnetPrefixCollection": [
+        "[variables('subnet1Prefix')]",
+        "[variables('subnet2Prefix')]"
+      ],
+      "autoAcctName": "[parameters('AutomationAccountName')]",
+      "createAutoAcctUri": "[uri(variables('stageLocation'),concat('nested/09.12.00.createAutoAcct.json',parameters('_artifactsLocationSasToken')))]",
+      "omsWorkspaceName": "[parameters('azureLogAnalyticsWorkspaceName')]",
+      "createOmsWorkspaceUri": "[uri(variables('stageLocation'),concat('nested/10.13.00.createOmsWorkspace.json',parameters('_artifactsLocationSasToken')))]",
+      "createRsvUri": "[uri(variables('stageLocation'),concat('nested/11.14.00.createRecoveryServicesVault.json',parameters('_artifactsLocationSasToken')))]",
+      "rsvName": "[parameters('recoveryServicesVaultName')]",
+      "roleCodeAds": "APPNPADC",
+      "roleCodeWeb": "APPNPWES",
+      "roleCodeSql": "APPNPSQL",
+      "roleCodeDev": "APPNPDEV",
+      "roleCodeLnx": "APPNPLNX",
+      "seriesPrefix": "0",
+      "adsPrefix": "[concat(parameters('regionCode'),variables('roleCodeAds'),variables('seriesPrefix'))]",
+      "webPrefix": "[concat(parameters('regionCode'),variables('roleCodeWeb'),variables('seriesPrefix'))]",
+      "sqlPrefix": "[concat(parameters('regionCode'),variables('roleCodeSql'),variables('seriesPrefix'))]",
+      "devPrefix": "[concat(parameters('regionCode'),variables('roleCodeDev'),variables('seriesPrefix'))]",
+      "lnxPrefix": "[concat(parameters('regionCode'),variables('roleCodeLnx'),variables('seriesPrefix'))]",
+      "fqdnContosoDev": "[if(equals(parameters('AzureEnvironment'),'AzureCloud'),'dev.contoso.com','dev.contoso.gov')]",
+      "domainJoinOptions": "3",
+      "dcNicIpPrefix": "[variables('netPrefix')]",
+      "adsPrivateIps": {
+        "ads01PrivIp": "[concat(variables('dcNicIpPrefix'),'.4')]",
+        "ads02PrivIp": "[concat(variables('dcNicIpPrefix'),'.5')]"
+      },
+      "diskNameSuffix": {
+        "syst": "-DSK-SYST",
+        "data": "-DSK-DTA1"
+      },
+      "createNetworkInterfacesUri": "[uri(variables('stageLocation'),concat('nested/11.14.01.createNetworkInterfaces.json',parameters('_artifactsLocationSasToken')))]",
+      "nicSuffix": "-NIC",
+      "nicCollection": {
+        "ads01nic": {
+          "name": "[toUpper(concat(variables('adsPrefix'),'1',variables('nicSuffix')))]"
+        },
+        "ads02nic": {
+          "name": "[toUpper(concat(variables('adsPrefix'),'2',variables('nicSuffix')))]"
+        },
+        "dev01nic": {
+          "name": "[toUpper(concat(variables('devPrefix'),'1',variables('nicSuffix')))]"
+        },
+        "web01nic": {
+          "name": "[toUpper(concat(variables('webPrefix'),'1',variables('nicSuffix')))]"
+        },
+        "web02nic": {
+          "name": "[toUpper(concat(variables('webPrefix'),'2',variables('nicSuffix')))]"
+        },
+        "sql01nic": {
+          "name": "[toUpper(concat(variables('sqlPrefix'),'1',variables('nicSuffix')))]"
+        },
+        "sql02nic": {
+          "name": "[toUpper(concat(variables('sqlPrefix'),'2',variables('nicSuffix')))]"
+        },
+        "lnx01nic": {
+          "name": "[toUpper(concat(variables('lnxPrefix'),'1',variables('nicSuffix')))]"
+        }
+      },
+      "createAds01Uri": "[uri(variables('stageLocation'),concat('nested/03.15.00.createDomainController.json',parameters('_artifactsLocationSasToken')))]",
+      "createDev01Uri": "[uri(variables('stageLocation'),concat('nested/14.17.00.createDevServer.json',parameters('_artifactsLocationSasToken')))]",
+      "createWebServersUri": "[uri(variables('stageLocation'),concat('nested/15.21.00.createWebServers.json',parameters('_artifactsLocationSasToken')))]",
+      "createSqlServersUri": "[uri(variables('stageLocation'),concat('nested/16.23.00.createSqlServers.json',parameters('_artifactsLocationSasToken')))]",
+      "createAdsServersUri": "[uri(variables('stageLocation'),concat('nested/17.25.00.createAdsServers.json',parameters('_artifactsLocationSasToken')))]",
+      "createLnx01Uri": "[uri(variables('stageLocation'),concat('nested/18.26.01.createLnxServer.json',parameters('_artifactsLocationSasToken')))]",
+      "updateVnetWithDNSuri": "[uri(variables('stageLocation'),concat('nested/03.16.00.updateVnetWithDNS.json',parameters('_artifactsLocationSasToken')))]",
+      "adsVmSize": "Standard_B2s"
+    },
+    "resources": [
+      {
+        "comments": "04.36.00.createPublicIP",
+        "name": "04.36.00.linkedDeploymentCreatePublicIP",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createPublicIPUri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "devPublicIPAddressType": {
+              "value": "[variables('devPublicIPAddressType')]"
+            },
+            "domainNameLabel": {
+              "value": "[variables('devDomainNameLabelPrefix')]"
+            },
+            "fqdnLocation": {
+              "value": "[variables('fqdnLocationSuffix')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "05.08.00.createAvSet",
+        "name": "05.08.00.linkedDeploymentCreateAvSet",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createAvSetUri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "avSet": {
+              "value": "[variables('avSet')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "06.06.00.createNSG",
+        "name": "06.06.00.linkedDeploymentCreateNSG",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createNSGUri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "vnet1AddressPrefix": {
+              "value": "[variables('vnet1AddressPrefix')]"
+            },
+            "nsgCollection": {
+              "value": "[variables('nsgCollection')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "07.03.00.createVnet",
+        "name": "07.03.00.linkedDeploymentCreateVnet",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "dependsOn": [
+          "06.06.00.linkedDeploymentCreateNSG"
+        ],
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createVnetUri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "vnet": {
+              "value": "[variables('vnet')]"
+            },
+            "subnetNames": {
+              "value": "[variables('subnetNameCollection')]"
+            },
+            "subnetPrefixes": {
+              "value": "[variables('subnetPrefixCollection')]"
+            },
+            "nsgId1": {
+              "value": "[reference('06.06.00.linkedDeploymentCreateNSG').outputs.nsgResourceId1.value]"
+            },
+            "nsgId2": {
+              "value": "[reference('06.06.00.linkedDeploymentCreateNSG').outputs.nsgResourceId2.value]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "11.14.00.createRecoveryServicesVault",
+        "name": "11.14.00.linkedDeploymentCreateRecoveryServicesVault",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "dependsOn": [],
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createRsvUri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "rsvName": {
+              "value": "[variables('rsvName')]"
+            },
+            "location": {
+              "value": "[parameters('location')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "11.14.01.createNetworkInterfaces",
+        "name": "11.14.01.linkedDeploymentCreateNetworkInterfaces",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "dependsOn": [
+          "04.36.00.linkedDeploymentCreatePublicIP",
+          "07.03.00.linkedDeploymentCreateVnet"
+        ],
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createNetworkInterfacesUri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "nicCollection": {
+              "value": "[variables('nicCollection')]"
+            },
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "subnetAddsRef": {
+              "value": "[reference('07.03.00.linkedDeploymentCreateVnet').outputs.SubnetAddsId.value]"
+            },
+            "subnetSrvsRef": {
+              "value": "[reference('07.03.00.linkedDeploymentCreateVnet').outputs.SubnetSrvsId.value]"
+            },
+            "dev01pipId": {
+              "value": "[reference('04.36.00.linkedDeploymentCreatePublicIP').outputs.devPublicIpResourceId.value]"
+            },
+            "adsPrivateIps": {
+              "value": "[variables('adsPrivateIps')]"
+            },
+            "includeAds": {
+              "value": "[parameters('includeAds')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "03.15.00.createDomainController",
+        "name": "03.15.00.linkedDeploymentCreateDomainController",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "dependsOn": [
+          "05.08.00.linkedDeploymentCreateAvSet",
+          "07.03.00.linkedDeploymentCreateVnet",
+          "11.14.01.linkedDeploymentCreateNetworkInterfaces"
+        ],
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createAds01Uri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "adsPrefix": {
+              "value": "[variables('adsPrefix')]"
+            },
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "adminUserName": {
+              "value": "[variables('adminUserName')]"
+            },
+            "adminPassword": {
+              "value": "[variables('adminPassword')]"
+            },
+            "adsAvSetId": {
+              "value": "[reference('05.08.00.linkedDeploymentCreateAvSet').outputs.adsAvSetId.value]"
+            },
+            "ads01nicId": {
+              "value": "[reference('11.14.01.linkedDeploymentCreateNetworkInterfaces').outputs.ads01nicId.value]"
+            },
+            "saSku": {
+              "value": "[variables('saSku')]"
+            },
+            "diagStorageUri": {
+              "value": "[variables('diagStorageUri')]"
+            },
+            "domainName": {
+              "value": "[variables('fqdnContosoDev')]"
+            },
+            "dscArtifactsUrl": {
+              "value": "[parameters('_artifactsLocation')]"
+            },
+            "dscUrlSasToken": {
+              "value": "[parameters('_artifactsLocationSasToken')]"
+            },
+            "vmSize": {
+              "value": "[variables('adsVmSize')]"
+            },
+            "diskNameSuffix": {
+              "value": "[variables('diskNameSuffix')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "03.16.00.updateVnetWithDNS",
+        "name": "03.16.00.linkedDeploymentUpdateVnetWithDNS",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "dependsOn": [
+          "03.15.00.linkedDeploymentCreateDomainController"
+        ],
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('updateVnetWithDNSuri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "vnet": {
+              "value": "[variables('vnet')]"
+            },
+            "subnetNames": {
+              "value": "[variables('subnetNameCollection')]"
+            },
+            "subnetPrefixes": {
+              "value": "[variables('subnetPrefixCollection')]"
+            },
+            "adsPrivateIps": {
+              "value": "[variables('adsPrivateIps')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "14.17.00.createDevServer",
+        "name": "14.17.00.linkedDeploymentCreateDevServer",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "dependsOn": [
+          "03.16.00.linkedDeploymentUpdateVnetWithDNS"
+        ],
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createDev01Uri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "devPrefix": {
+              "value": "[variables('devPrefix')]"
+            },
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "adminUserName": {
+              "value": "[variables('adminUserName')]"
+
+            },
+            "adminPassword": {
+              "value": "[variables('adminPassword')]"
+
+            },
+            "devAvSetId": {
+              "value": "[reference('05.08.00.linkedDeploymentCreateAvSet').outputs.devAvSetId.value]"
+            },
+            "dev01nicId": {
+              "value": "[reference('11.14.01.linkedDeploymentCreateNetworkInterfaces').outputs.dev01nicId.value]"
+            },
+            "saSku": {
+              "value": "[variables('saSku')]"
+            },
+            "diagStorageUri": {
+              "value": "[variables('diagStorageUri')]"
+            },
+            "domainName": {
+              "value": "[variables('fqdnContosoDev')]"
+            },
+            "domainJoinOptions": {
+              "value": "[variables('domainJoinOptions')]"
+            },
+            "vmSize": {
+              "value": "[parameters('vmSize')]"
+            },
+            "diskNameSuffix": {
+              "value": "[variables('diskNameSuffix')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "15.21.00.createWebServers",
+        "name": "15.21.00.linkedDeploymentCreateWebServers",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "dependsOn": [
+          "03.16.00.linkedDeploymentUpdateVnetWithDNS"
+        ],
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createWebServersUri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "webPrefix": {
+              "value": "[variables('webPrefix')]"
+            },
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "adminUserName": {
+              "value": "[variables('adminUserName')]"
+
+            },
+            "adminPassword": {
+              "value": "[variables('adminPassword')]"
+
+            },
+            "webAvSetId": {
+              "value": "[reference('05.08.00.linkedDeploymentCreateAvSet').outputs.webAvSetId.value]"
+            },
+            "webNicIds": {
+              "value": "[reference('11.14.01.linkedDeploymentCreateNetworkInterfaces').outputs.webNicIds.value]"
+            },
+            "saSku": {
+              "value": "[variables('saSku')]"
+            },
+            "diagStorageUri": {
+              "value": "[variables('diagStorageUri')]"
+            },
+            "domainName": {
+              "value": "[variables('fqdnContosoDev')]"
+            },
+            "domainJoinOptions": {
+              "value": "[variables('domainJoinOptions')]"
+            },
+            "vmSize": {
+              "value": "[parameters('vmSize')]"
+            },
+            "diskNameSuffix": {
+              "value": "[variables('diskNameSuffix')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "16.23.00.createSqlServers",
+        "name": "16.23.00.linkedDeploymentCreateSqlServers",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "dependsOn": [
+          "03.16.00.linkedDeploymentUpdateVnetWithDNS"
+        ],
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createSqlServersUri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "sqlPrefix": {
+              "value": "[variables('sqlPrefix')]"
+            },
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "adminUserName": {
+              "value": "[variables('adminUserName')]"
+
+            },
+            "adminPassword": {
+              "value": "[variables('adminPassword')]"
+
+            },
+            "sqlAvSetId": {
+              "value": "[reference('05.08.00.linkedDeploymentCreateAvSet').outputs.sqlAvSetId.value]"
+            },
+            "sqlNicIds": {
+              "value": "[reference('11.14.01.linkedDeploymentCreateNetworkInterfaces').outputs.sqlNicIds.value]"
+            },
+            "saSku": {
+              "value": "[variables('saSku')]"
+            },
+            "diagStorageUri": {
+              "value": "[variables('diagStorageUri')]"
+            },
+            "domainName": {
+              "value": "[variables('fqdnContosoDev')]"
+            },
+            "domainJoinOptions": {
+              "value": "[variables('domainJoinOptions')]"
+            },
+            "vmSize": {
+              "value": "[parameters('vmSize')]"
+            },
+            "diskNameSuffix": {
+              "value": "[variables('diskNameSuffix')]"
+            },
+            "cseScriptUri": {
+              "value": "[uri(variables('stageLocation'),concat('cse/Set-BypassAppLockerScenario.ps1',parameters('_artifactsLocationSasToken')))]"
+            },
+            "appLockerPrepScript": {
+              "value": "./cse/Set-BypassAppLockerScenario.ps1"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "condition": "[equals(parameters('includeAds'),'yes')]",
+        "comments": "17.25.00.createAdsServers",
+        "name": "17.25.00.linkedDeploymentCreateAdsServers",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "dependsOn": [
+          "03.16.00.linkedDeploymentUpdateVnetWithDNS"
+        ],
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createAdsServersUri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "adsPrefix": {
+              "value": "[variables('adsPrefix')]"
+            },
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "adminUserName": {
+              "value": "[variables('adminUserName')]"
+
+            },
+            "adminPassword": {
+              "value": "[variables('adminPassword')]"
+
+            },
+            "adsAvSetId": {
+              "value": "[reference('05.08.00.linkedDeploymentCreateAvSet').outputs.adsAvSetId.value]"
+            },
+            "adsNicIds": {
+              "value": "[reference('11.14.01.linkedDeploymentCreateNetworkInterfaces').outputs.adsNicIds.value]"
+            },
+            "saSku": {
+              "value": "[variables('saSku')]"
+            },
+            "diagStorageUri": {
+              "value": "[variables('diagStorageUri')]"
+            },
+            "domainName": {
+              "value": "[variables('fqdnContosoDev')]"
+            },
+            "domainJoinOptions": {
+              "value": "[variables('domainJoinOptions')]"
+            },
+            "dscArtifactsUrl": {
+              "value": "[parameters('_artifactsLocation')]"
+            },
+            "dscUrlSasToken": {
+              "value": "[parameters('_artifactsLocationSasToken')]"
+            },
+            "vmSize": {
+              "value": "[variables('adsVmSize')]"
+            },
+            "diskNameSuffix": {
+              "value": "[variables('diskNameSuffix')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      },
+      {
+        "comments": "18.26.01.createLnxServer",
+        "name": "18.26.01.linkedDeploymentCreateLnxServer",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "dependsOn": [
+          "03.16.00.linkedDeploymentUpdateVnetWithDNS"
+        ],
+        "properties": {
+          "templateLink": {
+            "uri": "[variables('createLnx01Uri')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "lnxPrefix": {
+              "value": "[variables('lnxPrefix')]"
+            },
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "adminUserName": {
+              "value": "[variables('adminUserName')]"
+
+            },
+            "adminPassword": {
+              "value": "[variables('adminPassword')]"
+
+            },
+            "lnxAvSetId": {
+              "value": "[reference('05.08.00.linkedDeploymentCreateAvSet').outputs.lnxAvSetId.value]"
+            },
+            "lnx01nicId": {
+              "value": "[reference('11.14.01.linkedDeploymentCreateNetworkInterfaces').outputs.lnx01nicId.value]"
+            },
+            "saSku": {
+              "value": "[variables('saSku')]"
+            },
+            "diagStorageUri": {
+              "value": "[variables('diagStorageUri')]"
+            },
+            "vmSize": {
+              "value": "[parameters('vmSize')]"
+            },
+            "diskNameSuffix": {
+              "value": "[variables('diskNameSuffix')]"
+            }
+          },
+          "mode": "Incremental",
+          "debugSetting": {
+            "detailLevel": "requestContent, responseContent"
+          }
+        }
+      }
+    ],
+    "outputs": {
+      "fqdnPublicIpFromLinkedTemplate": {
+        "type": "string",
+        "value": "[reference('04.36.00.linkedDeploymentCreatePublicIP').outputs.fqdn.value]"
+      },
+      "nsgResourceId1FromLinkedTemplate": {
+        "type": "string",
+        "value": "[reference('06.06.00.linkedDeploymentCreateNSG').outputs.nsgResourceId1.value]"
+      },
+      "nsgResourceId2FromLinkedTemplate": {
+        "type": "string",
+        "value": "[reference('06.06.00.linkedDeploymentCreateNSG').outputs.nsgResourceId2.value]"
+      }
+    }
+  }

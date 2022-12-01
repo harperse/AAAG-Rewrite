@@ -1,0 +1,152 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adsPrefix": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "adminUserName": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "adsAvSetId": {
+      "type": "string"
+    },
+    "adsNicIds": {
+      "type": "array"
+    },
+    "saSku": {
+      "type": "string"
+    },
+    "diagStorageUri": {
+      "type": "string"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "domainJoinOptions": {
+      "type": "string"
+    },
+    "dscArtifactsUrl": {
+      "type": "string"
+    },
+    "dscUrlSasToken": {
+      "type": "string"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "diskNameSuffix": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "adsName02": "[concat(parameters('adsPrefix'),'2')]",
+    "adsVmSize": "[parameters('vmSize')]",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "imageSku": "2019-Datacenter-Core-smalldisk"
+  },
+  "resources": [
+    {
+      "comments": "17.25.00.createAdsServers",
+      "name": "[variables('adsName02')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('adsVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('adsName02')]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('adsName02'),parameters('diskNameSuffix').syst)]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('saSku')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[concat(variables('adsName02'),parameters('diskNameSuffix').data)]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 32,
+              "managedDisk": {
+                "storageAccountType": "[parameters('saSku')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[parameters('adsNicIds')[1]]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[parameters('diagStorageUri')]"
+          }
+        },
+        "availabilitySet": {
+          "id": "[parameters('adsAvSetId')]"
+        }
+      }
+  },
+    {
+      "comments": "03.15.01.configureDC02.DesiredStateConfiguration",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('adsName02'),'/03.15.01.configureDC02')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines',variables('adsName02'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.83",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesUrl": "[concat(parameters('dscArtifactsUrl'),'/dsc/adsCnfgInstalldc02.ps1.zip',parameters('dscUrlSasToken'))]",
+          "configurationFunction": "adsCnfgInstalldc02.ps1\\adsCnfgInstalldc02",
+          "Properties": {
+            "domainName": "[parameters('domainName')]",
+            "dataDiskNumber": "2",
+            "dataDiskDriveLetter": "F",
+            "domainAdminCredentials": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "PrivateSettingsRef:domainAdminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "domainAdminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    }
+  ]
+}
