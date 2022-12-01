@@ -440,7 +440,7 @@ Write-Output "Please see the open dialogue box in your browser to authenticate t
 # Clear any possible cached credentials for other subscriptions
 Clear-AzContext
 
-# index 5.0: Authenticate to subscription
+# index 5.0: Authenticate to Azure subscription
 Switch ($AzureEnvironment)
 {
     "AzureCloud" { Connect-AzAccount -Environment AzureCloud }
