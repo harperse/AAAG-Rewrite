@@ -211,14 +211,7 @@ function New-AzStorageAccountHubAndSpoke {
     New-AzResourceGroupDeployment @spokeStorageAccountProperties
     
 }
-function New-AzAppOnlyResourceGroupDeployment {
-    [CmdletBinding()]
-    param (
-        [Parameter()]
-        [TypeName]
-        $ParameterName
-    )
-}
+
 function New-AzPOCResourceGroupDeployment {
     [CmdletBinding()]
     param (
@@ -230,13 +223,13 @@ function New-AzPOCResourceGroupDeployment {
             $resourceGroupName = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.rgNC, "01" -join "-"
             New-AzResourceGroup -Name $resourceGroupName -Location $selectedHubRegionCode -Verbose
             $hubObjectDefinitions.Add("resourceGroup", $(Get-AzResourceGroup -Name $resourceGroupName -Location $selectedHubRegionCode))
-            New-AzStorageAccountHubOrSpoke -HubOrSpoke Hub
+            New-AzStorageAccountHubAndSpoke -HubOrSpoke Hub
         }
         "Spoke" {
             $resourceGroupName = $selectedSpokeRegionCode, $hubResources.spkNC, "NP", $namingConstructs.rgNC, "01" -join "-"
             New-AzResourceGroup -Name $resourceGroupName -Location $selectedSpokeRegionCode -Verbose
             $spokeObjectDefinitions.Add("resourceGroup", $(Get-AzResourceGroup -Name $resourceGroupName -Location $selectedSpokeRegionCode))
-            New-AzStorageAccountHubOrSpoke -HubOrSpoke Spoke
+            New-AzStorageAccountHubAndSpoke -HubOrSpoke Spoke
         }
     }
 }
@@ -284,76 +277,7 @@ $azLocations = $(Get-AzLocation | Where-Object { $_.RegionType -eq "Physical" })
 #endregion DefaultStrings
 
 #region DefaultHashtables
-$regionCodes = @{
-    #Asia
-    CZEAS = "eastasia"
-    CZSEA = "southeastasia"
-    #Australia
-    CZAU1 = "australiacentral"
-    CZAU2 = "australiacentral2"
-    CZEAU = "australiaeast"
-    CZSAU = "australiasoutheast"
-    #Brazil
-    CZSBR = "brazilsouth"
-    CZBSE = "brazilsoutheast"
-    #Canada
-    CZCCA = "canadacentral"
-    CZECA = "canadaeast"
-    #Europe
-    CZNEU = "northeurope"
-    CZWEU = "westeurope"
-    #France
-    CZFRC = "francecentral"
-    CZFRS = "francesouth"
-    #Germany
-    CZGRN = "germanynorth"
-    CZGWC = "germanywestcentral"
-    #India
-    CZCIN = "centralindia"
-    CZSIN = "southindia"
-    CZWIN = "westindia"
-    #JioIndia
-    CZJIC = "jioindiacentral"
-    CZJIW = "jioindiawest"
-    #Japan
-    CZWJP = "japanwest"
-    CZEJP = "japaneast"
-    #Korea
-    CZKRC = "koreacentral"
-    CZKRS = "koreasouth"
-    #Norway
-    CZNWE = "norwayeast"
-    CZNWW = "norwaywest"
-    #Qatar
-    CZQAC = "qatarcentral"
-    #South Africa
-    CZNSA = "southafricanorth"
-    CZWSA = "southafricawest"
-    #Sweden
-    CZSWC = "swedencentral"
-    #Switzerland
-    CZSWN = "switzerlandnorth"
-    CZSWW = "switzerlandwest"
-    #UAE
-    CZUAC = "uaecentral"
-    CZUAN = "uaenorth"
-    #UK
-    CZSUK = "uksouth"
-    CZWUK = "ukwest"
-    #USCommercial
-    CZCUS = "centralus"
-    CZEU1 = "eastus"
-    CZEU2 = "eastus2"
-    CZCUN = "northcentralus"
-    CZSCU = "southcentralus"
-    CZWCU = "westcentralus"
-    CZWU1 = "westus"
-    CZWU2 = "westus2"
-    CZWU3 = "westus3"
-    #USGOV
-    USGVA = "usgovvirginia"
-    USGTX = "usgovtexas"
-} # end hashtable; updated 10/26/2022
+
 $hubResources = @{
     hubNC                 = 'INF'
     storAcctPrefix        = '1'
