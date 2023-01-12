@@ -157,7 +157,8 @@ Deploys an Azure PoC Infrastructure
 Param
 (
     [ValidateSet("AzureCloud", "AzureUSGovernment")][string] $AzureEnvironment = "AzureCloud",
-    [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW", IgnoreCase = $true)][string] $DeploymentOption = "DeployAppOnly",
+    [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW")][string] $DeploymentOption = "DeployAppOnly",
+    [ValidateSet("PowerShellOnly","PowerShellWithJSON","PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
     [switch]$ValidateOnly,
     [switch]$skipModules
 )

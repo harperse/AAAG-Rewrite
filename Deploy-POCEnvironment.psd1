@@ -1,64 +1,47 @@
 #region hashtables
 
+<#
 #region DefaultHashtables
 $regionCodes = @{
-    #Asia
-    CZEAS = "eastasia"
-    CZSEA = "southeastasia"
-    #Australia
+    #Africa
+    CZNSA = "southafricanorth"
+    #AsiaPacific
     CZAU1 = "australiacentral"
     CZAU2 = "australiacentral2"
-    CZEAU = "australiaeast"
-    CZSAU = "australiasoutheast"
-    #Brazil
-    CZSBR = "brazilsouth"
-    CZBSE = "brazilsoutheast"
-    #Canada
-    CZCCA = "canadacentral"
-    CZECA = "canadaeast"
-    #Europe
-    CZNEU = "northeurope"
-    CZWEU = "westeurope"
-    #France
-    CZFRC = "francecentral"
-    CZFRS = "francesouth"
-    #Germany
-    CZGRN = "germanynorth"
-    CZGWC = "germanywestcentral"
-    #India
     CZCIN = "centralindia"
-    CZSIN = "southindia"
-    CZWIN = "westindia"
-    #JioIndia
+    CZEAS = "eastasia"
+    CZEAU = "australiaeast"
+    CZEJP = "japaneast"
     CZJIC = "jioindiacentral"
     CZJIW = "jioindiawest"
-    #Japan
-    CZWJP = "japanwest"
-    CZEJP = "japaneast"
-    #Korea
     CZKRC = "koreacentral"
     CZKRS = "koreasouth"
-    #Norway
-    CZNWE = "norwayeast"
-    CZNWW = "norwaywest"
-    #Qatar
     CZQAC = "qatarcentral"
-    #South Africa
-    CZNSA = "southafricanorth"
-    CZWSA = "southafricawest"
-    #Sweden
-    CZSWC = "swedencentral"
-    #Switzerland
-    CZSWN = "switzerlandnorth"
-    CZSWW = "switzerlandwest"
-    #UAE
+    CZSAU = "australiasoutheast"
+    CZSEA = "southeastasia"
+    CZSIN = "southindia"
     CZUAC = "uaecentral"
     CZUAN = "uaenorth"
-    #UK
+    CZWIN = "westindia"
+    CZWJP = "japanwest"
+    #Europe
+    CZFRC = "francecentral"
+    CZFRS = "francesouth"
+    CZGRN = "germanynorth"
+    CZGWC = "germanywestcentral"
+    CZNEU = "northeurope"
+    CZNWE = "norwayeast"
+    CZNWW = "norwaywest"
     CZSUK = "uksouth"
+    CZSWC = "swedencentral"
+    CZSWN = "switzerlandnorth"
+    CZSWW = "switzerlandwest"
+    CZWEU = "westeurope"
     CZWUK = "ukwest"
-    #USCommercial
+    #NorthAmerica
+    CZCCA = "canadacentral"
     CZCUS = "centralus"
+    CZECA = "canadaeast"
     CZEU1 = "eastus"
     CZEU2 = "eastus2"
     CZCUN = "northcentralus"
@@ -67,10 +50,70 @@ $regionCodes = @{
     CZWU1 = "westus"
     CZWU2 = "westus2"
     CZWU3 = "westus3"
+    #SouthAmerica
+    CZSBR = "brazilsouth"
+    CZBSE = "brazilsoutheast"
     #USGOV
     USGVA = "usgovvirginia"
     USGTX = "usgovtexas"
 } # end hashtable; updated 10/26/2022
+#>
+
+Enum regionCodes {
+    #Africa
+    CZNSA #southafricanorth
+    #AsiaPacific
+    CZAU1 #australiacentral
+    CZAU2 #australiacentral2
+    CZCIN #centralindia
+    CZEAS #eastasia
+    CZEAU #australiaeast
+    CZEJP #japaneast
+    CZJIC #jioindiacentral
+    CZJIW #jioindiawest
+    CZKRC #koreacentral
+    CZKRS #koreasouth
+    CZQAC #qatarcentral
+    CZSAU #australiasoutheast
+    CZSEA #southeastasia
+    CZSIN #southindia
+    CZUAC #uaecentral
+    CZUAN #uaenorth
+    CZWIN #westindia
+    CZWJP #japanwest
+    #Europe
+    CZFRC #francecentral
+    CZFRS #francesouth
+    CZGRN #germanynorth
+    CZGWC #germanywestcentral
+    CZNEU #northeurope
+    CZNWE #norwayeast
+    CZNWW #norwaywest
+    CZSUK #uksouth
+    CZSWC #swedencentral
+    CZSWN #switzerlandnorth
+    CZSWW #switzerlandwest
+    CZWEU #westeurope
+    CZWUK #ukwest
+    #NorthAmerica
+    CZCCA #canadacentral
+    CZCUS #centralus
+    CZECA #canadaeast
+    CZEU1 #eastus
+    CZEU2 #eastus2
+    CZCUN #northcentralus
+    CZSCU #southcentralus
+    CZWCU #westcentralus
+    CZWU1 #westus
+    CZWU2 #westus2
+    CZWU3 #westus3
+    #SouthAmerica
+    CZSBR #brazilsouth
+    CZBSE #brazilsoutheast
+    #USGOV
+    USGVA #usgovvirginia
+    USGTX #usgovtexas
+}  # end hashtable; updated 1/12/2023
 
 [hashtable]$regionCodesGov = @{
     USGVA = "usgovvirginia" # Hub Vnet (primary)

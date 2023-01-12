@@ -1,5 +1,8 @@
-Login-AzAccount #Login to Azure using PowerShell
-Get-AzSubscription #Get list of subscriptions associated with the account
+#Login to Azure using PowerShell
+Login-AzAccount
+
+#Get list of subscriptions associated with the account
+Get-AzSubscription 
 Select-AzSubscription -SubscriptionID "Paste the subscription ID here"
 $VM = "<VM Name>" #VM Name goes here
 $RG = "<Resource Group Name where the VM is located>" #RG Name goes here
