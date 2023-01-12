@@ -16,7 +16,7 @@
       }
     },
     "_artifactsLocationSasToken": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "Auto-generated token to access _artifactsLocation when the template is deployed."
       }
@@ -40,7 +40,7 @@
       }
     },
     "adminPassword": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "Secure password"
       }
@@ -317,7 +317,7 @@
   "resources": [
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "04.36.00.linkedDeploymentCreatePublicIP",
       "properties": {
         "expressionEvaluationOptions": {
@@ -383,10 +383,10 @@
           }
         }
       }
-    }, //"04.36.00.linkedDeploymentCreatePublicIP"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "05.08.00.linkedDeploymentCreateAvSet",
       "properties": {
         "expressionEvaluationOptions": {
@@ -458,10 +458,10 @@
           }
         }
       }
-    }, //"05.08.00.linkedDeploymentCreateAvSet"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "06.06.00.linkedDeploymentCreateNSG",
       "properties": {
         "expressionEvaluationOptions": {
@@ -561,10 +561,10 @@
           }
         }
       }
-    }, //"06.06.00.linkedDeploymentCreateNSG"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "07.03.00.linkedDeploymentCreateVnet",
       "properties": {
         "expressionEvaluationOptions": {
@@ -666,10 +666,10 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', '06.06.00.linkedDeploymentCreateNSG')]"
       ]
-    }, //"07.03.00.linkedDeploymentCreateVnet"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "11.14.00.linkedDeploymentCreateRecoveryServicesVault",
       "properties": {
         "expressionEvaluationOptions": {
@@ -722,10 +722,10 @@
           ]
         }
       }
-    }, //"11.14.00.linkedDeploymentCreateRecoveryServicesVault"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "11.14.01.linkedDeploymentCreateNetworkInterfaces",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1047,10 +1047,10 @@
         "[resourceId('Microsoft.Resources/deployments', '04.36.00.linkedDeploymentCreatePublicIP')]",
         "[resourceId('Microsoft.Resources/deployments', '07.03.00.linkedDeploymentCreateVnet')]"
       ]
-    }, //"11.14.01.linkedDeploymentCreateNetworkInterfaces"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "03.15.00.linkedDeploymentCreateDomainController",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1255,10 +1255,10 @@
         "[resourceId('Microsoft.Resources/deployments', '07.03.00.linkedDeploymentCreateVnet')]",
         "[resourceId('Microsoft.Resources/deployments', '11.14.01.linkedDeploymentCreateNetworkInterfaces')]"
       ]
-    }, //"03.15.00.linkedDeploymentCreateDomainController"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "03.16.00.linkedDeploymentUpdateVnetWithDNS",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1336,10 +1336,10 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', '03.15.00.linkedDeploymentCreateDomainController')]"
       ]
-    }, //"03.16.00.linkedDeploymentUpdateVnetWithDNS"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "14.17.00.linkedDeploymentCreateDevServer",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1532,10 +1532,10 @@
         "[resourceId('Microsoft.Resources/deployments', '05.08.00.linkedDeploymentCreateAvSet')]",
         "[resourceId('Microsoft.Resources/deployments', '11.14.01.linkedDeploymentCreateNetworkInterfaces')]"
       ]
-    }, //"14.17.00.linkedDeploymentCreateDevServer"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "15.21.00.linkedDeploymentCreateWebServers",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1734,10 +1734,10 @@
         "[resourceId('Microsoft.Resources/deployments', '05.08.00.linkedDeploymentCreateAvSet')]",
         "[resourceId('Microsoft.Resources/deployments', '11.14.01.linkedDeploymentCreateNetworkInterfaces')]"
       ]
-    }, //"15.21.00.linkedDeploymentCreateWebServers"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "16.23.00.linkedDeploymentCreateSqlServers",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1977,11 +1977,11 @@
         "[resourceId('Microsoft.Resources/deployments', '05.08.00.linkedDeploymentCreateAvSet')]",
         "[resourceId('Microsoft.Resources/deployments', '11.14.01.linkedDeploymentCreateNetworkInterfaces')]"
       ]
-    }, //"16.23.00.linkedDeploymentCreateSqlServers"
+    },
     {
       "condition": "[equals(parameters('includeAds'), 'yes')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "17.25.00.linkedDeploymentCreateAdsServers",
       "properties": {
         "expressionEvaluationOptions": {
@@ -2190,10 +2190,10 @@
         "[resourceId('Microsoft.Resources/deployments', '05.08.00.linkedDeploymentCreateAvSet')]",
         "[resourceId('Microsoft.Resources/deployments', '11.14.01.linkedDeploymentCreateNetworkInterfaces')]"
       ]
-    }, //"17.25.00.linkedDeploymentCreateAdsServers"
+    },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
       "name": "18.26.01.linkedDeploymentCreateLnxServer",
       "properties": {
         "expressionEvaluationOptions": {
@@ -2347,7 +2347,7 @@
         "[resourceId('Microsoft.Resources/deployments', '05.08.00.linkedDeploymentCreateAvSet')]",
         "[resourceId('Microsoft.Resources/deployments', '11.14.01.linkedDeploymentCreateNetworkInterfaces')]"
       ]
-    } //"18.26.01.linkedDeploymentCreateLnxServer"
+    }
   ],
   "outputs": {
     "fqdnPublicIpFromLinkedTemplate": {
