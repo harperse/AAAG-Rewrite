@@ -1,124 +1,13 @@
+#region Strings
+
+[string[]] $requiredModules = @("Az.Accounts", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
+[string] $uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
+
+#endregion Strings
+
+
+
 #region hashtables
-
-<#
-#region DefaultHashtables
-$regionCodes = @{
-    #Africa
-    CZNSA = "southafricanorth"
-    #AsiaPacific
-    CZAU1 = "australiacentral"
-    CZAU2 = "australiacentral2"
-    CZCIN = "centralindia"
-    CZEAS = "eastasia"
-    CZEAU = "australiaeast"
-    CZEJP = "japaneast"
-    CZJIC = "jioindiacentral"
-    CZJIW = "jioindiawest"
-    CZKRC = "koreacentral"
-    CZKRS = "koreasouth"
-    CZQAC = "qatarcentral"
-    CZSAU = "australiasoutheast"
-    CZSEA = "southeastasia"
-    CZSIN = "southindia"
-    CZUAC = "uaecentral"
-    CZUAN = "uaenorth"
-    CZWIN = "westindia"
-    CZWJP = "japanwest"
-    #Europe
-    CZFRC = "francecentral"
-    CZFRS = "francesouth"
-    CZGRN = "germanynorth"
-    CZGWC = "germanywestcentral"
-    CZNEU = "northeurope"
-    CZNWE = "norwayeast"
-    CZNWW = "norwaywest"
-    CZSUK = "uksouth"
-    CZSWC = "swedencentral"
-    CZSWN = "switzerlandnorth"
-    CZSWW = "switzerlandwest"
-    CZWEU = "westeurope"
-    CZWUK = "ukwest"
-    #NorthAmerica
-    CZCCA = "canadacentral"
-    CZCUS = "centralus"
-    CZECA = "canadaeast"
-    CZEU1 = "eastus"
-    CZEU2 = "eastus2"
-    CZCUN = "northcentralus"
-    CZSCU = "southcentralus"
-    CZWCU = "westcentralus"
-    CZWU1 = "westus"
-    CZWU2 = "westus2"
-    CZWU3 = "westus3"
-    #SouthAmerica
-    CZSBR = "brazilsouth"
-    CZBSE = "brazilsoutheast"
-    #USGOV
-    USGVA = "usgovvirginia"
-    USGTX = "usgovtexas"
-} # end hashtable; updated 10/26/2022
-#>
-
-Enum regionCodes {
-    #Africa
-    CZNSA #southafricanorth
-    #AsiaPacific
-    CZAU1 #australiacentral
-    CZAU2 #australiacentral2
-    CZCIN #centralindia
-    CZEAS #eastasia
-    CZEAU #australiaeast
-    CZEJP #japaneast
-    CZJIC #jioindiacentral
-    CZJIW #jioindiawest
-    CZKRC #koreacentral
-    CZKRS #koreasouth
-    CZQAC #qatarcentral
-    CZSAU #australiasoutheast
-    CZSEA #southeastasia
-    CZSIN #southindia
-    CZUAC #uaecentral
-    CZUAN #uaenorth
-    CZWIN #westindia
-    CZWJP #japanwest
-    #Europe
-    CZFRC #francecentral
-    CZFRS #francesouth
-    CZGRN #germanynorth
-    CZGWC #germanywestcentral
-    CZNEU #northeurope
-    CZNWE #norwayeast
-    CZNWW #norwaywest
-    CZSUK #uksouth
-    CZSWC #swedencentral
-    CZSWN #switzerlandnorth
-    CZSWW #switzerlandwest
-    CZWEU #westeurope
-    CZWUK #ukwest
-    #NorthAmerica
-    CZCCA #canadacentral
-    CZCUS #centralus
-    CZECA #canadaeast
-    CZEU1 #eastus
-    CZEU2 #eastus2
-    CZCUN #northcentralus
-    CZSCU #southcentralus
-    CZWCU #westcentralus
-    CZWU1 #westus
-    CZWU2 #westus2
-    CZWU3 #westus3
-    #SouthAmerica
-    CZSBR #brazilsouth
-    CZBSE #brazilsoutheast
-    #USGOV
-    USGVA #usgovvirginia
-    USGTX #usgovtexas
-}  # end hashtable; updated 1/12/2023
-
-[hashtable]$regionCodesGov = @{
-    USGVA = "usgovvirginia" # Hub Vnet (primary)
-    USGTX = "usgovtexas" # Spoke Vnet (secondary)
-} # end hashtable
 
 $alaToaaaMap = @{
     CZEAS = @{
@@ -188,8 +77,8 @@ $alaToaaaMap = @{
     } # end ht
     CZEAU = @{
         reg = "australiaeast"
-        aaa = "austrailiasoutheast"
-        ala = "austrailiasoutheast"
+        aaa = "australiasoutheast"
+        ala = "australiasoutheast"
     } # end ht
     CZSAU = @{
         reg = "australiasoutheast"
@@ -291,6 +180,61 @@ $alaToaaaMap = @{
         aaa = "usgovvirginia"
         ala = "usgovvirginia"
     } # end ht
-} # end ht
+} # end hashtable
+
+$namingConstructs = @{
+    rgNC     = 'RGP'
+    vNetNC   = 'VNET'
+    rsvNC    = 'RSV'
+    alaNC    = 'ALA'
+    aaaNC    = 'AAA'
+    afwNC    = 'AFW'
+    subnetNC = 'SUB'
+    nsgNC    = 'NSG'
+    pipNC    = 'PIP'
+    udrNC    = 'UDR'
+}
+
+[hashtable]$hubProperties = @{
+    #ResourceGroup
+    
+    #StorageAccount
+    #AutomationAccount
+    #LogAnalyticsWorkspace
+    #VirtualNetworkSubnets
+    #VirtualNetwork
+    #JumpSubnetResources
+    #JumpSubnetNSG
+    #JumpServerPIP
+    #JumpServer
+    #AFWSubnetResources
+    #AzureFirewall
+    #VirtualNetworkPeering
+
+}
+
+[hashtable]$spokeProperties = @{
+    #ResourceGroup
+    #StorageAccount
+    #RecoveryServicesVault
+    #VirtualNetworkSubnets
+    #VirtualNetwork
+    #ADDSSubnetResources
+    #AvailabilitySet
+    #ADDSServer
+    #ADDSSubnetNSG
+    #AppSubnetResources
+    #AvailabilitySet1
+    #WebServers
+    #AvailabilitySet2
+    #DBServers
+    #AvailabilitySet3
+    #LinuxServer
+    #AvailabilitySet4
+    #DevServerPIP
+    #DevServer
+    #AppSubnetNSG
+}
 
 #endregion hashtables
+

@@ -147,21 +147,76 @@ Deploys an Azure PoC Infrastructure
 
 #>
 
-#FRAMEWORK
-
-# Determine deployment type (AppOnly, AppWithHub, AppWithHubAndFW)
-# If with hub, determine hub and spoke locations
-# Spoke = AppOnly with VNet peering
-
 [CmdletBinding()]
 Param
 (
     [ValidateSet("AzureCloud", "AzureUSGovernment")][string] $AzureEnvironment = "AzureCloud",
     [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW")][string] $DeploymentOption = "DeployAppOnly",
     [ValidateSet("PowerShellOnly","PowerShellWithJSON","PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
-    [switch]$ValidateOnly,
-    [switch]$skipModules
+    #[switch]$ValidateOnly,
+    [switch]$skipModules,
+    [switch]$Verbose
 )
+
+#region Enums
+
+Enum regionCodes {
+    #Africa
+    CZNSA #southafricanorth
+    #AsiaPacific
+    CZAU1 #australiacentral
+    CZAU2 #australiacentral2
+    CZCIN #centralindia
+    CZEAS #eastasia
+    CZEAU #australiaeast
+    CZEJP #japaneast
+    CZJIC #jioindiacentral
+    CZJIW #jioindiawest
+    CZKRC #koreacentral
+    CZKRS #koreasouth
+    CZQAC #qatarcentral
+    CZSAU #australiasoutheast
+    CZSEA #southeastasia
+    CZSIN #southindia
+    CZUAC #uaecentral
+    CZUAN #uaenorth
+    CZWIN #westindia
+    CZWJP #japanwest
+    #Europe
+    CZFRC #francecentral
+    CZFRS #francesouth
+    CZGRN #germanynorth
+    CZGWC #germanywestcentral
+    CZNEU #northeurope
+    CZNWE #norwayeast
+    CZNWW #norwaywest
+    CZSUK #uksouth
+    CZSWC #swedencentral
+    CZSWN #switzerlandnorth
+    CZSWW #switzerlandwest
+    CZWEU #westeurope
+    CZWUK #ukwest
+    #NorthAmerica
+    CZCCA #canadacentral
+    CZCUS #centralus
+    CZECA #canadaeast
+    CZEU1 #eastus
+    CZEU2 #eastus2
+    CZCUN #northcentralus
+    CZSCU #southcentralus
+    CZWCU #westcentralus
+    CZWU1 #westus
+    CZWU2 #westus2
+    CZWU3 #westus3
+    #SouthAmerica
+    CZSBR #brazilsouth
+    CZBSE #brazilsoutheast
+    #USGOV
+    USGVA #usgovvirginia
+    USGTX #usgovtexas
+}  # end enum; updated 1/12/2023
+
+#endregion Enums
 
 #region Functions
 
@@ -223,14 +278,31 @@ function New-AzPOCResourceGroupDeployment {
         "Hub" {
             $resourceGroupName = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.rgNC, "01" -join "-"
             New-AzResourceGroup -Name $resourceGroupName -Location $selectedHubRegionCode -Verbose
-            $hubObjectDefinitions.Add("resourceGroup", $(Get-AzResourceGroup -Name $resourceGroupName -Location $selectedHubRegionCode))
+            $global:hubObjectDefinitions.Add("resourceGroup", $(Get-AzResourceGroup -Name $resourceGroupName -Location $selectedHubRegionCode))
             New-AzStorageAccountHubAndSpoke -HubOrSpoke Hub
         }
         "Spoke" {
             $resourceGroupName = $selectedSpokeRegionCode, $hubResources.spkNC, "NP", $namingConstructs.rgNC, "01" -join "-"
             New-AzResourceGroup -Name $resourceGroupName -Location $selectedSpokeRegionCode -Verbose
-            $spokeObjectDefinitions.Add("resourceGroup", $(Get-AzResourceGroup -Name $resourceGroupName -Location $selectedSpokeRegionCode))
+            $global:spokeObjectDefinitions.Add("resourceGroup", $(Get-AzResourceGroup -Name $resourceGroupName -Location $selectedSpokeRegionCode))
             New-AzStorageAccountHubAndSpoke -HubOrSpoke Spoke
+        }
+    }
+}
+
+function New-AzVirtualNetworkHubAndSpoke {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke", "AppOnly")][string]$HubOrSpoke
+    )
+
+    switch ($HubOrSpoke) {
+        "Hub" {
+            New-AzVirtualNetworkSubnetConfig -Name $hubProperties.SubnetNameJMP -AddressPrefix $hubProperties.SubnetAddressPrefixJMP
+            New-AzVirtualNetworkSubnetConfig -Name $hubProperties.SubnetNameAFW -AddressPrefix $hubProperties.SubnetAddressPrefixAFW
+        }
+        "Spoke" {
+
         }
     }
 }
@@ -258,25 +330,6 @@ $azLocations = $(Get-AzLocation | Where-Object { $_.RegionType -eq "Physical" })
 
 #endregion PreExecutionHandling
 
-#region DefaultStrings
-[string[]] $requiredModules = @("Az.Accounts", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
-[string] $uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
-
-<#
-[string] $SpokeTemplateFile = 'azuredeploy.json'
-[string] $staSpkTemplateFile = ".\nested\00.00.00.createStorageAccount.json"
-[string] $staHubTemplateFile = ".\nested\00.00.01.createHubStorageAccount.json"
-[string] $SpokeAAAwithLAWTemplateFile = 'azureAppDeployAAAwithLAW.json'
-[string] $ArtifactsStagingDirectory = '.'
-[string] $DSCSourceFolder = 'dsc'
-[string] $vmSize = "Standard_D1_v2"
-[string] $PSModuleRepository = "PSGallery"
-[string] $label = "DEPLOY POC ENVIRONMENT FOR THE ACTIVATE AZURE WITH ADMINISTRATION AND GOVERNANCE OFFERING",
-[string] $includeAds = "no" # There is an error generated for deploying replica domain controllers: "Domain 'dev.contoso.com' could not be found.", so this will bypass creating the replica DC.
-[int] $headerCharCount = 200
-#>
-#endregion DefaultStrings
-
 #region DefaultHashtables
 
 $hubResources = @{
@@ -286,6 +339,7 @@ $hubResources = @{
     JMPSubnetAddressSpace = "10.10.1.0/24"
     AFWSubnetAddressSpace = "10.10.0.0/24"
 }
+
 $spokeResources = @{
     spkNC                 = 'APP'
     storAcctPrefix        = '2'
@@ -294,18 +348,9 @@ $spokeResources = @{
     SRVSubnetAddressSpace = "10.20.10.16/28"
     
 }
-$namingConstructs = @{
-    rgNC     = 'RGP'
-    vNetNC   = 'VNET'
-    rsvNC    = 'RSV'
-    alaNC    = 'ALA'
-    aaaNC    = 'AAA'
-    afwNC    = 'AFW'
-    subnetNC = 'SUB'
-    nsgNC    = 'NSG'
-    pipNC    = 'PIP'
-    udrNC    = 'UDR'
-}
+
+
+
 $jsonBase = [ordered]@{
     '$schema'      = "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#"
     contentVersion = "1.0.0.0"
@@ -332,9 +377,11 @@ $hubFWAppRule02 = @{
 }
 
 #endregion DefaultHashtables
-$hubObjectDefinitions = @{}
-$spokeObjectDefinitions = @{}
+
 #region CreatedObjectReferenceHashtables
+
+$global:hubObjectDefinitions = @{}
+$global:spokeObjectDefinitions = @{}
 
 #endregion CreatedObjectReferenceHashtables
 
@@ -372,31 +419,34 @@ if (!($skipModules)) {
 
 Write-Output "Please see the open dialogue box in your browser to authenticate to your Azure subscription..."
 Clear-AzContext -Force -Verbose
+
+Connect-AzAccount -Environment $AzureEnvironment
+Write-Output "Listing all Azure locations"
+Write-Output $azLocations
+
 Switch ($AzureEnvironment) {
     "AzureCloud" { 
-        Connect-AzAccount -Environment AzureCloud 
-        #BEGIN Location definitions
-        Write-Output "Listing all Azure locations"
-        Write-Output $azLocations
-        if (!($DeploymentOption -eq "DeployAppOnly")) {
-            Do { $azHubLocation = Read-Host "Please type or copy/paste the location for the hub of the hub/spoke model" }
-            Until ($azHubLocation -in $azLocations)
-    
-            Do { $azSpokeLocation = Read-Host "Please type or copy/paste the location for the spoke of the hub/spoke model" }
-            Until ($azSpokeLocation -in $azLocations)
-    
-            $selectedHubRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azHubLocation }
-            $selectedSpokeRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azSpokeLocation }
+        switch ($DeploymentOption) {
+            {$_ -eq ("DeployHubWithFW" -or "DeployHubWithoutFW")} {
+                Do { $azHubLocation = Read-Host "Please type or copy/paste the location for the hub of the hub/spoke model" }
+                Until ($azHubLocation -in $azLocations)
+        
+                Do { $azSpokeLocation = Read-Host "Please type or copy/paste the location for the spoke of the hub/spoke model" }
+                Until ($azSpokeLocation -in $azLocations)
+        
+                $selectedHubRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azHubLocation }
+                $selectedSpokeRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azSpokeLocation }
+            } 
+        
+            "DeployAppOnly" {
+                Do { $azAppLocation = Read-Host "Please type or copy/paste the location for the application deployment" }
+                    Until ($azAppLocation -in $azLocations)
+        
+                    $selectedAzAppLocation = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azAppLocation }
+                    $subscription = Select-AzSubscriptionFromList
+                    Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
+            }
         }
-        else {
-            Do { $azAppLocation = Read-Host "Please type or copy/paste the location for the application deployment" }
-            Until ($azAppLocation -in $azLocations)
-
-            $selectedAzAppLocation = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azAppLocation }
-        }
-        #END Location definitions
-        $subscription = Select-AzSubscriptionFromList
-        Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
     }
     "AzureUSGovernment" { 
         Connect-AzAccount -Environment AzureUSGovernment 
@@ -412,18 +462,11 @@ Switch ($AzureEnvironment) {
     }
 } # end switch
 
-switch ($DeploymentOption) {
-    { "DeployHubWithFW" -or "DeployHubWithoutFW" } {
-
-    }
-    "DeployAppOnly" {
-
-    }
-    "DeployHubWithoutFW" {}
-    "DeployHubWithFW" {}
+switch ($TemplateLanguage) {
+    "PowerShellOnly" {}
+    "PowerShellWithJSON" {}
+    "PowerShellWithBicep" {}
 }
-
-
 
 #endregion MainProcessing
 
