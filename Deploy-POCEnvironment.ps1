@@ -341,20 +341,6 @@ $spokeResources = @{}
 
 #endregion DefaultHashtables
 
-#region CreatedObjectReferenceHashtables
-
-$global:hubObjectDefinitions = @{}
-$global:spokeObjectDefinitions = @{}
-
-#endregion CreatedObjectReferenceHashtables
-
-#region ResourceNamingConstructs
-[string] $storageAccountSKU = 'Standard_LRS'
-[string] $storageAccountPrefix = 'sta'
-[string] $storageContainerName = 'stageartifacts'
-[string] $vmAdminUserName = 'adm.infra.user'
-#endregion ResourceNamingConstructs
-
 #region MainProcessing
 
 if (!($skipModules)) {

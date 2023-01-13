@@ -5,12 +5,14 @@ if ($HubOrSpoke -eq "Hub") {
         -Name $hubProperties.resourceGroupName `
         -Location $selectedHubRegionCode `
         -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
-    $hubResources.ResourceGroup = Get-AzResourceGroup -Name $hubProperties.resourceGroupName -Location $selectedHubRegionCode
+    
+    $hubResources.Add("ResourceGroup", $(Get-AzResourceGroup -Name $hubProperties.resourceGroupName -Location $selectedHubRegionCode))
 }
 else {
     New-AzResourceGroup `
         -Name $spokeProperties.resourceGroupName `
         -Location $selectedSpokeRegionCode `
         -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
-    $spokeResources.ResourceGroup = Get-AzResourceGroup -Name $spokeProperties.resourceGroupName -Location $selectedSpokeRegionCode
+    
+    $spokeResources.Add("ResourceGroup", $(Get-AzResourceGroup -Name $spokeProperties.resourceGroupName -Location $selectedSpokeRegionCode))
 }

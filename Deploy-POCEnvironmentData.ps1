@@ -204,17 +204,22 @@ $namingConstructs = @{
     storageAccountSkuName = "Standard_LRS"
     storageAccountAccessTier = "Hot"
     storageAccountEnableHttpsTrafficOnly = $true
+
+    vmAdminUserName = 'adm.infra.user'
 }
 
 [hashtable]$hubProperties = @{
     hubNC              = 'INF'
     hubStaPrefix       = 1
     #ResourceGroup
-    resourceGroupName  = $selectedHubRegionCode + $hubProperties.hubNC + $globalProperties.resourceGroupSuffix
+    resourceGroupName  = $selectedHubRegionCode, $hubProperties.hubNC, $globalProperties.resourceGroupSuffix -join "-"
     #StorageAccount
-    storageAccountName = $hubProperties.hubStaPrefix + $namingConstructs.staNC + $uniqueGUIDIdentifier
+    storageAccountName = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
+    storageAccountContainerName = 'stageartifacts'
     #AutomationAccount
-    automationAccountName = $selectedHubRegionCode + $namingConstructs.aaaNC + "NP" + $uniqueGUIDIdentifier + "AAA-01"
+    automationAccountName = $selectedHubRegionCode, $namingConstructs.aaaNC, "NP", $uniqueGUIDIdentifier, "AAA-01" -join "-"
+    automationAccountPlan = "Basic"
+    automationAccountAssignSystemIdentity = $true # For reference only
     automationAccountScheduleDescriptionStart = $null
     automationAccountScheduleNameStart = "Start 0800 Weekdays LOCAL"
     automationAccountScheduleStartTimeStart = $null
@@ -230,6 +235,9 @@ $namingConstructs = @{
     automationAccountScheduleFrequencyStop = $null
     automationAccountScheduleTimezoneStop = $null
     #LogAnalyticsWorkspace
+    logAnalyticsWorkspaceName = $selectedHubRegionCode, $namingConstructs.alaNC, "NP", $uniqueGUIDIdentifier, "ALA-01" -join "-"
+    logAnalyticsWorkspaceSku = "PerGB2018"
+    logAnalyticsWorkspaceRetentionInDays = 30
     #VirtualNetworkSubnets
     #JumpSubnetResources
     #JumpSubnetNSG
@@ -246,9 +254,9 @@ $namingConstructs = @{
     spokeNC            = 'APP'
     spokeStaPrefix     = 2
     #ResourceGroup
-    resourceGroupName  = $selectedSpokeRegionCode + $spokeProperties.spokeNC + $globalProperties.resourceGroupSuffix
+    resourceGroupName  = $selectedSpokeRegionCode, $spokeProperties.spokeNC, $globalProperties.resourceGroupSuffix  -join "-"
     #StorageAccount
-    storageAccountName = $hubProperties.hubStaPrefix + $namingConstructs.staNC + $uniqueGUIDIdentifier
+    storageAccountName = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier  -join $null
     #RecoveryServicesVault
     #VirtualNetworkSubnets
     #VirtualNetwork

@@ -458,7 +458,7 @@ $devServerName = $regionCode + "POCNPDEV01"
 $appVnetName = $regionCode + "-APP-NP-VNT-01"
 $appVnetAddrRange = "10.20.10.0/26"
 New-ARMDeployDscArchive -DSCSourceFolder $DSCSourceFolder -Verbose
-$runbookModules = @("Az.Accounts","Az.Resources","Az.Compute","Az.Automation","Az.Network")
+
 
 #region Push files to storage container
 $artifactsLocation = $StorageAccount.Context.BlobEndPoint + $StorageContainerName
