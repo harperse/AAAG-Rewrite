@@ -184,6 +184,7 @@ $alaToaaaMap = @{
 
 $namingConstructs = @{
     rgNC     = 'RGP'
+    staNC    = 'sta'
     vNetNC   = 'VNET'
     rsvNC    = 'RSV'
     alaNC    = 'ALA'
@@ -195,27 +196,59 @@ $namingConstructs = @{
     udrNC    = 'UDR'
 }
 
+[hashtable]$globalProperties = @{
+    resourceGroupSuffix = "NP-RGP-01"
+    tagKey              = "Creator"
+    tagValue            = "Microsoft Governance POC Script"
+    storageAccountKind  = "StorageV2"
+    storageAccountSkuName = "Standard_LRS"
+    storageAccountAccessTier = "Hot"
+    storageAccountEnableHttpsTrafficOnly = $true
+}
+
 [hashtable]$hubProperties = @{
+    hubNC              = 'INF'
+    hubStaPrefix       = 1
     #ResourceGroup
-    
+    resourceGroupName  = $selectedHubRegionCode + $hubProperties.hubNC + $globalProperties.resourceGroupSuffix
     #StorageAccount
+    storageAccountName = $hubProperties.hubStaPrefix + $namingConstructs.staNC + $uniqueGUIDIdentifier
     #AutomationAccount
+    automationAccountName = $selectedHubRegionCode + $namingConstructs.aaaNC + "NP" + $uniqueGUIDIdentifier + "AAA-01"
+    automationAccountScheduleDescriptionStart = $null
+    automationAccountScheduleNameStart = "Start 0800 Weekdays LOCAL"
+    automationAccountScheduleStartTimeStart = $null
+    automationAccountScheduleExpiryTimeStart = $null
+    automationAccountScheduleIntervalStart = $null
+    automationAccountScheduleFrequencyStart = $null
+    automationAccountScheduleTimezoneStart = $null
+    automationAccountScheduleDescriptionStop = $null
+    automationAccountScheduleNameStop = "Stop 1800 Weekdays LOCAL"
+    automationAccountScheduleStartTimeStop = $null
+    automationAccountScheduleExpiryTimeStop = $null
+    automationAccountScheduleIntervalStop = $null
+    automationAccountScheduleFrequencyStop = $null
+    automationAccountScheduleTimezoneStop = $null
     #LogAnalyticsWorkspace
     #VirtualNetworkSubnets
-    #VirtualNetwork
     #JumpSubnetResources
     #JumpSubnetNSG
     #JumpServerPIP
     #JumpServer
     #AFWSubnetResources
+    #VirtualNetwork
     #AzureFirewall
     #VirtualNetworkPeering
 
 }
 
 [hashtable]$spokeProperties = @{
+    spokeNC            = 'APP'
+    spokeStaPrefix     = 2
     #ResourceGroup
+    resourceGroupName  = $selectedSpokeRegionCode + $spokeProperties.spokeNC + $globalProperties.resourceGroupSuffix
     #StorageAccount
+    storageAccountName = $hubProperties.hubStaPrefix + $namingConstructs.staNC + $uniqueGUIDIdentifier
     #RecoveryServicesVault
     #VirtualNetworkSubnets
     #VirtualNetwork

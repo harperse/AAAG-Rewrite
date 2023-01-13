@@ -152,7 +152,7 @@ Param
 (
     [ValidateSet("AzureCloud", "AzureUSGovernment")][string] $AzureEnvironment = "AzureCloud",
     [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW")][string] $DeploymentOption = "DeployAppOnly",
-    [ValidateSet("PowerShellOnly","PowerShellWithJSON","PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
+    [ValidateSet("PowerShellOnly", "PowerShellWithJSON", "PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
     #[switch]$ValidateOnly,
     [switch]$skipModules,
     [switch]$Verbose
@@ -311,6 +311,10 @@ function New-AzVirtualNetworkHubAndSpoke {
 #endregion Functions
 
 #region PreExecutionHandling
+
+# Handling verbose switch
+$VerbosePreference = "Continue"
+
 #BEGIN Creating transcript log directory and transcript files 
 $startTimeStamp = Get-Date
 $startTimeStampAsString = $startTimeStamp.GetDateTimeFormats()[66].ToString().Replace(":", "-").Replace(" ", "_")
@@ -326,55 +330,14 @@ Write-Output "Configuring security protocol to use TLS 1.2 for Nuget support whe
 
 # Pre-loading list of Azure locations
 # Also stripping out "extended", staging, logical, and EUAP locations, 
-$azLocations = $(Get-AzLocation | Where-Object { $_.RegionType -eq "Physical" }).Location |  Where-Object { $_ -notlike "*stage" } | Where-Object { $_ -notlike "*euap" } | Where-Object { $_ -notlike "*stg" } | Sort-Object 
+$azLocations = $(Get-AzLocation | Where-Object { $_.RegionType -eq "Physical" }).Location |  Where-Object { $_ -notlike "*stage" } | Where-Object { $_ -notlike "*euap" } | Where-Object { $_ -notlike "*stg" } | Sort-Object
 
 #endregion PreExecutionHandling
 
 #region DefaultHashtables
 
-$hubResources = @{
-    hubNC                 = 'INF'
-    storAcctPrefix        = '1'
-    vNETAddressSpace      = "10.10.0.0/22"
-    JMPSubnetAddressSpace = "10.10.1.0/24"
-    AFWSubnetAddressSpace = "10.10.0.0/24"
-}
-
-$spokeResources = @{
-    spkNC                 = 'APP'
-    storAcctPrefix        = '2'
-    vNETAddressSpace      = "10.20.10.0/26"
-    ADCSubnetAddressSpace = "10.20.10.0/28"
-    SRVSubnetAddressSpace = "10.20.10.16/28"
-    
-}
-
-
-
-$jsonBase = [ordered]@{
-    '$schema'      = "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#"
-    contentVersion = "1.0.0.0"
-    properties     = $null
-}
-
-$hubFWAppRuleCollection = @{
-    Name     = "AllowAzurePaaS"
-    Priority = 1300
-    Action   = "Allow"
-}
-$hubFWAppRule01 = @{
-    Name       = "AllowAzurePaaSServices"
-    SourceAddr = @($hubResources.vNETAddressSpace, $spokeResources.vNETAddressSpace)
-    FQDNTags   = @("MicrosoftActiveProtectionService", "WindowsDiagnostics", "WindowsUpdate", "AzureBackup")
-}
-$hubFWAppRule02 = @{
-    Name       = "AllowLogAnalytics"
-    SourceAddr = @($hubResources.vNETAddressSpace, $spokeResources.vNETAddressSpace)
-    Protocol   = "https"
-    Port       = "443"
-    TargetFQDN = @("*.ods.opsinsights.azure.com", "*.oms.opsinsights.azure.com", "*.blob.core.windows.net", "*.azure-automation.net")
-
-}
+$hubResources = @{}
+$spokeResources = @{}
 
 #endregion DefaultHashtables
 
@@ -427,7 +390,7 @@ Write-Output $azLocations
 Switch ($AzureEnvironment) {
     "AzureCloud" { 
         switch ($DeploymentOption) {
-            {$_ -eq ("DeployHubWithFW" -or "DeployHubWithoutFW")} {
+            { $_ -eq ("DeployHubWithFW" -or "DeployHubWithoutFW") } {
                 Do { $azHubLocation = Read-Host "Please type or copy/paste the location for the hub of the hub/spoke model" }
                 Until ($azHubLocation -in $azLocations)
         
@@ -436,15 +399,18 @@ Switch ($AzureEnvironment) {
         
                 $selectedHubRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azHubLocation }
                 $selectedSpokeRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azSpokeLocation }
+
+                $subscription = Select-AzSubscriptionFromList
+                Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
             } 
         
             "DeployAppOnly" {
                 Do { $azAppLocation = Read-Host "Please type or copy/paste the location for the application deployment" }
-                    Until ($azAppLocation -in $azLocations)
+                Until ($azAppLocation -in $azLocations)
         
-                    $selectedAzAppLocation = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azAppLocation }
-                    $subscription = Select-AzSubscriptionFromList
-                    Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
+                $selectedAzAppLocation = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azAppLocation }
+                $subscription = Select-AzSubscriptionFromList
+                Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
             }
         }
     }
@@ -463,7 +429,9 @@ Switch ($AzureEnvironment) {
 } # end switch
 
 switch ($TemplateLanguage) {
-    "PowerShellOnly" {}
+    "PowerShellOnly" {
+        # Fetch raw files from Github, copy to \DeploymentFiles and launch deployment script
+    }
     "PowerShellWithJSON" {}
     "PowerShellWithBicep" {}
 }
