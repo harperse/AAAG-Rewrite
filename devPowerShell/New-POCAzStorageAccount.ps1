@@ -8,8 +8,12 @@ if ($HubOrSpoke -eq "Hub") {
         -SkuName $globalProperties.storageAccountSkuName `
         -Kind $globalProperties.storageAccountKind `
         -AccessTier $globalProperties.storageAccountAccessTier `
-        -EnableHttpsTrafficOnly $globalProperties.storageAccountEnableHttpsTrafficOnly `
+        -EnableHttpsTrafficOnly $true `
+        -AllowBlobPublicAccess $true `
+        -AllowSharedKeyAccess $true `
         -AllowCrossTenantReplication $true `
+        -NetworkRuleSet @{"Bypass" = "AzureServices"; "DefaultAction" = "Deny" } `
+        -MinimumTlsVersion TLS1_2 `
         -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
         
     $hubResources.Add("StorageAccount", $(Get-AzStorageAccount -ResourceGroupName $hubResources.ResourceGroup.ResourceGroupName -Name $hubProperties.storageAccountName))
@@ -22,14 +26,30 @@ else {
         -SkuName $globalProperties.storageAccountSkuName `
         -Kind $globalProperties.storageAccountKind `
         -AccessTier $globalProperties.storageAccountAccessTier `
-        -EnableHttpsTrafficOnly $globalProperties.storageAccountEnableHttpsTrafficOnly `
+        -EnableHttpsTrafficOnly $true `
+        -AllowBlobPublicAccess $true `
+        -AllowSharedKeyAccess $true `
         -AllowCrossTenantReplication $true `
+        -NetworkRuleSet @{"Bypass" = "AzureServices"; "DefaultAction" = "Allow" } `
+        -RequireInfrastructureEncryption `
+        -MinimumTlsVersion TLS1_2 `
         -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
+
+    Update-AzStorageBlobServiceProperty `
+        -Context $spokeResources.StorageAccount.Context `
+        -EnableChangeFeed $false `
+        -EnableVersioning $false `
+        -EnableDeleteRetentionPolicy $false `
+        -DeleteRetentionPolicyDays 7
+
+    # Add container to spoke storage account
+    New-AzStorageContainer `
+        -Name $globalProperties.storageAccountContainerName `
+        -Context $spokeResources.StorageAccount.Context `
+        -Permission Container `
+        -DefaultEncryptionScope '$account-encryption-key' `
+        -PreventEncryptionScopeOverride $false `
+        -PublicAccess "None" `
 
     $spokeResources.Add("StorageAccount", $(Get-AzStorageAccount -ResourceGroupName $spokeResources.ResourceGroup.ResourceGroupName -Name $spokeProperties.storageAccountName))
 }
-
-# Add container to ???? storage account
-New-AzStorageContainer `
-    -Name $hubProperties.storageAccountContainerName `
-    -Context $hubResources.StorageAccount.Context
