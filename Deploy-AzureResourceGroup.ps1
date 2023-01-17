@@ -938,42 +938,7 @@ $env = (Get-AzSubscription | Select-Object -ExpandProperty ExtendedProperties).E
 $startRunbookParams = @{"operation"="start";"env"=$env}
 $stopRunbookParams = @{"operation"="stop";"env"=$env}
 
-#region Start/Stop FW
-<#
-if ($DeploymentOption -eq "DeployHubWithFW")
-{
-    # https://www.jonathanmedd.net/2011/09/powershell-v3-bringing-ordered-to-your-hashtables.html
-    # Azure FW startup/shutdown runbook parameters
-    $commonAfwParams = [ordered]@{
-        "env"=$env;
-        "afwResourceGroup"=$hubResourceGroupName;
-        "afwVnetName"=$hubVnetName;
-        "afwName"=$hubFwName;
-        "afwPipName"=$hubPublicIp.ToLower();
-    } # end hashtable
 
-    # Azure FW startup runbook parameters
-    $startAfwRunbookParams = [ordered]@{
-        "operation"="start";
-    } # end hashtable
-    $startAfwRunbookParams += $commonAfwParams
-
-    # Azure FW shutdown runbook parameters
-    $stopAfwRunbookParams = [ordered]@{
-        "operation"="stop";
-    } # end hashtable
-    $stopAfwRunbookParams += $commonAfwParams
-
-    $runbookScripts = (Get-ChildItem -Path $runbooksDir\* -File -Include *.ps1 | Select-Object -Property FullName).FullName
-
-    Write-Output "Azure Firewall Startup Runbook Parameters:"
-    $startAfwRunbookParams
-    Write-Output ""
-    Write-Output "Azure Firewall Shutdown Runbook Parameters"
-    $stopAfwRunbookParams
-} # end if
-#>
-#endregion Start/Stop FW
 
 # https://docs.microsoft.com/en-us/powershell/module/az.accounts/connect-azaccount?view=azps-4.7.0
 # https://medium.com/faun/using-azure-automation-runbooks-and-schedules-to-automatically-turn-on-off-your-vms-38bfe20a757f

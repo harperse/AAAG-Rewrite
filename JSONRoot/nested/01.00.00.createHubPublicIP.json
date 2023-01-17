@@ -6,7 +6,7 @@
       "type": "object"
     },
     "hubDeploymentOption": {
-      "type": "string",
+      "type": "string"
     }
   },
   "variables": {

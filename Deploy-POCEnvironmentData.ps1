@@ -204,7 +204,7 @@ $namingConstructs = @{
     storageAccountEnableHttpsTrafficOnly = $true
 
     vmAdminUserName = 'adm.infra.user'
-    vmSize = 'Standard_D2s_v3'
+    vmSize = 'Standard_D1_v2'
 }
 
 [hashtable]$hubProperties = @{
@@ -219,17 +219,17 @@ $namingConstructs = @{
     automationAccountName = $selectedHubRegionCode, $namingConstructs.aaaNC, "NP", $uniqueGUIDIdentifier, "AAA-01" -join "-"
     automationAccountPlan = "Basic"
     automationAccountAssignSystemIdentity = $true # For reference only
-    automationAccountScheduleDescriptionStart = $null
+    automationAccountScheduleDescriptionStart = "Start 0800 Weekdays LOCAL"
     automationAccountScheduleNameStart = "Start 0800 Weekdays LOCAL"
-    automationAccountScheduleStartTimeStart = $null
-    automationAccountScheduleExpiryTimeStart = $null
+    automationAccountScheduleStartTimeStart = [datetime]::now.AddDays(1).ToString("yyyy-MM-ddT08:00:00")
+    automationAccountScheduleExpiryTimeStart = "9999-12-31T00:00:00-00:00"
     automationAccountScheduleIntervalStart = $null
     automationAccountScheduleFrequencyStart = $null
     automationAccountScheduleTimezoneStart = $null
-    automationAccountScheduleDescriptionStop = $null
+    automationAccountScheduleDescriptionStop = "Stop 1800 Weekdays LOCAL" 
     automationAccountScheduleNameStop = "Stop 1800 Weekdays LOCAL"
-    automationAccountScheduleStartTimeStop = $null
-    automationAccountScheduleExpiryTimeStop = $null
+    automationAccountScheduleStartTimeStop = [datetime]::now.AddDays(1).ToString("yyyy-MM-ddT18:00:00")
+    automationAccountScheduleExpiryTimeStop = "9999-12-31T00:00:00-00:00"
     automationAccountScheduleIntervalStop = $null
     automationAccountScheduleFrequencyStop = $null
     automationAccountScheduleTimezoneStop = $null
@@ -251,11 +251,10 @@ $namingConstructs = @{
     PubIPAllocationMethod = "Dynamic"
     PubIPIdleTimeoutInMinutes = 4
     #JumpServer
+    VMNameJMP = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
     #VirtualNetwork
     #AzureFirewall
     #VirtualMachines
-    #HubJumpServer
-    VMNameJMP = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
     #VirtualNetworkPeering
 
 }

@@ -46,9 +46,9 @@
           {
             "name": "AllowInternet",
             "properties": {
-              "priority": "1200",
+              "priority": 1200,
               "action": {
-                "type": "Allow",
+                "type": "Allow"
               },
               "rules": [
                 {
@@ -75,7 +75,7 @@
             "properties": {
               "priority": 1250,
               "action": {
-                "type": "Allow",
+                "type": "Allow"
               },
               "rules": [
                 {
@@ -107,10 +107,10 @@
                   "destinationPorts": [
                     "*"
                   ]
-                },
+                }
               ]
             }
-          },
+          }
         ],
         "applicationRuleCollections": [
           {
@@ -175,7 +175,7 @@
                   "translatedAddress": "10.10.1.4",
                   "translatedPort": "3389",
                   "sourceAddresses": [
-                    "[parameters('localPIP')]",
+                    "[parameters('localPIP')]"
                   ],
                   "destinationAddresses": [
                     "[parameters('jmpPublicIpAddr')]"

@@ -26,9 +26,6 @@
     "diagStorageUri": {
       "type": "string"
     },
-    "domainName": {
-      "type": "string"
-    },
     "dscArtifactsUrl": {
       "type": "string"
     },
@@ -129,16 +126,7 @@
           "autoUpgradeMinorVersion": true,
           "settings": {
             "modulesUrl": "[concat(parameters('dscArtifactsUrl'),'/dsc/adsCnfgInstall.ps1.zip',parameters('dscUrlSasToken'))]",
-            "configurationFunction": "adsCnfgInstall.ps1\\adsCnfgInstall",
-            "Properties": {
-              "domainName": "[parameters('domainName')]",
-              "dataDiskNumber": "2",
-              "dataDiskDriveLetter": "F",
-              "domainAdminCredentials": {
-                "userName": "[parameters('adminUserName')]",
-                "password": "PrivateSettingsRef:domainAdminPassword"
-              }
-            }
+            "configurationFunction": "adsCnfgInstall.ps1\\adsCnfgInstall"
           },
           "protectedSettings": {
             "Items": {

@@ -163,6 +163,7 @@ $spokeResources = @{}
 $global:regionCodes = @{
     #Africa
     southafricanorth   = CZNSA
+    southafricawest    = CZWSA
     #AsiaPacific
     australiacentral   = CZAU1
     australiacentral2  = CZAU2

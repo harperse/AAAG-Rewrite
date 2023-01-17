@@ -12,6 +12,7 @@ switch ($HubOrSpoke) {
     "Hub" {
         
         # Enable VNet Peering
+        # Add ADDS IP for DNS
     }
     "Spoke" {}
 }

@@ -9,6 +9,7 @@ if ($HubOrSpoke -eq "Hub") {
         -Kind $globalProperties.storageAccountKind `
         -AccessTier $globalProperties.storageAccountAccessTier `
         -EnableHttpsTrafficOnly $globalProperties.storageAccountEnableHttpsTrafficOnly `
+        -AllowCrossTenantReplication $true `
         -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
         
     $hubResources.Add("StorageAccount", $(Get-AzStorageAccount -ResourceGroupName $hubResources.ResourceGroup.ResourceGroupName -Name $hubProperties.storageAccountName))
@@ -22,6 +23,7 @@ else {
         -Kind $globalProperties.storageAccountKind `
         -AccessTier $globalProperties.storageAccountAccessTier `
         -EnableHttpsTrafficOnly $globalProperties.storageAccountEnableHttpsTrafficOnly `
+        -AllowCrossTenantReplication $true `
         -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
 
     $spokeResources.Add("StorageAccount", $(Get-AzStorageAccount -ResourceGroupName $spokeResources.ResourceGroup.ResourceGroupName -Name $spokeProperties.storageAccountName))

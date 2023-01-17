@@ -89,7 +89,7 @@
                 "nextHopType": "[parameters('routeTableObj').hubRouteNextHopType]",
                 "nextHopIpAddress": "[parameters('routeTableObj').hubFwPrvIp]"
               }
-            },
+            }
           ]
         }
       }
