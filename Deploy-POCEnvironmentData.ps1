@@ -206,6 +206,7 @@ $namingConstructs = @{
     storageAccountEnableHttpsTrafficOnly = $true
 
     vmAdminUserName = 'adm.infra.user'
+    vmSize = 'Standard_D2s_v3'
 }
 
 [hashtable]$hubProperties = @{
@@ -240,12 +241,23 @@ $namingConstructs = @{
     logAnalyticsWorkspaceRetentionInDays = 30
     #VirtualNetworkSubnets
     #JumpSubnetResources
-    #JumpSubnetNSG
-    #JumpServerPIP
-    #JumpServer
+    SubnetNameJMP = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.subnetNC, "JMP-01" -join "-"
+    SubnetAddressPrefixJMP = "10.10.1.0/24"
+    NSGNameJMP = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.nsgNC, "01" -join "-"
+    NSGRulesJMP = @{}
     #AFWSubnetResources
+    SubnetNameAFW = "AzureFirewallSubnet"
+    SubnetAddressPrefixAFW = "10.10.0.0/24"
+    #JumpServerPIP
+    PIPNameJMP = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC, "JMP-01" -join "-"
+    PubIPAllocationMethod = "Dynamic"
+    PubIPIdleTimeoutInMinutes = 4
+    #JumpServer
     #VirtualNetwork
     #AzureFirewall
+    #VirtualMachines
+    #HubJumpServer
+    VMNameJMP = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
     #VirtualNetworkPeering
 
 }

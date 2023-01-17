@@ -394,7 +394,7 @@ Switch ($AzureEnvironment) {
                 Do { $azAppLocation = Read-Host "Please type or copy/paste the location for the application deployment" }
                 Until ($azAppLocation -in $azLocations)
         
-                $selectedAzAppLocation = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azAppLocation }
+                $selectedSpokeRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azAppLocation }
                 $subscription = Select-AzSubscriptionFromList
                 Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
             }
@@ -407,7 +407,7 @@ Switch ($AzureEnvironment) {
             $selectedSpokeRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGVA" }
         }
         else {
-            $selectedAzAppLocation = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGTX" }
+            $selectedSpokeRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGTX" }
         }
         $subscription = Select-AzSubscriptionFromList
         Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
@@ -421,6 +421,8 @@ switch ($TemplateLanguage) {
     "PowerShellWithJSON" {}
     "PowerShellWithBicep" {}
 }
+
+$global:vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString
 
 #endregion MainProcessing
 
