@@ -108,8 +108,6 @@ switch ($HubOrSpoke) {
             -Tag @{ $globalResources.TagName = $globalResources.TagValue} `
             -Subnet $subnets
 
-        $spokeResources.Vnet = Get-AzVirtualNetwork `
-            -Name $spokeProperties.VnetName `
-            -ResourceGroupName $spokeResources.ResourceGroup.Name
+        $spokeResources.Add("Vnet", $(Get-AzVirtualNetwork -Name $spokeProperties.VnetName -ResourceGroupName $spokeResources.ResourceGroup.Name))
     }
 }

@@ -1,11 +1,9 @@
 #region Strings
 
-[string[]] $requiredModules = @("Az.Accounts", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
-[string] $uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
+[string[]]$requiredModules = @("Az.Accounts", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
+[string]$uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
 
 #endregion Strings
-
-
 
 #region hashtables
 
@@ -185,7 +183,7 @@ $alaToaaaMap = @{
 $namingConstructs = @{
     rgNC     = 'RGP'
     staNC    = 'sta'
-    vNetNC   = 'VNET'
+    vNetNC   = 'VNT'
     rsvNC    = 'RSV'
     alaNC    = 'ALA'
     aaaNC    = 'AAA'

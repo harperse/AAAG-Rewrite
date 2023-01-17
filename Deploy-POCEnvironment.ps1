@@ -1,6 +1,5 @@
 #requires -version 5.1
 #requires -RunAsAdministrator
-#requires -Module Az
 
 # For IPAddress class
 Using Namespace System.Net
@@ -148,167 +147,76 @@ Deploys an Azure PoC Infrastructure
 #>
 
 [CmdletBinding()]
-Param
-(
+Param (
     [ValidateSet("AzureCloud", "AzureUSGovernment")][string] $AzureEnvironment = "AzureCloud",
     [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW")][string] $DeploymentOption = "DeployAppOnly",
     [ValidateSet("PowerShellOnly", "PowerShellWithJSON", "PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
-    #[switch]$ValidateOnly,
-    [switch]$skipModules,
-    [switch]$Verbose
+    [switch]$skipModules
+    #[switch]$ValidateOnly
 )
 
-#region Enums
+#region DefaultHashtables
 
-Enum regionCodes {
+$hubResources = @{}
+$spokeResources = @{}
+
+$global:regionCodes = @{
     #Africa
-    CZNSA #southafricanorth
+    southafricanorth   = CZNSA
     #AsiaPacific
-    CZAU1 #australiacentral
-    CZAU2 #australiacentral2
-    CZCIN #centralindia
-    CZEAS #eastasia
-    CZEAU #australiaeast
-    CZEJP #japaneast
-    CZJIC #jioindiacentral
-    CZJIW #jioindiawest
-    CZKRC #koreacentral
-    CZKRS #koreasouth
-    CZQAC #qatarcentral
-    CZSAU #australiasoutheast
-    CZSEA #southeastasia
-    CZSIN #southindia
-    CZUAC #uaecentral
-    CZUAN #uaenorth
-    CZWIN #westindia
-    CZWJP #japanwest
+    australiacentral   = CZAU1
+    australiacentral2  = CZAU2
+    centralindia       = CZCIN
+    eastasia           = CZEAS
+    australiaeast      = CZEAU
+    japaneast          = CZEJP
+    jioindiacentral    = CZJIC
+    jioindiawest       = CZJIW
+    koreacentral       = CZKRC
+    koreasouth         = CZKRS
+    qatarcentral       = CZQAC
+    australiasoutheast = CZSAU
+    southeastasia      = CZSEA
+    southindia         = CZSIN
+    uaecentral         = CZUAC
+    uaenorth           = CZUAN
+    westindia          = CZWIN
+    japanwest          = CZWJP
     #Europe
-    CZFRC #francecentral
-    CZFRS #francesouth
-    CZGRN #germanynorth
-    CZGWC #germanywestcentral
-    CZNEU #northeurope
-    CZNWE #norwayeast
-    CZNWW #norwaywest
-    CZSUK #uksouth
-    CZSWC #swedencentral
-    CZSWN #switzerlandnorth
-    CZSWW #switzerlandwest
-    CZWEU #westeurope
-    CZWUK #ukwest
+    francecentral      = CZFRC
+    francesouth        = CZFRS
+    germanynorth       = CZGRN
+    germanywestcentral = CZGWC
+    northeurope        = CZNEU
+    norwayeast         = CZNWE
+    norwaywest         = CZNWW
+    uksouth            = CZSUK
+    swedencentral      = CZSWC
+    switzerlandnorth   = CZSWN
+    switzerlandwest    = CZSWW
+    westeurope         = CZWEU
+    ukwest             = CZWUK
     #NorthAmerica
-    CZCCA #canadacentral
-    CZCUS #centralus
-    CZECA #canadaeast
-    CZEU1 #eastus
-    CZEU2 #eastus2
-    CZCUN #northcentralus
-    CZSCU #southcentralus
-    CZWCU #westcentralus
-    CZWU1 #westus
-    CZWU2 #westus2
-    CZWU3 #westus3
+    canadacentral      = CZCCA
+    centralus          = CZCUS
+    canadaeast         = CZECA
+    eastus             = CZEU1
+    eastus2            = CZEU2
+    northcentralus     = CZCUN
+    southcentralus     = CZSCU
+    westcentralus      = CZWCU
+    westus             = CZWU1
+    westus2            = CZWU2
+    westus3            = CZWU3
     #SouthAmerica
-    CZSBR #brazilsouth
-    CZBSE #brazilsoutheast
+    brazilsouth        = CZSBR
+    brazilsoutheast    = CZBSE
     #USGOV
-    USGVA #usgovvirginia
-    USGTX #usgovtexas
-}  # end enum; updated 1/12/2023
+    usgovvirginia      = USGVA
+    usgovtexas         = USGTX
+}  #end hashtable; updated 1/17/2023
 
-#endregion Enums
-
-#region Functions
-
-function Select-AzSubscriptionFromList {
-    Write-Output "Listing all subscriptions"
-    $allSubscriptions = (Get-AzSubscription).Name | Sort-Object
-    Write-Output $allSubscriptions
-    Do {
-        [string] $selectedSubscription = Read-Host "Please type or copy/paste the name of the subscription here"
-    }
-    Until ($selectedSubscription -in $allSubscriptions)
-    return $selectedSubscription
-} #COMPLETE
-
-function New-AzStorageAccountHubAndSpoke {
-
-    if ($DeploymentOption -ne "DeployAppOnly") {
-        #Create hub storage account
-        Write-Output "Creating hub storage account"
-        $hubStorageAccountProperties = @{
-            ResourceGroupName  = $hubObjectDefinitions.resourceGroup.Name
-            Name               = $("staHubDeploy", $StartTimeStamp.Split("_")[0] -join "-")
-            TemplateFile       = ".\nested\00.00.01.createHubStorageAccount.json"
-            TemplateParameters = @{
-                staHubName = $hubResources.storAcctPrefix, $storageAccountPrefix, $uniqueGUIDIdentifier -join $null 
-            }
-            Mode               = Incremental
-            Verbose            = $true
-            ErrorAction        = SilentlyContinue
-        }
-        New-AzResourceGroupDeployment @hubStorageAccountProperties
-    }
-
-    #Create spoke storage account
-    Write-Output 'Creating spoke storage account'
-    $spokeStorageAccountProperties = @{
-        ResourceGroupName  = $spokeObjectDefinitions.resourceGroup.Name
-        Name               = $("staDeploy", $StartTimeStamp.Split("_")[0] -join "-")
-        TemplateFile       = ".\nested\00.00.00.createStorageAccount.json"
-        TemplateParameters = @{
-            staHubName           = $hubResources.storAcctPrefix, $storageAccountPrefix, $uniqueGUIDIdentifier -join $null 
-            storageContainerName = $storageContainerName
-        }
-        Mode               = Incremental
-        Verbose            = $true
-        ErrorAction        = SilentlyContinue
-    }
-    New-AzResourceGroupDeployment @spokeStorageAccountProperties
-    
-}
-
-function New-AzPOCResourceGroupDeployment {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke", "AppOnly")][string]$HubOrSpoke
-    )
-
-    switch ($HubOrSpoke) {
-        "Hub" {
-            $resourceGroupName = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.rgNC, "01" -join "-"
-            New-AzResourceGroup -Name $resourceGroupName -Location $selectedHubRegionCode -Verbose
-            $global:hubObjectDefinitions.Add("resourceGroup", $(Get-AzResourceGroup -Name $resourceGroupName -Location $selectedHubRegionCode))
-            New-AzStorageAccountHubAndSpoke -HubOrSpoke Hub
-        }
-        "Spoke" {
-            $resourceGroupName = $selectedSpokeRegionCode, $hubResources.spkNC, "NP", $namingConstructs.rgNC, "01" -join "-"
-            New-AzResourceGroup -Name $resourceGroupName -Location $selectedSpokeRegionCode -Verbose
-            $global:spokeObjectDefinitions.Add("resourceGroup", $(Get-AzResourceGroup -Name $resourceGroupName -Location $selectedSpokeRegionCode))
-            New-AzStorageAccountHubAndSpoke -HubOrSpoke Spoke
-        }
-    }
-}
-
-function New-AzVirtualNetworkHubAndSpoke {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke", "AppOnly")][string]$HubOrSpoke
-    )
-
-    switch ($HubOrSpoke) {
-        "Hub" {
-            New-AzVirtualNetworkSubnetConfig -Name $hubProperties.SubnetNameJMP -AddressPrefix $hubProperties.SubnetAddressPrefixJMP
-            New-AzVirtualNetworkSubnetConfig -Name $hubProperties.SubnetNameAFW -AddressPrefix $hubProperties.SubnetAddressPrefixAFW
-        }
-        "Spoke" {
-
-        }
-    }
-}
-
-
-#endregion Functions
+#endregion DefaultHashtables
 
 #region PreExecutionHandling
 
@@ -317,7 +225,7 @@ $VerbosePreference = "Continue"
 
 #BEGIN Creating transcript log directory and transcript files 
 $startTimeStamp = Get-Date
-$startTimeStampAsString = $startTimeStamp.GetDateTimeFormats()[66].ToString().Replace(":", "-").Replace(" ", "_")
+$startTimeStampAsString = [string]$startTimeStamp.GetDateTimeFormats([char]"s").Replace(":", "-")
 New-Item -Path .\TranscriptLogs -ItemType Directory | Out-Null
 Start-Transcript -Path ".\TranscriptLogs\POCEnvironment-$startTimeStampAsString.log"
 #END Creating transcript log directory and transcript files
@@ -327,21 +235,74 @@ Write-Output "Setting the PSGallery as a trusted repository for module download 
 Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted -Verbose
 Write-Output "Configuring security protocol to use TLS 1.2 for Nuget support when installing modules."
 [ServicePointManager]::SecurityProtocol = [SecurityProtocolType]::Tls12
-
-# Pre-loading list of Azure locations
-# Also stripping out "extended", staging, logical, and EUAP locations, 
-$azLocations = $(Get-AzLocation | Where-Object { $_.RegionType -eq "Physical" }).Location |  Where-Object { $_ -notlike "*stage" } | Where-Object { $_ -notlike "*euap" } | Where-Object { $_ -notlike "*stg" } | Sort-Object
-
 #endregion PreExecutionHandling
 
-#region DefaultHashtables
-
-$hubResources = @{}
-$spokeResources = @{}
-
-#endregion DefaultHashtables
-
 #region MainProcessing
+# Importing the Az modules
+Import-Module Az -Verbose -Force
+
+Write-Output "Please see the open dialogue box in your browser to authenticate to your Azure subscription..."
+Clear-AzContext -Force -Verbose
+
+Connect-AzAccount -Environment $AzureEnvironment
+# Pre-loading list of Azure locations
+# Also stripping out "extended", staging, logical, and EUAP locations 
+#$azLocations = $(Get-AzLocation | Where-Object { $_.RegionType -eq "Physical" }).Location |  Where-Object { $_ -notlike "*stage" } | Where-Object { $_ -notlike "*euap" } | Where-Object { $_ -notlike "*stg" } | Sort-Object
+Write-Output "Listing all Azure locations"
+Write-Output $azLocations
+
+Switch ($AzureEnvironment) {
+    "AzureCloud" { 
+        switch ($DeploymentOption) {
+            { $_ -eq ("DeployHubWithFW" -or "DeployHubWithoutFW") } {
+                Do { $azHubLocation = Read-Host "Please type or copy/paste the location for the hub of the hub/spoke model" }
+                Until ($azHubLocation -in $global:regionCodes.Keys)
+        
+                Do { $azSpokeLocation = Read-Host "Please type or copy/paste the location for the spoke of the hub/spoke model" }
+                Until ($azSpokeLocation -in $global:regionCodes.Keys)
+        
+                $selectedHubRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azHubLocation }
+                $selectedSpokeRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azSpokeLocation }
+
+                $subscription = Select-AzSubscriptionFromList
+                Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
+            } 
+        
+            "DeployAppOnly" {
+                Do { $azAppLocation = Read-Host "Please type or copy/paste the location for the application deployment" }
+                Until ($azAppLocation -in $global:regionCodes.Keys)
+        
+                $selectedHubRegionCode = $null
+                $selectedSpokeRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azAppLocation }
+                $subscription = Select-AzSubscriptionFromList
+                Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
+            }
+        }
+    }
+    "AzureUSGovernment" { 
+        Connect-AzAccount -Environment AzureUSGovernment 
+        If (!($DeploymentOption -eq "DeployAppOnly")) {
+            $selectedHubRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGTX" }
+            $selectedSpokeRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGVA" }
+        }
+        else {
+            $selectedHubRegionCode = $null
+            $selectedSpokeRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGTX" }
+        }
+        $subscription = Select-AzSubscriptionFromList
+        Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
+    }
+} # end switch
+
+switch ($TemplateLanguage) {
+    "PowerShellOnly" {
+        # Fetch raw files from Github, copy to \DeploymentFiles and launch deployment script
+    }
+    "PowerShellWithJSON" {}
+    "PowerShellWithBicep" {}
+}
+
+$global:vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString
 
 if (!($skipModules)) {
     Write-Output "Checking for installed and proper versions of required modules"
@@ -366,63 +327,8 @@ if (!($skipModules)) {
     #END Installing/upgrading/checking Az modules
 }
 
-Write-Output "Please see the open dialogue box in your browser to authenticate to your Azure subscription..."
-Clear-AzContext -Force -Verbose
-
-Connect-AzAccount -Environment $AzureEnvironment
-Write-Output "Listing all Azure locations"
-Write-Output $azLocations
-
-Switch ($AzureEnvironment) {
-    "AzureCloud" { 
-        switch ($DeploymentOption) {
-            { $_ -eq ("DeployHubWithFW" -or "DeployHubWithoutFW") } {
-                Do { $azHubLocation = Read-Host "Please type or copy/paste the location for the hub of the hub/spoke model" }
-                Until ($azHubLocation -in $azLocations)
-        
-                Do { $azSpokeLocation = Read-Host "Please type or copy/paste the location for the spoke of the hub/spoke model" }
-                Until ($azSpokeLocation -in $azLocations)
-        
-                $selectedHubRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azHubLocation }
-                $selectedSpokeRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azSpokeLocation }
-
-                $subscription = Select-AzSubscriptionFromList
-                Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
-            } 
-        
-            "DeployAppOnly" {
-                Do { $azAppLocation = Read-Host "Please type or copy/paste the location for the application deployment" }
-                Until ($azAppLocation -in $azLocations)
-        
-                $selectedSpokeRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azAppLocation }
-                $subscription = Select-AzSubscriptionFromList
-                Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
-            }
-        }
-    }
-    "AzureUSGovernment" { 
-        Connect-AzAccount -Environment AzureUSGovernment 
-        If (!($DeploymentOption -eq "DeployAppOnly")) {
-            $selectedHubRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGTX" }
-            $selectedSpokeRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGVA" }
-        }
-        else {
-            $selectedSpokeRegionCode = $regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGTX" }
-        }
-        $subscription = Select-AzSubscriptionFromList
-        Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
-    }
-} # end switch
-
-switch ($TemplateLanguage) {
-    "PowerShellOnly" {
-        # Fetch raw files from Github, copy to \DeploymentFiles and launch deployment script
-    }
-    "PowerShellWithJSON" {}
-    "PowerShellWithBicep" {}
-}
-
-$global:vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString
+# Import the configuration data
+. .\Deploy-POCEnvironmentData.ps1
 
 #endregion MainProcessing
 
