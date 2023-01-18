@@ -69,16 +69,14 @@ if ($HubOrSpoke -eq "Hub") {
         -Name $hubProperties.FWName `
         -ResourceGroupName $hubResources.ResourceGroup.Name `
         -Location $hubResources.ResourceGroup.Location `
-        -Sku "AZFW_Hub" `
+        -Sku $hubProperties.FWSku `
         -VirtualHub $hubResources.VHub `
-        -PublicIpAddress $hubResources.PIPFW `
-        -ThreatIntelMode "Deny" `
-        -ThreatIntelWhitelist $hubProperties.FWThreatIntelWhitelist `
-        -AdditionalProperties @{ "enableDnsProxy" = $true } `
-        -Tag @{ $globalResources.TagName = $globalResources.TagValue} `
+        -PublicIpAddress $hubResources.JMPPIP `
+        -ThreatIntelMode $hubProperties.FWThreatIntelMode `
         -NatRuleCollection $natRulesCollection `
-        -ApplicationRuleCollection $appRulesCollection
+        -ApplicationRuleCollection $appRulesCollection `
         -NetworkRuleCollection $networkRulesCollection1, $networkRulesCollection2 `
+        -Tag @{ $globalResources.TagName = $globalResources.TagValue} `
         -Verbose
 
     $hubResources.Add("Firewall", $(Get-AzFirewall -Name $hubProperties.FWName -ResourceGroupName $hubResources.ResourceGroup.Name))
