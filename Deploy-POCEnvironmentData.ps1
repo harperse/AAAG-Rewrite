@@ -220,22 +220,22 @@ $namingConstructs = @{
     aaPlan                      = "Basic"
     aaAssignSystemIdentity      = $true # For reference only
     aaStartSchedule             = @{
-        aaScheduleDescription  = "Start 0800 Weekdays LOCAL"
-        aaScheduleName         = "Start 0800 Weekdays LOCAL"
-        aaScheduleStartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT08:00:00")
-        aaScheduleExpiryTime   = "9999-12-31T00:00:00-00:00"
-        aaScheduleWeekInterval = 1
-        aaScheduleDaysOfWeek   = "Monday,Tuesday,Wednesday,Thursday,Friday"
-        aaScheduleTimezone     = "UTC"
+        Description  = "Start 0800 Weekdays LOCAL"
+        Name         = "Start 0800 Weekdays LOCAL"
+        StartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT08:00:00")
+        ExpiryTime   = "9999-12-31T00:00:00-00:00"
+        WeekInterval = 1
+        DaysOfWeek   = "Monday,Tuesday,Wednesday,Thursday,Friday"
+        Timezone     = "UTC"
     }
     aaStopSchedule              = @{
-        aaScheduleDescription  = "Stop 1800 Weekdays LOCAL"
-        aaScheduleName         = "Stop 1800 Weekdays LOCAL"
-        aaScheduleStartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT18:00:00")
-        aaScheduleExpiryTime   = "9999-12-31T00:00:00-00:00"
-        aaScheduleWeekInterval = 1
-        aaScheduleDaysOfWeek   = "Monday,Tuesday,Wednesday,Thursday,Friday"
-        aaScheduleTimezone     = "UTC"
+        Description  = "Stop 1800 Weekdays LOCAL"
+        Name         = "Stop 1800 Weekdays LOCAL"
+        StartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT18:00:00")
+        ExpiryTime   = "9999-12-31T00:00:00-00:00"
+        WeekInterval = 1
+        DaysOfWeek   = "Monday,Tuesday,Wednesday,Thursday,Friday"
+        Timezone     = "UTC"
     }
     #LogAnalyticsWorkspace
     lawName                     = $selectedHubRegionCode, $hubResources.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.alaNC -join "-"
@@ -268,7 +268,15 @@ $namingConstructs = @{
     PubIPTier                   = "Regional"
     PubIPIdleTimeoutInMinutes   = 4
     #JumpServer
-    VMNameJMP                   = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
+    JMPVMName                   = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
+    JMPNicName                  = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-NIC-01" -join "-"
+    JMPOSDiskName               = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-OSDisk-01" -join "-"
+    JMPOSDiskCreateOption       = "FromImage"
+    JMPDataDiskName             = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-DataDisk-01" -join "-"
+    JMPDataDiskCreateOption     = "Empty"
+    JMPOSDiskSizeGB             = 32
+    JMPDataDiskSizeGB           = 32
+    JMPPrivateIPAddress = "10.10.1.4"
     #VirtualNetwork
     #AzureFirewall
     FWName                      = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.fwNC -join "-"

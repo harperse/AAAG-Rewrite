@@ -5,21 +5,67 @@ if ($HubOrSpoke -eq "Hub") {
     $Image = Get-AzVMImage -Location $hubResources.ResourceGroup.Location -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "20348.1487.230106" | Select-Object -First 1 | Out-Null
     
     # Create the Jumpbox VM
+    $nicConfigJMP = New-AzNetworkInterface `
+        -Name $hubProperties.NICNameJMP `
+        -ResourceGroupName $hubResources.ResourceGroup.Name `
+        -Location $hubResources.ResourceGroup.Location `
+        -SubnetId $hubResources.SubnetJMP.Id `
+        -PublicIpAddressId $hubResources.PubIPJMP.Id `
+        -PrivateIpAddress = $hubResources.JMPPrivateIPAddress `
+        -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+        -AsJob
+
+    $osDiskConfigJMP = New-AzDiskConfig `
+        -SkuName $globalProperties.storageAccountSkuName `
+        -Location $hubResources.ResourceGroup.Location `
+        -CreateOption $hubProperties.JMPOSDiskCreateOption `
+        -DiskSizeGB $hubProperties.JMPOSDiskSizeGB `
+        -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+        -AsJob
+
+    $dataDiskConfigJMP = New-AzDiskConfig `
+        -SkuName $globalProperties.storageAccountSkuName `
+        -Location $hubResources.ResourceGroup.Location `
+        -CreateOption $hubProperties.JMPDataDiskCreateOption `
+        -DiskSizeGB $hubProperties.JMPDataDiskSizeGB `
+        -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+        -AsJob
+
     $vmConfigJMP = New-AzVMConfig `
-        -VMName $hubProperties.VMNameJMP `
+        -VMName $hubProperties.JMPVMName `
         -VMSize $globalProperties.vmSize `
         -VirtualNetworkName $hubResources.Vnet.Name `
         -SubnetName $hubProperties.SubnetNameJMP `
-        -PublicIpAddressName $hubResources.PubIPJMP.Name `
+        -PublicIpAddressName $hubResources.PIPJMP.Name `
         -OpenPorts $hubResources.OpenPorts `
         -Image $Image `
         -Credential $credential `
         -Tags @{ $globalResources.TagName = $globalResources.TagValue } `
 
-    $vmConfigJMP | New-AzVM -AsJob
+    $vmConfigJMP = Add-AzNetworkInterface `
+        -VM $vmConfigJMP `
+        -Id $nicConfigJMP.Id
+
+    $vmConfigJMP = Set-AzVMOSDisk `
+        -VM $vmConfigJMP `
+        -Name $hubProperties.JMPOSDiskName `
+        -Disk $osDiskConfigJMP `
+        -Caching ReadWrite `
+        -Windows
+
+    $vmConfigJMP = Add-AzVMDataDisk `
+        -VM $vmConfigJMP `
+        -Name $hubProperties.JMPDataDiskName `
+        -Disk $dataDiskConfigJMP `
+
+    New-AzVM `
+        -ResourceGroupName $hubResources.ResourceGroup.Name `
+        -Location $hubResources.ResourceGroup.Location `
+        -VM $vmConfigJMP `
+        -AsJob
 
     $hubResources.VMJMP = Get-AzVM `
-        -Name $hubProperties.VMNameJMP `
+        -Name $hubProperties.JMPVMName `
         -ResourceGroupName $hubResources.ResourceGroup.Name
 
 }
@@ -37,7 +83,7 @@ else {
         -Tags @{ $globalResources.TagName = $globalResources.TagValue } 
 
     $vmConfigADC | New-AzVM -AsJob
-    
+
     $spokeResources.VMADC = Get-AzVM `
         -Name $spokeProperties.vmNameADC `
         -ResourceGroupName $spokeResources.ResourceGroup.Name

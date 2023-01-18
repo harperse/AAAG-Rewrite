@@ -152,15 +152,14 @@ Param (
     [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW")][string] $DeploymentOption = "DeployAppOnly",
     [ValidateSet("PowerShellOnly", "PowerShellWithJSON", "PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
     [switch]$skipModules
-    #[switch]$ValidateOnly
 )
 
 #region DefaultHashtables
 
-$hubResources = @{}
-$spokeResources = @{}
+[hashtable]$hubResources = @{}
+[hashtable]$spokeResources = @{}
 
-$global:regionCodes = @{
+[hashtable]$global:regionCodes = @{
     #Africa
     southafricanorth   = CZNSA
     southafricawest    = CZWSA

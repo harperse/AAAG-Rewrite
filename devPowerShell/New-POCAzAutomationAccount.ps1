@@ -11,37 +11,37 @@ New-AzAutomationAccount `
 foreach ($runbookModule in $runbookModules) {
     Import-AzAutomationModule `
         -ResourceGroupName $hubResources.ResourceGroup.ResourceGroupName `
-        -AutomationAccountName $hubProperties.automationAccountName `
+        -AutomationAccountName $hubProperties.aaName `
         -Name $runbookModule
 }
     
 New-AzAutomationSchedule `
     -ResourceGroupName $hubResources.ResourceGroup.ResourceGroupName `
-    -AutomationAccountName $hubProperties.automationAccountName `
-    -Name $hubProperties.automationAccountScheduleNameStart `
-    -Description $hubProperties.automationAccountScheduleDescriptionStart `
-    -DaysOfWeek $hubProperties.automationAccountScheduleWeekIntervalStart `
-    -WeekInterval $hubProperties.automationAccountScheduleWeekIntervalStart `
-    -StartTime $hubProperties.automationAccountScheduleStartTimeStart `
-    -ExpiryTime $hubProperties.automationAccountScheduleExpiryTimeStart `
-    -Timezone $hubProperties.automationAccountScheduleTimezoneStart `
+    -AutomationAccountName $hubProperties.aaName `
+    -Name $hubProperties.aaStartSchedule.Name `
+    -Description $hubProperties.aaStartSchedule.Description `
+    -DaysOfWeek $hubProperties.aaStartSchedule.DaysOfWeek `
+    -WeekInterval $hubProperties.aaStartSchedule.WeekInterval `
+    -StartTime $hubProperties.aaStartSchedule.StartTime `
+    -ExpiryTime $hubProperties.aaStartSchedule.ExpiryTime `
+    -Timezone $hubProperties.aaStartSchedule.Timezone `
     -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
 
 New-AzAutomationSchedule `
     -ResourceGroupName $hubResources.ResourceGroup.ResourceGroupName `
-    -AutomationAccountName $hubProperties.automationAccountName `
-    -Name $hubProperties.automationAccountScheduleNameStop `
-    -Description $hubProperties.automationAccountScheduleDescriptionStop `
-    -DaysOfWeek $hubProperties.automationAccountScheduleWeekIntervalStop `
-    -WeekInterval $hubProperties.automationAccountScheduleWeekIntervalStop `
-    -StartTime $hubProperties.automationAccountScheduleStartTimeStop `
-    -ExpiryTime $hubProperties.automationAccountScheduleExpiryTimeStop `
-    -Timezone $hubProperties.automationAccountScheduleTimezoneStop `
-    -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue } `
+    -AutomationAccountName $hubProperties.aaName `
+    -Name $hubProperties.aaStopSchedule.Name `
+    -Description $hubProperties.aaStopSchedule.Description `
+    -DaysOfWeek $hubProperties.aaStopSchedule.DaysOfWeek `
+    -WeekInterval $hubProperties.aaStopSchedule.WeekInterval `
+    -StartTime $hubProperties.aaStopSchedule.StartTime `
+    -ExpiryTime $hubProperties.aaStopSchedule.ExpiryTime `
+    -Timezone $hubProperties.aaStopSchedule.Timezone `
+    -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
 
 Import-AzAutomationRunbook `
     -ResourceGroupName $hubResources.ResourceGroup.ResourceGroupName `
-    -AutomationAccountName $hubProperties.automationAccountName `
+    -AutomationAccountName $hubProperties.aaName `
     -Name "Start-VMs" `
     -Path "$pwd\runbooks\Start-VMs.ps1" `
     -Description "Starts all VMs in a Resource Group" `
@@ -50,7 +50,7 @@ Import-AzAutomationRunbook `
 
 Import-AzAutomationRunbook `
     -ResourceGroupName $hubResources.ResourceGroup.ResourceGroupName `
-    -AutomationAccountName $hubProperties.automationAccountName `
+    -AutomationAccountName $hubProperties.aaName `
     -Name "Stop-VMs" `
     -Path "$pwd\runbooks\Stop-VMs.ps1" `
     -Description "Stops all VMs in a Resource Group" `
@@ -59,18 +59,18 @@ Import-AzAutomationRunbook `
 
 Register-AzAutomationScheduledRunbook `
     -ResourceGroupName $hubResources.ResourceGroup.ResourceGroupName `
-    -AutomationAccountName $hubProperties.automationAccountName `
+    -AutomationAccountName $hubProperties.aaName `
     -Name "Start-VMs" `
-    -ScheduleName $hubProperties.automationAccountScheduleNameStart `
+    -ScheduleName $hubProperties.aaStartSchedule.Name `
     -Description "Starts all VMs in a Resource Group" `
     -LogVerbose `
     -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
 
 Register-AzAutomationScheduledRunbook `
     -ResourceGroupName $hubResources.ResourceGroup.ResourceGroupName `
-    -AutomationAccountName $hubProperties.automationAccountName `
+    -AutomationAccountName $hubProperties.aaName `
     -Name "Stop-VMs" `
-    -ScheduleName $hubProperties.automationAccountScheduleNameStop `
+    -ScheduleName $hubProperties.aaStopSchedule.Name `
     -Description "Stops all VMs in a Resource Group" `
     -LogVerbose `
     -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
