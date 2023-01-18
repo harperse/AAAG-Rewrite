@@ -202,13 +202,9 @@ $namingConstructs = @{
     storageAccountSkuName                = "Standard_LRS"
     storageAccountAccessTier             = "Hot"
     storageAccountEnableHttpsTrafficOnly = $true
-
     vmAdminUserName                      = 'adm.infra.user'
     vmSize                               = 'Standard_D1_v2'
-    
-
-    vmImageHub = $(Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
-    vmImageSpoke = $(Get-AzVMImage -Location $selectedSpokeRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
+    vmImage                              = $(Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
 }
 
 [hashtable]$hubProperties = @{
@@ -280,73 +276,75 @@ $namingConstructs = @{
     JMPDataDiskCreateOption     = "Empty"
     JMPOSDiskSizeGB             = 32
     JMPDataDiskSizeGB           = 32
-    JMPPrivateIPAddress = "10.10.1.4"
+    JMPPrivateIPAddress         = "10.10.1.4"
     #VirtualNetwork
+    VNetName                    = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.vnetNC -join "-"
+    VNetAddressPrefix           = "10.10.0.0/22"
     #AzureFirewall
     FWName                      = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.fwNC -join "-"
     FWSku                       = "AZFW_Hub"
     FWVHub                      = $null
     FWThreatIntelMode           = "Deny"
     NatRule1                    = @{
-        Name       = "RDPToJumpServer"
-        Protocol   = "TCP"
-        SourceAddr = $localMachinePublicIP
-        DestPort   = "50000"
-        TransAddr  = $hubResources.VMJMP.PrivateIP
-        TransPort  = "3389"
+        Name              = "RDPToJumpServer"
+        SourceAddress     = $localMachinePublicIP
+        TranslatedAddress = $hubResources.VMJMP.PrivateIP
+        TranslatedPort    = "3389"
+        DestinationPort   = "50000"
+        Protocol          = "TCP"
     }
     NatRuleCollection           = @{
-        Name     = "NATforRDP"
-        Priority = 1100
-        Action   = "Allow"
+        Name       = "NATforRDP"
+        Priority   = 1100
+        ActionType = "Allow"
     }
     NetworkRule1                = @{
-        Name       = "JumpAllowInternet"
-        Protocol   = "TCP"
-        SourceAddr = $hubJmpServerPrvIp
-        DestAddr   = "*"
-        DestPort   = @("80", "443")
+        Name               = "JumpAllowInternet"
+        Protocol           = "TCP"
+        SourceAddress      = $hubJmpServerPrvIp
+        DestinationAddress = "*"
+        DestinationPort    = @("80", "443")
     }
     NetworkRule2                = @{
-        Name       = "HubToSpoke"
-        Protocol   = "Any"
-        SourceAddr = $hubResources.Vnet.AddressSpace
-        DestAddr   = $spokeResources.Vnet.AddressSpace
-        DestPort   = "*"
+        Name               = "HubToSpoke"
+        Protocol           = "Any"
+        SourceAddress      = $hubResources.Vnet.AddressSpace
+        DestinationAddress = $spokeResources.Vnet.AddressSpace
+        DestinationPort    = "*"
     }
     NetworkRule3                = @{
-        Name       = "SpokeToHub"
-        Protocol   = "Any"
-        SourceAddr = $spokeResources.Vnet.AddressSpace
-        DestAddr   = $hubResources.Vnet.AddressSpace
-        DestPort   = "*"
+        Name               = "SpokeToHub"
+        Protocol           = "Any"
+        SourceAddress      = $spokeResources.Vnet.AddressSpace
+        DestinationAddress = $hubResources.Vnet.AddressSpace
+        DestinationPort    = "*"
     }
     NetworkRuleCollection1      = @{
-        Name     = "AllowInternet"
-        Priority = 1200
-        Action   = "Allow"
+        Name       = "AllowInternet"
+        Priority   = 1200
+        ActionType = "Allow"
     }
     NetworkRuleCollection2      = @{
-        Name     = "AllowHubandSpoke"
-        Priority = 1250
-        Action   = "Allow"
+        Name       = "AllowHubandSpoke"
+        Priority   = 1250
+        ActionType = "Allow"
     }
     ApplicationRule1            = @{
-        Name       = "AllowAzurePaaSServices"
-        SourceAddr = @($hubResources.Vnet.AddressSpace, $spokeResources.Vnet.AddressSpace)
-        fqdnTags   = @("MicrosoftActiveProtectionService", "WindowsDiagnostics", "WindowsUpdate", "AzureBackup")
+        Name          = "AllowAzurePaaSServices"
+        SourceAddress = @($hubResources.Vnet.AddressSpace, $spokeResources.Vnet.AddressSpace)
+        FQDNTag       = @("MicrosoftActiveProtectionService", "WindowsDiagnostics", "WindowsUpdate", "AzureBackup")
     }
     ApplicationRule2            = @{
-        Name       = "AllowLogAnalytics"
-        SourceAddr = @($hubResources.Vnet.AddressSpace, $spokeResources.Vnet.AddressSpace)
-        Protocol   = "Https"
-        Port       = 443
-        TargetFqdn = @("*.ods.opsinsights.azure.com", "*.oms.opsinsights.azure.com", "*.blob.core.windows.net", "*.azure-automation.net")
+        Name          = "AllowLogAnalytics"
+        SourceAddress = @($hubResources.Vnet.AddressSpace, $spokeResources.Vnet.AddressSpace)
+        Protocol      = "Https"
+        Port          = 443
+        TargetFqdn    = @("*.ods.opsinsights.azure.com", "*.oms.opsinsights.azure.com", "*.blob.core.windows.net", "*.azure-automation.net")
     }
     ApplicationRuleCollection   = @{
         Name       = "AllowAzurePaaS"
         Priority   = 1300
-        RuleAction = "Allow"
+        ActionType = "Allow"
     }
     #VirtualMachines
     #VirtualNetworkPeering
@@ -354,18 +352,30 @@ $namingConstructs = @{
 }
 
 [hashtable]$spokeProperties = @{
-    spokeNC            = 'APP'
-    spokeStaPrefix     = 2
+    spokeNC                = "APP"
+    spokeLNXNC             = "POC"
+    spokeStaPrefix         = 2
     #ResourceGroup
-    resourceGroupName  = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NP", $namingConstructs.rgNC -join "-"
+    resourceGroupName      = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NP", $namingConstructs.rgNC -join "-"
     #StorageAccount
-    storageAccountName = $spokeProperties.spokeStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
+    storageAccountName     = $spokeProperties.spokeStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
     #RecoveryServicesVault
-    rsvName = "rsv", $uniqueGUIDIdentifier -join $null
+    rsvName                = "rsv", $uniqueGUIDIdentifier -join $null
+    #NetworkSecurityGroups
+    #ADDSSubnetNSG
+    nsgNameADC             = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.nsgNC -join "-"
+    #AppSubnetNSG
+    nsgNameSRV             = $selectedSpokeRegionCode, "SRV", "NP", $namingConstructs.nsgNC -join "-"
     #VirtualNetworkSubnets
+    SubnetNameADC          = $selectedSpokeRegionCode, "ADC-NP-SUB-01"
+    SubnetAddressPrefixADC = "10.20.10.0/28"
+    SubnetNameSRV          = $selectedSpokeRegionCode, "SRV-NP-SUB-01"
+    SubnetAddressPrefixSRV = "10.20.10.16/28"
     #VirtualNetwork
+    VnetName               = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NP", $namingConstructs.vnetNC -join "-"
+    VnetAddressPrefix      = "10.20.10.0/26"
     #UserDefinedRoutes
-    UserDefinedRoutes  = @{
+    UserDefinedRoutes      = @{
         tableName       = $selectedSpokeRegionCode + "-APP-NP-UDR-01"
         zeroRoute       = "ZeroTraffic"
         zeroAddrPrefix  = "0.0.0.0/0"
@@ -376,22 +386,32 @@ $namingConstructs = @{
         hubNextHopType  = $hubRouteNextHopType
         hubNextHopAddr  = $hubFwPrvIp
     }
-    #ADDSSubnetResources
-    #AvailabilitySet
+    #AvailabilitySetADC
+    AVSetNameADC           = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.avsetNC -join "-"
     #ADDSServer
-    #ADDSSubnetNSG
+    vmNameADC1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPADC01" -join $null
     #AppSubnetResources
     #AvailabilitySet1
+    AVSetNameWES           = $selectedSpokeRegionCode, "WES", "NP", $namingConstructs.avsetNC -join "-"
     #WebServers
+    vmNameWeb1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPWES01" -join $null
+    vmNameWeb2             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPWES02" -join $null
     #AvailabilitySet2
+    AVSetNameSQL           = $selectedSpokeRegionCode, "SQL", "NP", $namingConstructs.avsetNC -join "-"
     #DBServers
+    vmNameSQL1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPSQL01" -join $null
+    vmNameSQL2             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPSQL02" -join $null
     #AvailabilitySet3
+    AVSetNameLNX           = $selectedSpokeRegionCode, "LNX", "NP", $namingConstructs.avsetNC -join "-"
     #LinuxServer
+    vmNameLinux1           = $selectedSpokeRegionCode, $spokeProperties.spokeLNXNC, "NPLNX01" -join $null
     #AvailabilitySet4
+    AVSetNameDEV           = $selectedSpokeRegionCode, "DEV", "NP", $namingConstructs.avsetNC -join "-"
     #DevServerPIP
+    pipNameDev1            = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPDEV01-PIP" -join $null
     #DevServer
-    #AppSubnetNSG
+    vmNameDev1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPDEV01" -join $null
+    
 }
 
 #endregion hashtables
-

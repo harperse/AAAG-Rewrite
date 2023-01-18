@@ -301,7 +301,8 @@ switch ($TemplateLanguage) {
     "PowerShellWithBicep" {}
 }
 
-$global:vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString
+$vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString
+$global:credential = [credential]::new($globalProperties.vmAdminUserName, $vmAdminPassword)
 
 if (!($skipModules)) {
     Write-Output "Checking for installed and proper versions of required modules"
@@ -327,8 +328,8 @@ if (!($skipModules)) {
 }
 
 # Determine the latest VM image version
-$imageVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | % {$_.Split(".")[1] -as [int]} | Sort-Object -Descending | Select-Object -First 1
-$selectedVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object {$_.Version -like "*$imageVersion*"} | Select-Object -ExpandProperty Version
+$imageVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object {$PSItem.Split(".")[1] -as [int]} | Sort-Object -Descending | Select-Object -First 1
+$selectedVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object {$PSItem.Version -like "*$imageVersion*"} | Select-Object -ExpandProperty Version
 
 # Import the configuration data
 . .\Deploy-POCEnvironmentData.ps1

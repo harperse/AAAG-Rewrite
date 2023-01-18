@@ -1,83 +1,49 @@
 [Parameter(Mandatory = $true)][ParameterSet("Hub", "Spoke")][string]$HubOrSpoke
 
 if ($HubOrSpoke -eq "Hub") {
-    $natRule1 = New-AzFirewallNatRule `
-        -Name $hubProperties.NatRule1.RuleName `
-        -SourceAddress $hubProperties.NatRule1.RuleSourceAddr `
-        -TranslatedAddress $hubProperties.NatRule1.RuleTransAddr `
-        -TranslatedPort $hubProperties.NatRule1.RuleTransPort `
-        -DestinationPort $hubProperties.NatRule1.RuleDestPort `
-        -Protocol $hubProperties.NatRule1.RuleProtocol
+    $natRule1Properties = $hubProperties.NatRule1
+    $natRule1 = New-AzFirewallNatRule @natRule1Properties
     
-    $natRulesCollection = New-AzFirewallNatRuleCollection `
-        -Name $hubProperties.NatRuleCollection.Name `
-        -Priority $hubProperties.NatRuleCollection.Priority `
-        -ActionType $hubProperties.NatRuleCollection.ActionType `
-        -Rule $natRule1
+    $natRuleCollectionProperties = $hubProperties.NatRuleCollection
+    $natRulesCollection = New-AzFirewallNatRuleCollection @natRuleCollectionProperties -Rule $natRule1
 
-    $networkRule1 = New-AzFirewallNetworkRule `
-        -Name $hubProperties.NetworkRule1.Name `
-        -SourceAddress $hubProperties.NetworkRule1.SourceAddr `
-        -DestinationAddress $hubProperties.NetworkRule1.DestAddr `
-        -DestinationPort $hubProperties.NetworkRule1.DestPort `
-        -Protocol $hubProperties.NetworkRule1.Protocol
+    $networkRule1Properties = $hubProperties.NetworkRule1
+    $networkRule1 = New-AzFirewallNetworkRule @networkRule1Properties
 
-    $networkRule2 = New-AzFirewallNetworkRule `
-        -Name $hubProperties.NetworkRule2.Name `
-        -SourceAddress $hubProperties.NetworkRule2.SourceAddr `
-        -DestinationAddress $hubProperties.NetworkRule2.DestAddr `
-        -DestinationPort $hubProperties.NetworkRule2.DestPort `
-        -Protocol $hubProperties.NetworkRule2.Protocol
+    $networkRule2Properties = $hubProperties.NetworkRule2
+    $networkRule2 = New-AzFirewallNetworkRule @networkRule2Properties
 
-    $networkRule3 = New-AzFirewallNetworkRule `
-        -Name $hubProperties.NetworkRule3.Name `
-        -SourceAddress $hubProperties.NetworkRule3.SourceAddr `
-        -DestinationAddress $hubProperties.NetworkRule3.DestAddr `
-        -DestinationPort $hubProperties.NetworkRule3.DestPort `
-        -Protocol $hubProperties.NetworkRule3.Protocol
+    $networkRule3Properties = $hubProperties.NetworkRule3
+    $networkRule3 = New-AzFirewallNetworkRule @networkRule3Properties
 
-    $networkRulesCollection1 = New-AzFirewallNetworkRuleCollection `
-        -Name $hubProperties.NetworkRuleCollection1.Name `
-        -Priority $hubProperties.NetworkRuleCollection1.Priority `
-        -ActionType $hubProperties.NetworkRuleCollection1.Action `
-        -Rule $networkRule1
+    $networkRulesCollection1Properties = $hubProperties.NetworkRuleCollection1
+    $networkRulesCollection1 = New-AzFirewallNetworkRuleCollection @networkRulesCollection1Properties -Rule $networkRule1
 
-    $networkRulesCollection2 = New-AzFirewallNetworkRuleCollection `
-        -Name $hubProperties.NetworkRuleCollection2.Name `
-        -Priority $hubProperties.NetworkRuleCollection2.Priority `
-        -ActionType $hubProperties.NetworkRuleCollection2.Action `
-        -Rule $networkRule2, $networkRule3
+    $networkRulesCollection2Properties = $hubProperties.NetworkRuleCollection2
+    $networkRulesCollection2 = New-AzFirewallNetworkRuleCollection @networkRulesCollection2Properties -Rule $networkRule2, $networkRule3
+        
+    $applicationRule1Properties = $hubProperties.ApplicationRule1
+    $applicationRule1 = New-AzFirewallApplicationRule @applicationRule1Properties
 
-    $applicationRule1 = New-AzFirewallApplicationRule `
-        -Name $hubProperties.ApplicationRule1.Name `
-        -SourceAddress $hubProperties.ApplicationRule1.SourceAddr `
-        -FqdnTag $hubProperties.ApplicationRule1.FQDNTag
+    $applicationRule2Properties = $hubProperties.ApplicationRule2
+    $applicationRule2 = New-AzFirewallApplicationRule @applicationRule2Properties
 
-    $applicationRule2 = New-AzFirewallApplicationRule `
-        -Name $hubProperties.ApplicationRule2.Name `
-        -SourceAddress $hubProperties.ApplicationRule2.SourceAddr `
-        -Protocol $hubProperties.ApplicationRule2.Protocol `
-        -TargetFqdn $hubProperties.ApplicationRule2.TargetFQDN
-
-    $appRulesCollection = New-AzFirewallApplicationRuleCollection `
-        -Name $hubProperties.ApplicationRuleCollection.Name `
-        -Priority $hubProperties.ApplicationRuleCollection.Priority `
-        -ActionType $hubProperties.ApplicationRuleCollection.RuleAction `
-        -Rule $applicationRule1, $applicationRule2
-
-    New-AzFirewall `
-        -Name $hubProperties.FWName `
-        -ResourceGroupName $hubResources.ResourceGroup.Name `
-        -Location $hubResources.ResourceGroup.Location `
-        -Sku $hubProperties.FWSku `
-        -VirtualHub $hubResources.VHub `
-        -PublicIpAddress $hubResources.JMPPIP `
-        -ThreatIntelMode $hubProperties.FWThreatIntelMode `
-        -NatRuleCollection $natRulesCollection `
-        -ApplicationRuleCollection $appRulesCollection `
-        -NetworkRuleCollection $networkRulesCollection1, $networkRulesCollection2 `
-        -Tag @{ $globalResources.TagName = $globalResources.TagValue} `
-        -Verbose
-
-    $hubResources.Add("Firewall", $(Get-AzFirewall -Name $hubProperties.FWName -ResourceGroupName $hubResources.ResourceGroup.Name))
+    $appRulesCollectionProperties = $hubProperties.ApplicationRuleCollection
+    $appRulesCollection = New-AzFirewallApplicationRuleCollection @appRulesCollectionProperties -Rule $applicationRule1, $applicationRule2
+        
+    $hubResources.Add("Firewall", $(New-AzFirewall `
+                -Name $hubProperties.FWName `
+                -ResourceGroupName $hubResources.ResourceGroup.Name `
+                -Location $hubResources.ResourceGroup.Location `
+                -Sku $hubProperties.FWSku `
+                -VirtualHub $hubResources.VHub `
+                -PublicIpAddress $hubResources.JMPPIP `
+                -ThreatIntelMode $hubProperties.FWThreatIntelMode `
+                -NatRuleCollection $natRulesCollection `
+                -ApplicationRuleCollection $appRulesCollection `
+                -NetworkRuleCollection $networkRulesCollection1, $networkRulesCollection2 `
+                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -Verbose
+        )
+    )
 }
