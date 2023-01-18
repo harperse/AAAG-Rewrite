@@ -181,79 +181,143 @@ $alaToaaaMap = @{
 } # end hashtable
 
 $namingConstructs = @{
-    rgNC     = 'RGP'
     staNC    = 'sta'
-    vNetNC   = 'VNT'
-    rsvNC    = 'RSV'
-    alaNC    = 'ALA'
-    aaaNC    = 'AAA'
-    afwNC    = 'AFW'
-    subnetNC = 'SUB'
-    nsgNC    = 'NSG'
-    pipNC    = 'PIP'
-    udrNC    = 'UDR'
+    rgNC     = 'RGP-01'
+    vNetNC   = 'VNT-01'
+    rsvNC    = 'RSV-01'
+    alaNC    = 'ALA-01'
+    aaaNC    = 'AAA-01'
+    afwNC    = 'AFW-01'
+    subnetNC = 'SUB-01'
+    nsgNC    = 'NSG-01'
+    pipNC    = 'PIP-01'
+    udrNC    = 'UDR-01'
+    fwNC     = 'AFW-01'
 }
 
 [hashtable]$globalProperties = @{
-    resourceGroupSuffix = "NP-RGP-01"
-    tagKey              = "Creator"
-    tagValue            = "Microsoft Governance POC Script"
-    storageAccountKind  = "StorageV2"
-    storageAccountSkuName = "Standard_LRS"
-    storageAccountAccessTier = "Hot"
+    tagKey                               = "Creator"
+    tagValue                             = "Microsoft Governance POC Script"
+    storageAccountKind                   = "StorageV2"
+    storageAccountSkuName                = "Standard_LRS"
+    storageAccountAccessTier             = "Hot"
     storageAccountEnableHttpsTrafficOnly = $true
 
-    vmAdminUserName = 'adm.infra.user'
-    vmSize = 'Standard_D1_v2'
+    vmAdminUserName                      = 'adm.infra.user'
+    vmSize                               = 'Standard_D1_v2'
 }
 
 [hashtable]$hubProperties = @{
-    hubNC              = 'INF'
-    hubStaPrefix       = 1
+    hubNC                                      = 'INF'
+    hubStaPrefix                               = 1
     #ResourceGroup
-    resourceGroupName  = $selectedHubRegionCode, $hubProperties.hubNC, $globalProperties.resourceGroupSuffix -join "-"
+    resourceGroupName                          = $selectedHubRegionCode, $hubProperties.hubNC, "NP", $namingConstructs.rgNC -join "-"
     #StorageAccount
-    storageAccountName = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
-    storageAccountContainerName = 'stageartifacts'
+    storageAccountName                         = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
+    storageAccountContainerName                = 'stageartifacts'
     #AutomationAccount
-    automationAccountName = $selectedHubRegionCode, $namingConstructs.aaaNC, "NP", $uniqueGUIDIdentifier, "AAA-01" -join "-"
-    automationAccountPlan = "Basic"
-    automationAccountAssignSystemIdentity = $true # For reference only
-    automationAccountScheduleDescriptionStart = "Start 0800 Weekdays LOCAL"
-    automationAccountScheduleNameStart = "Start 0800 Weekdays LOCAL"
-    automationAccountScheduleStartTimeStart = [datetime]::now.AddDays(1).ToString("yyyy-MM-ddT08:00:00")
-    automationAccountScheduleExpiryTimeStart = "9999-12-31T00:00:00-00:00"
-    automationAccountScheduleIntervalStart = $null
-    automationAccountScheduleFrequencyStart = $null
-    automationAccountScheduleTimezoneStart = $null
-    automationAccountScheduleDescriptionStop = "Stop 1800 Weekdays LOCAL" 
-    automationAccountScheduleNameStop = "Stop 1800 Weekdays LOCAL"
-    automationAccountScheduleStartTimeStop = [datetime]::now.AddDays(1).ToString("yyyy-MM-ddT18:00:00")
-    automationAccountScheduleExpiryTimeStop = "9999-12-31T00:00:00-00:00"
-    automationAccountScheduleIntervalStop = $null
-    automationAccountScheduleFrequencyStop = $null
-    automationAccountScheduleTimezoneStop = $null
+    automationAccountName                      = $selectedHubRegionCode, $namingConstructs.aaaNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.aaaNC -join "-"
+    automationAccountPlan                      = "Basic"
+    automationAccountAssignSystemIdentity      = $true # For reference only
+    automationAccountScheduleDescriptionStart  = "Start 0800 Weekdays LOCAL"
+    automationAccountScheduleNameStart         = "Start 0800 Weekdays LOCAL"
+    automationAccountScheduleStartTimeStart    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT08:00:00")
+    automationAccountScheduleExpiryTimeStart   = "9999-12-31T00:00:00-00:00"
+    automationAccountScheduleWeekIntervalStart = 1
+    automationAccountScheduleDaysOfWeekStart   = "Monday,Tuesday,Wednesday,Thursday,Friday"
+    automationAccountScheduleTimezoneStart     = "UTC"
+    automationAccountScheduleDescriptionStop   = "Stop 1800 Weekdays LOCAL" 
+    automationAccountScheduleNameStop          = "Stop 1800 Weekdays LOCAL"
+    automationAccountScheduleStartTimeStop     = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT18:00:00")
+    automationAccountScheduleExpiryTimeStop    = "9999-12-31T00:00:00-00:00"
+    automationAccountScheduleWeekIntervalStop  = 1
+    automationAccountScheduleDaysOfWeekStop    = "Monday,Tuesday,Wednesday,Thursday,Friday"
+    automationAccountScheduleTimezoneStop      = "UTC"
     #LogAnalyticsWorkspace
-    logAnalyticsWorkspaceName = $selectedHubRegionCode, $namingConstructs.alaNC, "NP", $uniqueGUIDIdentifier, "ALA-01" -join "-"
-    logAnalyticsWorkspaceSku = "PerGB2018"
-    logAnalyticsWorkspaceRetentionInDays = 30
+    logAnalyticsWorkspaceName                  = $selectedHubRegionCode, $hubResources.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.alaNC -join "-"
+    logAnalyticsWorkspaceSku                   = "PerGB2018"
+    logAnalyticsWorkspaceRetentionInDays       = 30
     #VirtualNetworkSubnets
     #JumpSubnetResources
-    SubnetNameJMP = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.subnetNC, "JMP-01" -join "-"
-    SubnetAddressPrefixJMP = "10.10.1.0/24"
-    NSGNameJMP = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.nsgNC, "01" -join "-"
-    NSGRulesJMP = @{}
+    SubnetNameJMP                              = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.subnetNC -join "-"
+    SubnetAddressPrefixJMP                     = "10.10.1.0/24"
+    NSGNameJMP                                 = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.nsgNC -join "-"
+    NSGRulesJMP                                = @{}
     #AFWSubnetResources
-    SubnetNameAFW = "AzureFirewallSubnet"
-    SubnetAddressPrefixAFW = "10.10.0.0/24"
+    SubnetNameAFW                              = "AzureFirewallSubnet"
+    SubnetAddressPrefixAFW                     = "10.10.0.0/24"
     #JumpServerPIP
-    PIPNameJMP = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC, "JMP-01" -join "-"
-    PubIPAllocationMethod = "Dynamic"
-    PubIPIdleTimeoutInMinutes = 4
+    PIPNameJMP                                 = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC -join "-"
+    PubIPAllocationMethod                      = "Dynamic"
+    PubIPSku                                   = "Standard"
+    PuBIPTier                                  = "Regional"
+    PubIPIdleTimeoutInMinutes                  = 4
     #JumpServer
-    VMNameJMP = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
+    VMNameJMP                                  = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
     #VirtualNetwork
     #AzureFirewall
+    FWName                                     = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.fwNC -join "-"
+    NatRule1                                   = @{
+        Name       = "RDPToJumpServer"
+        Protocol   = "TCP"
+        SourceAddr = $localMachinePublicIP
+        DestPort   = "50000"
+        TransAddr  = $hubResources.VMJMP.PrivateIP
+        TransPort  = "3389"
+    }
+    NatRuleCollection                          = @{
+        Name     = "NATforRDP"
+        Priority = 1100
+        Action   = "Allow"
+    }
+    NetworkRule1                               = @{
+        Name       = "JumpAllowInternet"
+        Protocol   = "TCP"
+        SourceAddr = $hubJmpServerPrvIp
+        DestAddr   = "*"
+        DestPort   = @("80", "443")
+    }
+    NetworkRule2                               = @{
+        Name       = "HubToSpoke"
+        Protocol   = "Any"
+        SourceAddr = $hubResources.Vnet.AddressSpace
+        DestAddr   = $spokeResources.Vnet.AddressSpace
+        DestPort   = "*"
+    }
+    NetworkRule3                               = @{
+        Name       = "SpokeToHub"
+        Protocol   = "Any"
+        SourceAddr = $spokeResources.Vnet.AddressSpace
+        DestAddr   = $hubResources.Vnet.AddressSpace
+        DestPort   = "*"
+    }
+    NetworkRuleCollection1                     = @{
+        Name     = "AllowInternet"
+        Priority = 1200
+        Action   = "Allow"
+    }
+    NetworkRuleCollection2                     = @{
+        Name     = "AllowHubandSpoke"
+        Priority = 1250
+        Action   = "Allow"
+    }
+    ApplicationRule1                           = @{
+        Name       = "AllowAzurePaaSServices"
+        SourceAddr = @($hubResources.Vnet.AddressSpace, $spokeResources.Vnet.AddressSpace)
+        fqdnTags   = @("MicrosoftActiveProtectionService", "WindowsDiagnostics", "WindowsUpdate", "AzureBackup")
+    }
+    ApplicationRule2                           = @{
+        Name       = "AllowLogAnalytics"
+        SourceAddr = @($hubResources.Vnet.AddressSpace, $spokeResources.Vnet.AddressSpace)
+        Protocol   = "Https"
+        Port       = 443
+        TargetFqdn = @("*.ods.opsinsights.azure.com", "*.oms.opsinsights.azure.com", "*.blob.core.windows.net", "*.azure-automation.net")
+    }
+    ApplicationRuleCollection                  = @{
+        Name       = "AllowAzurePaaS"
+        Priority   = 1300
+        RuleAction = "Allow"
+    }
     #VirtualMachines
     #VirtualNetworkPeering
 
@@ -263,9 +327,9 @@ $namingConstructs = @{
     spokeNC            = 'APP'
     spokeStaPrefix     = 2
     #ResourceGroup
-    resourceGroupName  = $selectedSpokeRegionCode, $spokeProperties.spokeNC, $globalProperties.resourceGroupSuffix  -join "-"
+    resourceGroupName  = $selectedSpokeRegionCode, $spokeProperties.spokeNC, $globalProperties.resourceGroupSuffix -join "-"
     #StorageAccount
-    storageAccountName = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier  -join $null
+    storageAccountName = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
     #RecoveryServicesVault
     #VirtualNetworkSubnets
     #VirtualNetwork

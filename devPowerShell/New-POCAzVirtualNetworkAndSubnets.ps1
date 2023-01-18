@@ -18,6 +18,7 @@ switch ($HubOrSpoke) {
             -AllocationMethod $hubProperties.PubIPAllocationMethod `
             -IdleTimeoutInMinutes $hubProperties.PubIPIdleTimeoutInMinutes `
             -Sku $hubProperties.PubIPSku `
+            -Tier $hubProperties.PubIPTier `
             -Tag @{ $globalResources.TagName = $globalResources.TagValue} `
             -AsJob
 

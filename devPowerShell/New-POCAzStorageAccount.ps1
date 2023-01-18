@@ -12,7 +12,7 @@ if ($HubOrSpoke -eq "Hub") {
         -AllowBlobPublicAccess $true `
         -AllowSharedKeyAccess $true `
         -AllowCrossTenantReplication $true `
-        -NetworkRuleSet @{"Bypass" = "AzureServices"; "DefaultAction" = "Deny" } `
+        -NetworkRuleSet @{"Bypass" = "AzureServices"; "DefaultAction" = "Allow" } `
         -MinimumTlsVersion TLS1_2 `
         -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
         
