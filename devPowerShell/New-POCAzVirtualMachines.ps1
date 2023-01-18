@@ -5,13 +5,20 @@ if ($HubOrSpoke -eq "Hub") {
     $Image = Get-AzVMImage -Location $hubResources.ResourceGroup.Location -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "20348.1487.230106" | Select-Object -First 1 | Out-Null
     
     # Create the Jumpbox VM
+    $nicIPConfigJMP = New-AzNetworkInterfaceIpConfig `
+        -Name $hubProperties.NICIPConfigNameJMP `
+        -SubnetId $hubResources.SubnetJMP.Id `
+        -PrivateIpAddress $hubResources.JMPPrivateIPAddress `
+        -PublicIpAddressId $hubResources.PubIPJMP.Id `
+        -PrivateIpAddressVersion IPv4 `
+        -Primary `
+        -AsJob
+
     $nicConfigJMP = New-AzNetworkInterface `
         -Name $hubProperties.NICNameJMP `
         -ResourceGroupName $hubResources.ResourceGroup.Name `
         -Location $hubResources.ResourceGroup.Location `
-        -SubnetId $hubResources.SubnetJMP.Id `
-        -PublicIpAddressId $hubResources.PubIPJMP.Id `
-        -PrivateIpAddress = $hubResources.JMPPrivateIPAddress `
+        -IpConfigurationName $nicIPConfigJMP
         -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
         -AsJob
 

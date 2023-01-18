@@ -161,59 +161,59 @@ Param (
 
 [hashtable]$global:regionCodes = @{
     #Africa
-    southafricanorth   = CZNSA
-    southafricawest    = CZWSA
+    southafricanorth   = "CZNSA"
+    southafricawest    = "CZWSA"
     #AsiaPacific
-    australiacentral   = CZAU1
-    australiacentral2  = CZAU2
-    centralindia       = CZCIN
-    eastasia           = CZEAS
-    australiaeast      = CZEAU
-    japaneast          = CZEJP
-    jioindiacentral    = CZJIC
-    jioindiawest       = CZJIW
-    koreacentral       = CZKRC
-    koreasouth         = CZKRS
-    qatarcentral       = CZQAC
-    australiasoutheast = CZSAU
-    southeastasia      = CZSEA
-    southindia         = CZSIN
-    uaecentral         = CZUAC
-    uaenorth           = CZUAN
-    westindia          = CZWIN
-    japanwest          = CZWJP
+    australiacentral   = "CZAU1"
+    australiacentral2  = "CZAU2"
+    centralindia       = "CZCIN"
+    eastasia           = "CZEAS"
+    australiaeast      = "CZEAU"
+    japaneast          = "CZEJP"
+    jioindiacentral    = "CZJIC"
+    jioindiawest       = "CZJIW"
+    koreacentral       = "CZKRC"
+    koreasouth         = "CZKRS"
+    qatarcentral       = "CZQAC"
+    australiasoutheast = "CZSAU"
+    southeastasia      = "CZSEA"
+    southindia         = "CZSIN"
+    uaecentral         = "CZUAC"
+    uaenorth           = "CZUAN"
+    westindia          = "CZWIN"
+    japanwest          = "CZWJP"
     #Europe
-    francecentral      = CZFRC
-    francesouth        = CZFRS
-    germanynorth       = CZGRN
-    germanywestcentral = CZGWC
-    northeurope        = CZNEU
-    norwayeast         = CZNWE
-    norwaywest         = CZNWW
-    uksouth            = CZSUK
-    swedencentral      = CZSWC
-    switzerlandnorth   = CZSWN
-    switzerlandwest    = CZSWW
-    westeurope         = CZWEU
-    ukwest             = CZWUK
+    francecentral      = "CZFRC"
+    francesouth        = "CZFRS"
+    germanynorth       = "CZGRN"
+    germanywestcentral = "CZGWC"
+    northeurope        = "CZNEU"
+    norwayeast         = "CZNWE"
+    norwaywest         = "CZNWW"
+    uksouth            = "CZSUK"
+    swedencentral      = "CZSWC"
+    switzerlandnorth   = "CZSWN"
+    switzerlandwest    = "CZSWW"
+    westeurope         = "CZWEU"
+    ukwest             = "CZWUK"
     #NorthAmerica
-    canadacentral      = CZCCA
-    centralus          = CZCUS
-    canadaeast         = CZECA
-    eastus             = CZEU1
-    eastus2            = CZEU2
-    northcentralus     = CZCUN
-    southcentralus     = CZSCU
-    westcentralus      = CZWCU
-    westus             = CZWU1
-    westus2            = CZWU2
-    westus3            = CZWU3
+    canadacentral      = "CZCCA"
+    centralus          = "CZCUS"
+    canadaeast         = "CZECA"
+    eastus             = "CZEU1"
+    eastus2            = "CZEU2"
+    northcentralus     = "CZCUN"
+    southcentralus     = "CZSCU"
+    westcentralus      = "CZWCU"
+    westus             = "CZWU1"
+    westus2            = "CZWU2"
+    westus3            = "CZWU3"
     #SouthAmerica
-    brazilsouth        = CZSBR
-    brazilsoutheast    = CZBSE
+    brazilsouth        = "CZSBR"
+    brazilsoutheast    = "CZBSE"
     #USGOV
-    usgovvirginia      = USGVA
-    usgovtexas         = USGTX
+    usgovvirginia      = "USGVA"
+    usgovtexas         = "USGTX"
 }  #end hashtable; updated 1/17/2023
 
 #endregion DefaultHashtables
@@ -237,6 +237,7 @@ Write-Output "Configuring security protocol to use TLS 1.2 for Nuget support whe
 [ServicePointManager]::SecurityProtocol = [SecurityProtocolType]::Tls12
 #endregion PreExecutionHandling
 
+
 #region MainProcessing
 # Importing the Az modules
 Import-Module Az -Verbose -Force
@@ -246,10 +247,8 @@ Clear-AzContext -Force -Verbose
 
 Connect-AzAccount -Environment $AzureEnvironment
 # Pre-loading list of Azure locations
-# Also stripping out "extended", staging, logical, and EUAP locations 
-#$azLocations = $(Get-AzLocation | Where-Object { $_.RegionType -eq "Physical" }).Location |  Where-Object { $_ -notlike "*stage" } | Where-Object { $_ -notlike "*euap" } | Where-Object { $_ -notlike "*stg" } | Sort-Object
 Write-Output "Listing all Azure locations"
-Write-Output $azLocations
+Write-Output $global:regionCodes.Keys | Sort-Object
 
 Switch ($AzureEnvironment) {
     "AzureCloud" { 
@@ -261,8 +260,8 @@ Switch ($AzureEnvironment) {
                 Do { $azSpokeLocation = Read-Host "Please type or copy/paste the location for the spoke of the hub/spoke model" }
                 Until ($azSpokeLocation -in $global:regionCodes.Keys)
         
-                $selectedHubRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azHubLocation }
-                $selectedSpokeRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azSpokeLocation }
+                $selectedHubRegionCode = $global:regionCodes[$azHubLocation]
+                $selectedSpokeRegionCode = $global:regionCodes[$azSpokeLocation]
 
                 $subscription = Select-AzSubscriptionFromList
                 Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
@@ -273,7 +272,7 @@ Switch ($AzureEnvironment) {
                 Until ($azAppLocation -in $global:regionCodes.Keys)
         
                 $selectedHubRegionCode = $null
-                $selectedSpokeRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq $azAppLocation }
+                $selectedSpokeRegionCode = $global:regionCodes[$azSpokeLocation]
                 $subscription = Select-AzSubscriptionFromList
                 Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
             }
@@ -326,6 +325,10 @@ if (!($skipModules)) {
     }
     #END Installing/upgrading/checking Az modules
 }
+
+# Determine the latest VM image version
+$imageVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | % {$_.Split(".")[1] -as [int]} | Sort-Object -Descending | Select-Object -First 1
+$selectedVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object {$_.Version -like "*$imageVersion*"} | Select-Object -ExpandProperty Version
 
 # Import the configuration data
 . .\Deploy-POCEnvironmentData.ps1

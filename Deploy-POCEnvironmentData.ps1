@@ -205,6 +205,10 @@ $namingConstructs = @{
 
     vmAdminUserName                      = 'adm.infra.user'
     vmSize                               = 'Standard_D1_v2'
+    
+
+    vmImageHub = $(Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
+    vmImageSpoke = $(Get-AzVMImage -Location $selectedSpokeRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
 }
 
 [hashtable]$hubProperties = @{
@@ -353,10 +357,11 @@ $namingConstructs = @{
     spokeNC            = 'APP'
     spokeStaPrefix     = 2
     #ResourceGroup
-    resourceGroupName  = $selectedSpokeRegionCode, $spokeProperties.spokeNC, $globalProperties.resourceGroupSuffix -join "-"
+    resourceGroupName  = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NP", $namingConstructs.rgNC -join "-"
     #StorageAccount
-    storageAccountName = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
+    storageAccountName = $spokeProperties.spokeStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
     #RecoveryServicesVault
+    rsvName = "rsv", $uniqueGUIDIdentifier -join $null
     #VirtualNetworkSubnets
     #VirtualNetwork
     #UserDefinedRoutes
