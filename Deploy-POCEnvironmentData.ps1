@@ -1,7 +1,8 @@
 #region Strings
 
-[string[]]$requiredModules = @("Az.Accounts", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
 [string]$uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
+[string[]]$requiredModules = @("Az.Accounts", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
+[string[]]$runbookModules = @("Az.Accounts", "Az.Resources", "Az.Compute", "Az.Automation", "Az.Network")
 
 #endregion Strings
 
@@ -237,6 +238,20 @@ $namingConstructs = @{
         DaysOfWeek   = "Monday,Tuesday,Wednesday,Thursday,Friday"
         Timezone     = "UTC"
     }
+    aaStartRunbook              = @{
+        Name         = "Start-VMs"
+        Description  = "Starts all VMs in the resource group"
+        Path         = "$PSScriptRoot\Runbooks\Start-VMs.ps1"
+        LogVerbose   = $true
+        ScheduleName = $hubProperties.aaStartSchedule.Name
+    }
+    aaStopRunbook               = @{
+        Name         = "Stop-VMs"
+        Description  = "Stops all VMs in the resource group"
+        Path         = "$PSScriptRoot\Runbooks\Stop-VMs.ps1"
+        LogVerbose   = $true
+        ScheduleName = $hubProperties.aaStopSchedule.Name
+    }
     #LogAnalyticsWorkspace
     lawName                     = $selectedHubRegionCode, $hubResources.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.alaNC -join "-"
     lawSku                      = "PerGB2018"
@@ -283,6 +298,7 @@ $namingConstructs = @{
     #AzureFirewall
     FWName                      = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.fwNC -join "-"
     FWSku                       = "AZFW_Hub"
+    FWSkuTier                   = "Standard"
     FWVHub                      = $null
     FWThreatIntelMode           = "Deny"
     NatRule1                    = @{
@@ -389,7 +405,7 @@ $namingConstructs = @{
     #AvailabilitySetADC
     AVSetNameADC           = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.avsetNC -join "-"
     #ADDSServer
-    vmNameADC1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPADC01" -join $null
+    vmNameADC              = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPADC01" -join $null
     #AppSubnetResources
     #AvailabilitySet1
     AVSetNameWES           = $selectedSpokeRegionCode, "WES", "NP", $namingConstructs.avsetNC -join "-"

@@ -36,6 +36,7 @@ if ($HubOrSpoke -eq "Hub") {
                 -ResourceGroupName $hubResources.ResourceGroup.Name `
                 -Location $hubResources.ResourceGroup.Location `
                 -Sku $hubProperties.FWSku `
+                -SkuTier $hubResources.FWSkuTier `
                 -VirtualHub $hubResources.VHub `
                 -PublicIpAddress $hubResources.JMPPIP `
                 -ThreatIntelMode $hubProperties.FWThreatIntelMode `
@@ -43,7 +44,7 @@ if ($HubOrSpoke -eq "Hub") {
                 -ApplicationRuleCollection $appRulesCollection `
                 -NetworkRuleCollection $networkRulesCollection1, $networkRulesCollection2 `
                 -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
-                -Verbose
+                -Verbose -AsJob 
         )
     )
 }

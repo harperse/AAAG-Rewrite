@@ -68,7 +68,6 @@ if ($HubOrSpoke -eq "Hub") {
                 -AsJob
         )
     )
-
 }
 else {
     # Create the domain controller
@@ -96,8 +95,83 @@ else {
                 -Image $globalProperties.vmImage `
                 -VirtualNetworkName $spokeResources.Vnet.Name `
                 -Credential $global:credential `
-                -SubnetName $spokeProperties.SubnetNameWeb `
+                -SubnetName $spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $spokeResources.AVSetWeb.Name `
+                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -AsJob
+        )
+    )
+
+    $spokeResources.Add("VMWeb2", $(New-AzVM `
+                -ResourceGroupName $spokeResources.ResourceGroup.Name `
+                -Location $spokeResources.ResourceGroup.Location `
+                -Name $spokeProperties.vmNameWeb2 `
+                -Size $globalProperties.vmSize `
+                -Image $globalProperties.vmImage `
+                -VirtualNetworkName $spokeResources.Vnet.Name `
+                -Credential $global:credential `
+                -SubnetName $spokeProperties.SubnetNameSRV `
+                -AvailabilitySetName $spokeResources.AVSetWeb.Name `
+                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -AsJob
+        )
+    )
+
+    $spokeResources.Add("VMSQL1", $(New-AzVM `
+                -ResourceGroupName $spokeResources.ResourceGroup.Name `
+                -Location $spokeResources.ResourceGroup.Location `
+                -Name $spokeProperties.vmNameSQL1 `
+                -Size $globalProperties.vmSize `
+                -Image $globalProperties.vmImage `
+                -VirtualNetworkName $spokeResources.Vnet.Name `
+                -Credential $global:credential `
+                -SubnetName $spokeProperties.SubnetNameSRV `
+                -AvailabilitySetName $spokeResources.AVSetSQL.Name `
+                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -AsJob
+        )
+    )
+
+    $spokeResources.Add("VMSQL2", $(New-AzVM `
+                -ResourceGroupName $spokeResources.ResourceGroup.Name `
+                -Location $spokeResources.ResourceGroup.Location `
+                -Name $spokeProperties.vmNameSQL2 `
+                -Size $globalProperties.vmSize `
+                -Image $globalProperties.vmImage `
+                -VirtualNetworkName $spokeResources.Vnet.Name `
+                -Credential $global:credential `
+                -SubnetName $spokeProperties.SubnetNameSRV `
+                -AvailabilitySetName $spokeResources.AVSetSQL.Name `
+                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -AsJob
+        )
+    )
+
+    $spokeResources.Add("VMLNX", $(New-AzVM `
+                -ResourceGroupName $spokeResources.ResourceGroup.Name `
+                -Location $spokeResources.ResourceGroup.Location `
+                -Name $spokeProperties.vmNameLNX `
+                -Size $globalProperties.vmSize `
+                -Image $globalProperties.vmImage `
+                -VirtualNetworkName $spokeResources.Vnet.Name `
+                -Credential $global:credential `
+                -SubnetName $spokeProperties.SubnetNameSRV `
+                -AvailabilitySetName $spokeResources.AVSetLNX.Name `
+                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -AsJob
+        )
+    )
+
+    $spokeResources.Add("VMDEV", $(New-AzVM `
+                -ResourceGroupName $spokeResources.ResourceGroup.Name `
+                -Location $spokeResources.ResourceGroup.Location `
+                -Name $spokeProperties.vmNameDEV `
+                -Size $globalProperties.vmSize `
+                -Image $globalProperties.vmImage `
+                -VirtualNetworkName $spokeResources.Vnet.Name `
+                -Credential $global:credential `
+                -SubnetName $spokeProperties.SubnetNameSRV `
+                -AvailabilitySetName $spokeResources.AVSetDEV.Name `
                 -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
                 -AsJob
         )

@@ -13,6 +13,7 @@ switch ($HubOrSpoke) {
         
         # Enable VNet Peering
         # Add ADDS IP for DNS
+        # Link AAA to ALA
     }
     "Spoke" {}
 }
