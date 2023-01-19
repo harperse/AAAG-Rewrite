@@ -1,8 +1,11 @@
 #region Strings
 
 [string]$uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
-[string[]]$requiredModules = @("Az.Accounts", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
+[string]$localMachinePublicIP = Invoke-RestMethod http://ipinfo.io/json | Select-Object -ExpandProperty ip
+[string]$lawMonitoringSolutions = @("Updates","ChangeTracking","Security","ServiceMap","AzureActivity","VMInsights","AzureAutomation","NetworkMonitoring")
+[string[]]$requiredModules = @("Az", "Az.MonitoringSolutions", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
 [string[]]$runbookModules = @("Az.Accounts", "Az.Resources", "Az.Compute", "Az.Automation", "Az.Network")
+
 
 #endregion Strings
 
@@ -277,6 +280,13 @@ $namingConstructs = @{
     SubnetNameAFW               = "AzureFirewallSubnet"
     SubnetAddressPrefixAFW      = "10.10.0.0/24"
     #JumpServerPIP
+    PIPJumpServer               = @{
+        name                 = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC -join "-"
+        allocationMethod     = "Dynamic"
+        sku                  = "Standard"
+        tier                 = "Regional"
+        idleTimeoutInMinutes = 4
+    }
     PubIPNameJMP                = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC -join "-"
     PubIPAllocationMethod       = "Dynamic"
     PubIPSku                    = "Standard"
@@ -402,6 +412,7 @@ $namingConstructs = @{
         hubNextHopType  = $hubRouteNextHopType
         hubNextHopAddr  = $hubFwPrvIp
     }
+    #AppServersAndAvailabilitySets
     #AvailabilitySetADC
     AVSetNameADC           = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.avsetNC -join "-"
     #ADDSServer

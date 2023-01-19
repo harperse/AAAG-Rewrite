@@ -7,3 +7,10 @@ $hubResources.Add("OperationalInsightsWorkspace", $(New-AzOperationalInsightsWor
             -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
     )
 )
+
+foreach ($solution in $lawMonitoringSolutions) {
+    New-AzMonitorLogAnalyticsSolution `
+        -ResourceGroupName $hubProperties.resourceGroupName `
+        -WorkspaceId $hubResources.OperationalInsightsWorkspace.Id `
+        -Type $solution -Verbose
+}

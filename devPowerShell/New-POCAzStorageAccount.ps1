@@ -52,5 +52,4 @@ else {
         -DefaultEncryptionScope '$account-encryption-key' `
         -PreventEncryptionScopeOverride $false `
         -PublicAccess "None" `
-
 }

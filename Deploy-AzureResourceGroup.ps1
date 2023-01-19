@@ -480,11 +480,6 @@ $ArtifactsLocationSasToken = New-AzStorageContainerSASToken -Container $StorageC
 $ArtifactsLocationSasToken = ConvertTo-SecureString -String $ArtifactsLocationSasToken -AsPlainText -Force
 #endregion Push files to storage container
 
-#region Generate credentials
-$adminUserName = "adm.infra.user"
-$adminCred = Get-Credential -UserName $adminUserName -Message "Enter password for user: $adminUserName. Password must be complex, at least 12 characters including 3 of the following: lowercase, uppercase, numbers and special characters."
-$adminPassword = $adminCred.password
-#endregion Generate credentials
 
 [hashtable]$parameters = @{}
 [hashtable]$hubParameters = @{}
@@ -583,129 +578,9 @@ ElseIf ($DeploymentOption -eq "DeployHubWithFW") {
     $hubRTS = "RouteToSpoke"
     $hubRTSAddrPrefix = "10.20.10.0/26"
 
-    $appRouteTableObj = [PSCustomObject]@{
-        tableName = $regionCode + "-APP-NP-UDR-01"
-        zeroRoute = "ZeroTraffic"
-        zeroAddrPrefix = "0.0.0.0/0"
-        zeroNextHopType = $hubRouteNextHopType
-        zeroNextHopAddr = $hubFwPrvIp
-        hubRoute = "RouteToHub"
-        hubAddrPrefix = "10.10.0.0/22"
-        hubNextHopType = $hubRouteNextHopType
-        hubNextHopAddr = $hubFwPrvIp
-    } # end PSCustomObject
+    
 
-    [string]$hubFwNatRuleCollName = "NATforRDP"
-    [int]$hubFwNatRuleCollPriority = 1100
-    [string]$hubFwNatRuleCollAction = "Allow"
-    [string]$hubFwNatRule01Name = "RDPToJumpServer"
-    [string]$hubFwNatRule01Protocol = "TCP"
-    [string]$hubFwNatRule01SourceAddr = $localMachinePublicIP
-    [string]$hubFwNatRule01DestPort = "50000"
-    [string]$hubFwNatRule01TransAddr = $hubJmpServerPrvIp
-    [string]$hubFwNatRule01TransPort = "3389"
-
-    [string]$hubFwNetworkRuleCollName = "AllowInternet"
-    [int]$hubFwNetworkRulePriority = 1200
-    [string]$hubFwNetworkRuleCollAction = "Allow"
-    [string]$hubFwNetworkRule01Name = "JumpAllowInternet"
-    [string]$hubFwNetworkRule01Protocol = "TCP"
-    [string]$hubFwNetworkRule01SourceAddr = $hubJmpServerPrvIp
-    [string]$hubFwNetworkRule01DestAddr = "*"
-    [string[]]$hubFwNetworkRule01DestPort = @("80","443")
-
-    [string]$hubFwNetworkRuleCollName02 = "AllowHubandSpoke"
-    [int]$hubFwNetworkRulePriority02 = 1250
-    [string]$hubFwNetworkRuleCollAction02 = "Allow"
-
-    [string]$hubFwNetworkRule02Name = "HubToSpoke"
-    [string]$hubFwNetworkRule02Protocol = "Any"
-    [string]$hubFwNetworkRule02SourceAddr = $hubVnetAddressSpace
-    [string]$hubFwNetworkRule02DestAddr = $appVnetAddrRange
-    [string]$hubFwNetworkRule02DestPort = "*"
-
-    [string]$hubFwNetworkRule03Name = "SpokeToHub"
-    [string]$hubFwNetworkRule03Protocol = "Any"
-    [string]$hubFwNetworkRule03SourceAddr = $appVnetAddrRange
-    [string]$hubFwNetworkRule03DestAddr = $hubVnetAddressSpace
-    [string]$hubFwNetworkRule03DestPort = "*"
-
-    [string]$hubFwAppRuleCollName = "AllowAzurePaaS"
-    [int]$hubFwAppRulePriority = 1300
-    [string]$hubFwAppRuleAction = "Allow"
-    [string]$hubFwAppRule01Name = "AllowAzurePaaSServices"
-    [string[]]$hubFwAppRule01SourceAddr = @($hubVnetAddressSpace, $appVnetAddrRange)
-    [string[]]$hubFwAppRule01fqdnTags = @("MicrosoftActiveProtectionService", "WindowsDiagnostics", "WindowsUpdate", "AzureBackup")
-    [string]$hubFwAppRule02Name = "AllowLogAnalytics"
-    [string[]]$hubFwAppRule02SourceAddr = @($hubVnetAddressSpace, $appVnetAddrRange)
-    [string]$hubFwAppRule02Protocol = "Https"
-    [int]$hubFwAppRule02Port = 443
-    [string[]]$hubFwAppRule02TargetFqdn = @("*.ods.opsinsights.azure.com", "*.oms.opsinsights.azure.com", "*.blob.core.windows.net", "*.azure-automation.net")
-
-    $hubParamsWithFW = Add-HubParameters -hubParameters $hubParameters -Verbose
-    # Routes defintion
-    $hubParameters.Add("hubFwSubnetName",$hubFwSubnetName)
-    $hubParameters.Add("hubFwSubnetRange",$hubFwSubnetRange)
-    $hubParameters.Add("hubRouteTable",$hubRouteTable)
-    $hubParameters.Add("hubRouteDisablePropagation",$hubRouteDisablePropagation)
-    $hubParameters.Add("hubRouteToAfwName",$hubRouteToAfwName)
-    $hubParameters.Add("hubRouteToAfwAddrPrefix",$hubRouteToAfwAddrPrefix)
-    $hubParameters.Add("hubRouteNextHopType",$hubRouteNextHopType)
-    $hubParameters.Add("hubFwPrvIp",$hubFwPrvIp)
-    $hubParameters.Add("hubRouteToAfwNextHopAddress",$hubRouteToAfwNextHopAddress)
-    $hubParameters.Add("hubRTS",$hubRTS)
-    $hubParameters.Add("hubRTSAddrPrefix",$hubRTSAddrPrefix)
-
-    # NAT definition
-    $hubParameters.Add("hubFwNatRuleCollName",$hubFwNatRuleCollName)
-    $hubParameters.Add("hubFwNatRuleCollPriority",$hubFwNatRuleCollPriority)
-    $hubParameters.Add("hubFwNatRuleCollAction",$hubFwNatRuleCollAction)
-    $hubParameters.Add("hubFwNatRule01Name",$hubFwNatRule01Name)
-    $hubParameters.Add("hubFwNatRule01Protocol",$hubFwNatRule01Protocol)
-    $hubParameters.Add("hubFwNatRule01SourceAddr",$hubFwNatRule01SourceAddr)
-    $hubParameters.Add("hubFwNatRule01DestPort",$hubFwNatRule01DestPort)
-    $hubParameters.Add("hubFwNatRule01TransAddr",$hubFwNatRule01TransAddr)
-    $hubParameters.Add("hubFwNatRule01TransPort",$hubFwNatRule01TransPort)
-
-    # Networks defintion
-    $hubParameters.Add("hubFwNetworkRuleCollName",$hubFwNetworkRuleCollName)
-    $hubParameters.Add("hubFwNetworkRulePriority",$hubFwNetworkRulePriority)
-    $hubParameters.Add("hubFwNetworkRuleCollAction",$hubFwNetworkRuleCollAction)
-
-    $hubParameters.Add("hubFwNetworkRule01Name",$hubFwNetworkRule01Name)
-    $hubParameters.Add("hubFwNetworkRule01Protocol",$hubFwNetworkRule01Protocol)
-    $hubParameters.Add("hubFwNetworkRule01SourceAddr",$hubFwNetworkRule01SourceAddr)
-    $hubParameters.Add("hubFwNetworkRule01DestAddr",$hubFwNetworkRule01DestAddr)
-    $hubParameters.Add("hubFwNetworkRule01DestPort",$hubFwNetworkRule01DestPort)
-
-    $hubParameters.Add("hubFwNetworkRuleCollName02",$hubFwNetworkRuleCollName02)
-    $hubParameters.Add("hubFwNetworkRulePriority02",$hubFwNetworkRulePriority02)
-    $hubParameters.Add("hubFwNetworkRuleCollAction02",$hubFwNetworkRuleCollAction02)
-
-    $hubParameters.Add("hubFwNetworkRule02Name",$hubFwNetworkRule02Name)
-    $hubParameters.Add("hubFwNetworkRule02Protocol",$hubFwNetworkRule02Protocol)
-    $hubParameters.Add("hubFwNetworkRule02SourceAddr",$hubFwNetworkRule02SourceAddr)
-    $hubParameters.Add("hubFwNetworkRule02DestAddr",$hubFwNetworkRule02DestAddr)
-    $hubParameters.Add("hubFwNetworkRule02DestPort",$hubFwNetworkRule02DestPort)
-
-    $hubParameters.Add("hubFwNetworkRule03Name",$hubFwNetworkRule03Name)
-    $hubParameters.Add("hubFwNetworkRule03Protocol",$hubFwNetworkRule03Protocol)
-    $hubParameters.Add("hubFwNetworkRule03SourceAddr",$hubFwNetworkRule03SourceAddr)
-    $hubParameters.Add("hubFwNetworkRule03DestAddr",$hubFwNetworkRule03DestAddr)
-    $hubParameters.Add("hubFwNetworkRule03DestPort",$hubFwNetworkRule03DestPort)
-
-    # Applications definition
-    $hubParameters.Add("hubFwAppRuleCollName",$hubFwAppRuleCollName)
-    $hubParameters.Add("hubFwAppRulePriority",$hubFwAppRulePriority)
-    $hubParameters.Add("hubFwAppRuleAction",$hubFwAppRuleAction)
-    $hubParameters.Add("hubFwAppRule01Name",$hubFwAppRule01Name)
-    $hubParameters.Add("hubFwAppRule01SourceAddr",$hubFwAppRule01SourceAddr)
-    $hubParameters.Add("hubFwAppRule01fqdnTags",$hubFwAppRule01fqdnTags)
-    $hubParameters.Add("hubFwAppRule02Name",$hubFwAppRule02Name)
-    $hubParameters.Add("hubFwAppRule02SourceAddr",$hubFwAppRule02SourceAddr)
-    $hubParameters.Add("hubFwAppRule02Protocol",$hubFwAppRule02Protocol)
-    $hubParameters.Add("hubFwAppRule02Port",$hubFwAppRule02Port )
-    $hubParameters.Add("hubFwAppRule02TargetFqdn",$hubFwAppRule02TargetFqdn)
+    
 
     if ($ValidateOnly)
     {
@@ -834,20 +709,7 @@ else
         -Force `
         -Verbose `
         -ErrorVariable ErrorMessages
-        if ($ErrorMessages)
-        {
-            Write-Output '', 'Template deployment returned the following errors:', @(@($ErrorMessages) | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") })
-        } # end if
-        else
-        {
-            # Deployment of App environment is successful
-            $StopTimer = Get-Date -Verbose
-            Write-Output "Calculating elapsed time..."
-            $ExecutionTime = New-TimeSpan -Start $BeginTimer -End $StopTimer
-            $Footer = "TOTAL SCRIPT EXECUTION TIME: $ExecutionTime"
-            Write-Output ""
-            Write-Output $Footer
-        } # end else  
+  
     }
 } # end else
 #endregion deploy spoke
@@ -857,15 +719,7 @@ $aaaResourceGroupName = $null
 if (($DeploymentOption -eq "DeployHubWithoutFW") -or ($DeploymentOption -eq "DeployHubWithFW"))
 {
     $aaaResourceGroupName = $hubResourceGroupName
-    $SpokeVnetName = $parameters.regionCode + "-APP-NP-VNT-01"
-    $HubVnet = Get-AzVirtualNetwork -Name $hubParameters.hubVnetName -ResourceGroupName $hubResourceGroupName -Verbose
-    $SpokeVNet = Get-AzVirtualNetwork -Name $SpokeVnetName -ResourceGroupName $resourceGroupName -Verbose
-    $HubtoSpokePeeringName = 'LinkTo' + $SpokeVnetName
-    $SpoketoHubPeeringName = 'LinkTo' + $HubVnetName
-    # Peer Hub VNet to Spoke VNet
-    Add-AzVirtualNetworkPeering -Name $HubtoSpokePeeringName -VirtualNetwork $HubVnet -RemoteVirtualNetworkId $SpokeVnet.Id
-    # Peer Spoke Vnet  to Hub VNet.
-    Add-AzVirtualNetworkPeering -Name $SpoketoHubPeeringName -VirtualNetwork $SpokeVNet -RemoteVirtualNetworkId $HubVnet.Id
+
 } # end condition
 
 If ($DeploymentOption -eq "DeployHubWithoutFW")
@@ -879,19 +733,7 @@ ElseIf ($DeploymentOption -eq "DeployHubWithFW")
     $serverName = $hubParameters.hubFwName
     $userName = $hubParameters.hubJumpServerName + "\" + $hubParameters.adminUserName
     $fqdnEndPoint = (Get-AzPublicIpAddress -ResourceGroupName $hubResourceGroupName | Where-Object { $_.Name -match $serverName}).DnsSettings.fqdn + ":50000"
-    # Create route confiugration
-    $zeroTrafficConfig = New-AzRouteConfig -Name $appRouteTableObj.zeroRoute -AddressPrefix $appRouteTableObj.zeroAddrPrefix -NextHopType $appRouteTableObj.zeroNextHopType -NextHopIpAddress $appRouteTableObj.zeroNextHopAddr -Verbose
-    $hubTrafficConfig = New-AzRouteConfig -Name $appRouteTableObj.hubRoute -AddressPrefix $appRouteTableObj.hubAddrPrefix -NextHopType $appRouteTableObj.hubNextHopType -NextHopIpAddress $appRouteTableObj.hubNextHopAddr -Verbose
-    $appRoutes = @($zeroTrafficConfig,$hubTrafficConfig)
-    # Create route table
-    $appRouteTableResource = New-AzRouteTable -ResourceGroupName $resourceGroupName -Location $regionFullName -Name $appRouteTableObj.tableName -Route $appRoutes -Force -Verbose
-    # Get all subnet configurations in app vnet
-    $appVnetResource = Get-AzVirtualNetwork -Name $appVnetName -ResourceGroupName $resourceGroupName
-    # Assign route table to each subnet in app vnet
-    Set-AzVirtualNetworkSubnetConfig -Name $appVnetResource.Subnets[0].Name -VirtualNetwork $appVnetResource -AddressPrefix $appVnetResource.Subnets[0].AddressPrefix -RouteTableId $appRouteTableResource.id -Verbose
-    Set-AzVirtualNetworkSubnetConfig -Name $appVnetResource.Subnets[1].Name -VirtualNetwork $appVnetResource -AddressPrefix $appVnetResource.Subnets[1].AddressPrefix -RouteTableId $appRouteTableResource.id -Verbose
-    # Apply changes and update configuration for virtual network
-    $appVnetResource | Set-AzVirtualNetwork
+
 } # end elseif
 ElseIf ($DeploymentOption -eq "DeployAppOnly")
 {
@@ -905,17 +747,6 @@ Else
 } # end else
 #region runbooks
 
-<#
-$certPassword = (New-Guid).Guid
-$ApplicationDisplayName = "ServicePrincipal-$randomInfix"
-
-New-AutomationAccountRunAsServicePrincipal -rgName $aaaResourceGroupName `
--AutomationAccountName $AutomationAccountName `
--ApplicationDisplayName $ApplicationDisplayName `
--SubscriptionId $subscriptionId `
--SelfSignedCertPlainPassword $CertPassword `
--selfSignedCertNoOfMonthsUntilExpired 12
-#>
 
 # Assign the Automation Account Managed Identity Contributor rights over the subscription so it can startup/shutdown VM(s) and the Az Firewall
 if ($DeploymentOption -ne "DeployAppOnly")
@@ -940,86 +771,13 @@ $stopRunbookParams = @{"operation"="stop";"env"=$env}
 
 
 
-# https://docs.microsoft.com/en-us/powershell/module/az.accounts/connect-azaccount?view=azps-4.7.0
-# https://medium.com/faun/using-azure-automation-runbooks-and-schedules-to-automatically-turn-on-off-your-vms-38bfe20a757f
-# Publish-RunbookScripts -rbScripts $runbookScripts -ResourceGroupName $ResourceGroupName -Verbose
-Publish-AutomationAccountRunbookScripts -rbScripts $runbookScripts -ResourceGroupName $aaaResourceGroupName -AutomationAccountName $AutomationAccountName -Verbose
-# Provide instructions for logging into the dev/jump server
-# Wait for 100 seconds to allow runbooks to fully publish
 
-# Start-Sleep -Seconds $waitTimeToPublishRunbooks-Verbose
-# Link startup runbooks with startup schedule
-$startupRunbooks = ((Get-AzAutomationRunbook -ResourceGroupName $aaaResourceGroupName -AutomationAccountName $AutomationAccountName | Where-Object {$_.Name -match 'start'}).name)
-foreach ($startupRunbook in $startupRunbooks)
-{
-    <#
-    if ($startupRunbook -match 'AzureFirewallStart')
-    {
-        Register-AzAutomationScheduledRunbook -RunbookName $startupRunbook -ScheduleName $startupScheduleName -Parameters $startAfwRunbookParams -ResourceGroupName $aaaResourceGroupName -AutomationAccountName $AutomationAccountName -Verbose
-    } # end if
-    else
-    {
-    } # end else
-    #>
-    Register-AzAutomationScheduledRunbook -RunbookName $startupRunbook -ScheduleName $startupScheduleName -Parameters $startRunbookParams -ResourceGroupName $aaaResourceGroupName -AutomationAccountName $AutomationAccountName -Verbose
-} # end foreach
-
-# Start-Sleep -Seconds $waitTimeToPublishRunbooks -Verbose
-# Link shutdown runbooks with shutdown schedules
-$shutdownRunbooks = ((Get-AzAutomationRunbook -ResourceGroupName $aaaResourceGroupName -AutomationAccountName $AutomationAccountName | Where-Object {$_.Name -match 'stop'}).name)
-foreach ($shutdownRunbook in $shutdownRunbooks)
-{
-    <#
-    if ($shutdownRunbook -match 'AzureFirewallStop')
-    {
-        Register-AzAutomationScheduledRunbook -RunbookName $shutdownRunbook -ScheduleName $shutdownScheduleName -Parameters $stopAfwRunbookParams -ResourceGroupName $aaaResourceGroupName -AutomationAccountName $AutomationAccountName -Verbose
-    } # end if
-    else
-    {
-    } # end else
-    #>
-    Register-AzAutomationScheduledRunbook -RunbookName $shutdownRunbook -ScheduleName $shutdownScheduleName -Parameters $stopRunbookParams -ResourceGroupName $aaaResourceGroupName -AutomationAccountName $AutomationAccountName -Verbose
-} # end foreach
-#endregion runbooks
 
 $connectionMessage = @"
 To log into your new jump server: $serverName, you must change your login name to: $userName and specify the corresponding password you entered at the beginning of this script.
 Specify this DNS hostname for your RDP session: $fqdnEndPoint.
 "@
 Write-Output $connectionMessage
-# Allow engineer/administrator to pause and read connection message before continuing
 
-# Resource group and log files cleanup messages
-Write-Warning "The list of PoC resource groups are:"
-Get-AzResourceGroup -Name $pocResourceGroupFilter -Verbose
-Write-Output "To remove the resource groups, use the command below:"
-Write-Output 'Get-AzResourceGroup -Name "*NP-RGP-01*" | ForEach-Object { Remove-AzResourceGroup -ResourceGroupName $_.ResourceGroupName -Verbose -Force }'
 
-Write-Warning "Transcript logs are hosted in the directory: $LogDirectory to allow access for multiple users on this machine for diagnostic or auditing purposes."
-Write-Warning "To examine, archive or remove old log files to recover storage space, run this command to open the log files location: Start-Process -FilePath $LogDirectory"
-Write-Warning "You may change the value of the `$modulePath variable in this script, currently at: $modulePath to a common file server hosted share if you prefer, i.e. \\<server.domain.com>\<share>\<log-directory>"
 
- # end else PROCEED
-
-Stop-Transcript -Verbose
-
-# Create prompt and response objects for continuing script and opening logs.
-$openTranscriptPrompt = "Would you like to open the transcript log now ? [YES/NO]"
-Do
-{
-    $openTranscriptResponse = read-host $openTranscriptPrompt
-    $openTranscriptResponse = $openTranscriptResponse.ToUpper()
-} # end do
-Until ($openTranscriptResponse -eq "Y" -OR $openTranscriptResponse -eq "YES" -OR $openTranscriptResponse -eq "N" -OR $openTranscriptResponse -eq "NO")
-
-# Exit if user does not want to continue
-If ($openTranscriptResponse -in 'Y', 'YES')
-{
-    Start-Process -FilePath notepad.exe $Transcript -Verbose
-} #end condition
-else
-{
-    # Terminate script
-    Write-Output "End of Script!"
-    $header.SeparatorDouble
-} # end else
