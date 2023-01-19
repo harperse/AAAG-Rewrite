@@ -1,7 +1,7 @@
 $hubResources.Add("OperationalInsightsWorkspace", $(New-AzOperationalInsightsWorkspace `
-            -ResourceGroupName $hubProperties.resourceGroupName `
-            -Name $hubProperties.operationalInsightsWorkspaceName `
+            -ResourceGroupName $hubResources.ResourceGroup.Name `
             -Location $alaToaaaMap[$selectedHubRegionCode].ala `
+            -Name $hubProperties.operationalInsightsWorkspaceName `
             -Sku $hubProperties.operationalInsightsWorkspaceSku `
             -RetentionInDays $hubProperties.operationalInsightsWorkspaceRetentionInDays `
             -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }

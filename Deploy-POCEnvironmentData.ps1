@@ -4,6 +4,7 @@
 [string]$localMachinePublicIP = Invoke-RestMethod http://ipinfo.io/json | Select-Object -ExpandProperty ip
 [string]$lawMonitoringSolutions = @("Updates","ChangeTracking","Security","ServiceMap","AzureActivity","VMInsights","AzureAutomation","NetworkMonitoring")
 [string[]]$requiredModules = @("Az", "Az.MonitoringSolutions", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
+[string[]]$requiredDSCResources = @("xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")  
 [string[]]$runbookModules = @("Az.Accounts", "Az.Resources", "Az.Compute", "Az.Automation", "Az.Network")
 
 
@@ -11,7 +12,7 @@
 
 #region hashtables
 
-$alaToaaaMap = @{
+[hashtable]$alaToaaaMap = @{
     CZEAS = @{
         reg = "eastasia"
         aaa = "southeastasia"
@@ -184,7 +185,7 @@ $alaToaaaMap = @{
     } # end ht
 } # end hashtable
 
-$namingConstructs = @{
+[hashtable]$namingConstructs = @{
     staNC    = 'sta'
     rgNC     = 'RGP-01'
     vNetNC   = 'VNT-01'
@@ -206,6 +207,7 @@ $namingConstructs = @{
     storageAccountSkuName                = "Standard_LRS"
     storageAccountAccessTier             = "Hot"
     storageAccountEnableHttpsTrafficOnly = $true
+    storageAccountContainerName = 'stageartifacts'
     vmAdminUserName                      = 'adm.infra.user'
     vmSize                               = 'Standard_D1_v2'
     vmImage                              = $(Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
@@ -214,13 +216,22 @@ $namingConstructs = @{
 [hashtable]$hubProperties = @{
     hubNC                       = 'INF'
     hubStaPrefix                = 1
-    #ResourceGroup
+    #ResourceNames
     resourceGroupName           = $selectedHubRegionCode, $hubProperties.hubNC, "NP", $namingConstructs.rgNC -join "-"
-    #StorageAccount
     storageAccountName          = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
-    storageAccountContainerName = 'stageartifacts'
-    #AutomationAccount
     aaName                      = $selectedHubRegionCode, $namingConstructs.aaaNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.aaaNC -join "-"
+    lawName                     = $selectedHubRegionCode, $hubResources.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.alaNC -join "-"
+    SubnetNameJMP               = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.subnetNC -join "-"
+    NSGNameJMP                  = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.nsgNC -join "-"
+    PubIPNameJMP                = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC -join "-"
+    JMPVMName                   = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
+    JMPNicName                  = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-NIC-01" -join "-"
+    JMPOSDiskName               = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-OSDisk-01" -join "-"
+    JMPDataDiskName             = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-DataDisk-01" -join "-"
+    SubnetNameAFW               = "AzureFirewallSubnet"
+    VNetName                    = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.vnetNC -join "-"
+    FWName                      = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.fwNC -join "-"
+    #AutomationAccount
     aaPlan                      = "Basic"
     aaAssignSystemIdentity      = $true # For reference only
     aaStartSchedule             = @{
@@ -256,14 +267,11 @@ $namingConstructs = @{
         ScheduleName = $hubProperties.aaStopSchedule.Name
     }
     #LogAnalyticsWorkspace
-    lawName                     = $selectedHubRegionCode, $hubResources.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.alaNC -join "-"
     lawSku                      = "PerGB2018"
     lawRetentionInDays          = 30
     #VirtualNetworkSubnets
     #JumpSubnetResources
-    SubnetNameJMP               = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.subnetNC -join "-"
     SubnetAddressPrefixJMP      = "10.10.1.0/24"
-    NSGNameJMP                  = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.nsgNC -join "-"
     NSGRulesJMP                 = @{
         name                     = AllowRdpInbound
         access                   = Allow
@@ -277,7 +285,6 @@ $namingConstructs = @{
         sourcePortRange          = *
     }
     #AFWSubnetResources
-    SubnetNameAFW               = "AzureFirewallSubnet"
     SubnetAddressPrefixAFW      = "10.10.0.0/24"
     #JumpServerPIP
     PIPJumpServer               = @{
@@ -287,26 +294,19 @@ $namingConstructs = @{
         tier                 = "Regional"
         idleTimeoutInMinutes = 4
     }
-    PubIPNameJMP                = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC -join "-"
     PubIPAllocationMethod       = "Dynamic"
     PubIPSku                    = "Standard"
     PubIPTier                   = "Regional"
     PubIPIdleTimeoutInMinutes   = 4
     #JumpServer
-    JMPVMName                   = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
-    JMPNicName                  = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-NIC-01" -join "-"
-    JMPOSDiskName               = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-OSDisk-01" -join "-"
     JMPOSDiskCreateOption       = "FromImage"
-    JMPDataDiskName             = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-DataDisk-01" -join "-"
     JMPDataDiskCreateOption     = "Empty"
     JMPOSDiskSizeGB             = 32
     JMPDataDiskSizeGB           = 32
     JMPPrivateIPAddress         = "10.10.1.4"
     #VirtualNetwork
-    VNetName                    = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.vnetNC -join "-"
     VNetAddressPrefix           = "10.10.0.0/22"
     #AzureFirewall
-    FWName                      = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.fwNC -join "-"
     FWSku                       = "AZFW_Hub"
     FWSkuTier                   = "Standard"
     FWVHub                      = $null
@@ -381,24 +381,32 @@ $namingConstructs = @{
     spokeNC                = "APP"
     spokeLNXNC             = "POC"
     spokeStaPrefix         = 2
-    #ResourceGroup
+    #ResourceNames
     resourceGroupName      = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NP", $namingConstructs.rgNC -join "-"
-    #StorageAccount
     storageAccountName     = $spokeProperties.spokeStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
-    #RecoveryServicesVault
     rsvName                = "rsv", $uniqueGUIDIdentifier -join $null
-    #NetworkSecurityGroups
-    #ADDSSubnetNSG
     nsgNameADC             = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.nsgNC -join "-"
-    #AppSubnetNSG
     nsgNameSRV             = $selectedSpokeRegionCode, "SRV", "NP", $namingConstructs.nsgNC -join "-"
-    #VirtualNetworkSubnets
     SubnetNameADC          = $selectedSpokeRegionCode, "ADC-NP-SUB-01"
-    SubnetAddressPrefixADC = "10.20.10.0/28"
     SubnetNameSRV          = $selectedSpokeRegionCode, "SRV-NP-SUB-01"
+    VnetName               = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NP", $namingConstructs.vnetNC -join "-"
+    AVSetNameADC           = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.avsetNC -join "-"
+    AVSetNameWES           = $selectedSpokeRegionCode, "WES", "NP", $namingConstructs.avsetNC -join "-"
+    AVSetNameSQL           = $selectedSpokeRegionCode, "SQL", "NP", $namingConstructs.avsetNC -join "-"
+    AVSetNameLNX           = $selectedSpokeRegionCode, "LNX", "NP", $namingConstructs.avsetNC -join "-"
+    AVSetNameDEV           = $selectedSpokeRegionCode, "DEV", "NP", $namingConstructs.avsetNC -join "-"
+    vmNameADC              = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPADC01" -join $null
+    vmNameWeb1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPWES01" -join $null
+    vmNameWeb2             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPWES02" -join $null
+    vmNameSQL1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPSQL01" -join $null
+    vmNameSQL2             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPSQL02" -join $null
+    vmNameLinux1           = $selectedSpokeRegionCode, $spokeProperties.spokeLNXNC, "NPLNX01" -join $null
+    vmNameDev1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPDEV01" -join $null
+    pipNameDev1            = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPDEV01-PIP" -join $null
+    #VirtualNetworkSubnets
+    SubnetAddressPrefixADC = "10.20.10.0/28"
     SubnetAddressPrefixSRV = "10.20.10.16/28"
     #VirtualNetwork
-    VnetName               = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NP", $namingConstructs.vnetNC -join "-"
     VnetAddressPrefix      = "10.20.10.0/26"
     #UserDefinedRoutes
     UserDefinedRoutes      = @{
@@ -414,30 +422,28 @@ $namingConstructs = @{
     }
     #AppServersAndAvailabilitySets
     #AvailabilitySetADC
-    AVSetNameADC           = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.avsetNC -join "-"
+    
     #ADDSServer
-    vmNameADC              = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPADC01" -join $null
+    
     #AppSubnetResources
     #AvailabilitySet1
-    AVSetNameWES           = $selectedSpokeRegionCode, "WES", "NP", $namingConstructs.avsetNC -join "-"
+    
     #WebServers
-    vmNameWeb1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPWES01" -join $null
-    vmNameWeb2             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPWES02" -join $null
+    
     #AvailabilitySet2
-    AVSetNameSQL           = $selectedSpokeRegionCode, "SQL", "NP", $namingConstructs.avsetNC -join "-"
+    
     #DBServers
-    vmNameSQL1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPSQL01" -join $null
-    vmNameSQL2             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPSQL02" -join $null
+    
     #AvailabilitySet3
-    AVSetNameLNX           = $selectedSpokeRegionCode, "LNX", "NP", $namingConstructs.avsetNC -join "-"
+    
     #LinuxServer
-    vmNameLinux1           = $selectedSpokeRegionCode, $spokeProperties.spokeLNXNC, "NPLNX01" -join $null
+
     #AvailabilitySet4
-    AVSetNameDEV           = $selectedSpokeRegionCode, "DEV", "NP", $namingConstructs.avsetNC -join "-"
+
     #DevServerPIP
-    pipNameDev1            = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPDEV01-PIP" -join $null
+    
     #DevServer
-    vmNameDev1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPDEV01" -join $null
+    
     
 }
 

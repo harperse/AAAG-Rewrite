@@ -56,7 +56,7 @@ if ($HubOrSpoke -eq "Hub") {
     $vmConfigJMP = Add-AzVMDataDisk `
         -VM $vmConfigJMP `
         -Name $hubProperties.JMPDataDiskName `
-        -Disk $dataDiskConfigJMP `
+        -Disk $dataDiskConfigJMP
 
     $hubResources.Add("VMJMP", $(New-AzVM `
                 -ResourceGroupName $hubResources.ResourceGroup.Name `
@@ -65,6 +65,7 @@ if ($HubOrSpoke -eq "Hub") {
                 -VirtualNetworkName $hubResources.Vnet.Name `
                 -Credential $credential `
                 -VM $vmConfigJMP `
+                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
                 -AsJob
         )
     )

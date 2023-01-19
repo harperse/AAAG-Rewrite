@@ -1,4 +1,4 @@
-#requires -version 5.1
+#requires -version 7.0
 #requires -RunAsAdministrator
 
 # For IPAddress class
@@ -151,7 +151,7 @@ Param (
     [ValidateSet("AzureCloud", "AzureUSGovernment")][string] $AzureEnvironment = "AzureCloud",
     [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW")][string] $DeploymentOption = "DeployAppOnly",
     [ValidateSet("PowerShellOnly", "PowerShellWithJSON", "PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
-    [switch]$skipModules
+    [switch]$skipModuleInstall
 )
 
 #region DefaultHashtables
@@ -228,15 +228,9 @@ $startTimeStamp = Get-Date
 $startTimeStampAsString = [string]$startTimeStamp.GetDateTimeFormats([char]"s").Replace(":", "-")
 New-Item -Path .\TranscriptLogs -ItemType Directory | Out-Null
 Start-Transcript -Path ".\TranscriptLogs\POCEnvironment-$startTimeStampAsString.log"
-#END Creating transcript log directory and transcript files
-
 Write-Output "Started script: $StartTimeStamp"
-Write-Output "Setting the PSGallery as a trusted repository for module download and installation (if needed)"
-Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted -Verbose
-Write-Output "Configuring security protocol to use TLS 1.2 for Nuget support when installing modules."
-[ServicePointManager]::SecurityProtocol = [SecurityProtocolType]::Tls12
+#END Creating transcript log directory and transcript files
 #endregion PreExecutionHandling
-
 
 #region MainProcessing
 # Importing the Az modules
@@ -265,6 +259,7 @@ Switch ($AzureEnvironment) {
 
                 $subscription = Select-AzSubscriptionFromList
                 Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
+                Update-AzConfig -DefaultSubscriptionForLogin $subscription -Verbose -Scope CurrentUser -DisplayBreakingChangeWarning $true -EnableDataCollection $false
             } 
         
             "DeployAppOnly" {
@@ -304,32 +299,51 @@ switch ($TemplateLanguage) {
 $vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString
 $global:credential = [credential]::new($globalProperties.vmAdminUserName, $vmAdminPassword)
 
-if (!($skipModules)) {
+if (!($skipModuleInstall)) {
+    Write-Output "Setting the PSGallery as a trusted repository for module download and installation (if needed)"
+    Set-PackageSource -Name "PSGallery" -Trusted -Verbose
+    Write-Output "Configuring security protocol to use TLS 1.2 for PowerShellGet support when installing modules."
+    [ServicePointManager]::SecurityProtocol = [SecurityProtocolType]::Tls12
     Write-Output "Checking for installed and proper versions of required modules"
-    #BEGIN Installing/upgrading/checking Nuget package provider
-    $installedNugetVersion = $(Get-PackageProvider -Name Nuget -ErrorAction SilentlyContinue).Version.ToString()
-    $currentNugetVersion = $(Find-PackageProvider -Name Nuget).Version.ToString()
-    if (($currentNugetVersion -gt $installedNugetVersion) -or ($null -eq $installedNugetVersion)) {
-        Write-Output "Upgrading Nuget Version to $currentNugetVersion"
-        #Install-PackageProvider -Name Nuget -ForceBootstrap -Force -Verbose -RequiredVersion $currentNugetVersion.ToString()
+    #BEGIN Installing/upgrading/checking PowerShellGet package provider
+    $installedPSGetVersion = $(Get-PackageProvider -Name PowerShellGet -ErrorAction SilentlyContinue).Version.ToString()
+    $currentPSGetVersion = $(Find-PackageProvider -Name PowerShellGet).Version.ToString()
+    if (($currentPSGetVersion -gt $installedPSGetVersion) -or ($null -eq $installedPSGetVersion)) {
+        Write-Output "Upgrading PowerShellGet Version to $currentPSGetVersion"
+        Install-PackageProvider -Name PowerShellGet -ForceBootstrap -Force -Verbose -RequiredVersion $currentPSGetVersion.ToString()
     }
-    #END Installing/upgrading Nuget package provider
+    #END Installing/upgrading PowerShellGet package provider
 
-    #BEGIN Installing/upgrading/checking required modules
+    #BEGIN Installing/upgrading/checking required Az modules
     foreach ($requiredModule in $requiredModules) {
-        $installedVersion = $(Get-Module -Name $requiredModule -ListAvailable -ErrorAction SilentlyContinue).Version.ToString() 
-        $currentVersion = $(Find-Module -Name $requiredModule).Version.ToString()
+        $installedVersion = $(Get-Package -Name $requiredModule -ProviderName PowerShellGet -ErrorAction SilentlyContinue).Version.ToString() 
+        $currentVersion = $(Find-Package -Name $requiredModule -ProviderName PowerShellGet).Version.ToString()
         if (($currentVersion -gt $installedVersion) -or ($null -eq $installedVersion)) {
             Write-Output "Upgrading $requiredModule to version $currentVersion"
-            Install-Module -Name $requiredModule -Repository "PSGallery" -Scope CurrentUser -AllowClobber -Force
+            Install-Package -Name $requiredModule -Source "PSGallery" -ProviderName PowerShellGet -Type Module -Scope CurrentUser -AllowClobber -InstallUpdate -Force
         }
     }
     #END Installing/upgrading/checking Az modules
+
+    #BEGIN Installing/upgrading required DSC resources
+    foreach ($requiredDSCResource in $requiredDSCResources) {
+        $installedDSCResourceVersion = $(Get-Package -Name $requiredDSCResource -ErrorAction SilentlyContinue).Version.ToString()
+        $currentDSCResourceVersion = $(Find-Package -Name $requiredDSCResource).Version.ToString()
+        if (($currentDSCResourceVersion -gt $installedDSCResourceVersion) -or ($null -eq $installedDSCResourceVersion)) {
+            Write-Output "Upgrading $requiredDSCResource to version $currentDSCResourceVersion"
+            Install-Package -Name $requiredDSCResource -Source "PSGallery" -ProviderName PowerShellGet -Type Module -Scope CurrentUser -AllowClobber -InstallUpdate -Force
+            Import-DscResource -ModuleName $requiredDSCResource
+        }
+    }
+    #END Installing/upgrading required DSC resources
+}
+else {
+    ### Validate the required modules are at least installed, EXIT if not
 }
 
 # Determine the latest VM image version
-$imageVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object {$PSItem.Split(".")[1] -as [int]} | Sort-Object -Descending | Select-Object -First 1
-$selectedVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object {$PSItem.Version -like "*$imageVersion*"} | Select-Object -ExpandProperty Version
+$imageVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object { $PSItem.Split(".")[1] -as [int] } | Sort-Object -Descending | Select-Object -First 1
+$selectedVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object { $PSItem.Version -like "*$imageVersion*" } | Select-Object -ExpandProperty Version
 
 # Import the configuration data
 . .\Deploy-POCEnvironmentData.ps1
