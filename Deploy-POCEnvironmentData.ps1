@@ -2,12 +2,19 @@
 
 [string]$uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
 [string]$localMachinePublicIP = Invoke-RestMethod http://ipinfo.io/json | Select-Object -ExpandProperty ip
-[string]$lawMonitoringSolutions = @("Updates","ChangeTracking","Security","ServiceMap","AzureActivity","VMInsights","AzureAutomation","NetworkMonitoring")
+[string]$lawMonitoringSolutions = @("Updates", "ChangeTracking", "Security", "ServiceMap", "AzureActivity", "VMInsights", "AzureAutomation", "NetworkMonitoring")
 [string[]]$requiredModules = @("Az", "Az.MonitoringSolutions", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
 [string[]]$requiredDSCResources = @("xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")  
 [string[]]$runbookModules = @("Az.Accounts", "Az.Resources", "Az.Compute", "Az.Automation", "Az.Network")
 
-
+if ($AzureEnvironment -eq "AzureCloud") {
+    [string]$storageDnsSuffix = ".blob.core.windows.net"
+    [string]$dnsNameLabelSuffix = ".cloudapp.azure.com"
+}
+else {
+    [string]$storageDnsSuffix = ".blob.core.usgovcloudapi.net"
+    [string]$dnsNameLabelSuffix = ".cloudapp.usgovcloudapi.net"
+}
 #endregion Strings
 
 #region hashtables
@@ -207,34 +214,34 @@
     storageAccountSkuName                = "Standard_LRS"
     storageAccountAccessTier             = "Hot"
     storageAccountEnableHttpsTrafficOnly = $true
-    storageAccountContainerName = 'stageartifacts'
+    storageAccountContainerName          = 'stageartifacts'
     vmAdminUserName                      = 'adm.infra.user'
     vmSize                               = 'Standard_D1_v2'
     vmImage                              = $(Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
 }
 
 [hashtable]$hubProperties = @{
-    hubNC                       = 'INF'
-    hubStaPrefix                = 1
+    hubNC                     = 'INF'
+    hubStaPrefix              = 1
     #ResourceNames
-    resourceGroupName           = $selectedHubRegionCode, $hubProperties.hubNC, "NP", $namingConstructs.rgNC -join "-"
-    storageAccountName          = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
-    aaName                      = $selectedHubRegionCode, $namingConstructs.aaaNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.aaaNC -join "-"
-    lawName                     = $selectedHubRegionCode, $hubResources.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.alaNC -join "-"
-    SubnetNameJMP               = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.subnetNC -join "-"
-    NSGNameJMP                  = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.nsgNC -join "-"
-    PubIPNameJMP                = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC -join "-"
-    JMPVMName                   = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
-    JMPNicName                  = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-NIC-01" -join "-"
-    JMPOSDiskName               = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-OSDisk-01" -join "-"
-    JMPDataDiskName             = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-DataDisk-01" -join "-"
-    SubnetNameAFW               = "AzureFirewallSubnet"
-    VNetName                    = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.vnetNC -join "-"
-    FWName                      = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.fwNC -join "-"
+    resourceGroupName         = $selectedHubRegionCode, $hubProperties.hubNC, "NP", $namingConstructs.rgNC -join "-"
+    storageAccountName        = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
+    aaName                    = $selectedHubRegionCode, $namingConstructs.aaaNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.aaaNC -join "-"
+    lawName                   = $selectedHubRegionCode, $hubResources.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.alaNC -join "-"
+    SubnetNameJMP             = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.subnetNC -join "-"
+    NSGNameJMP                = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.nsgNC -join "-"
+    PubIPNameJMP              = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC -join "-"
+    JMPVMName                 = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
+    JMPNicName                = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-NIC-01" -join "-"
+    JMPOSDiskName             = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-OSDisk-01" -join "-"
+    JMPDataDiskName           = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-DataDisk-01" -join "-"
+    SubnetNameAFW             = "AzureFirewallSubnet"
+    VNetName                  = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.vnetNC -join "-"
+    FWName                    = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.fwNC -join "-"
     #AutomationAccount
-    aaPlan                      = "Basic"
-    aaAssignSystemIdentity      = $true # For reference only
-    aaStartSchedule             = @{
+    aaPlan                    = "Basic"
+    aaAssignSystemIdentity    = $true # For reference only
+    aaStartSchedule           = @{
         Description  = "Start 0800 Weekdays LOCAL"
         Name         = "Start 0800 Weekdays LOCAL"
         StartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT08:00:00")
@@ -243,7 +250,7 @@
         DaysOfWeek   = "Monday,Tuesday,Wednesday,Thursday,Friday"
         Timezone     = "UTC"
     }
-    aaStopSchedule              = @{
+    aaStopSchedule            = @{
         Description  = "Stop 1800 Weekdays LOCAL"
         Name         = "Stop 1800 Weekdays LOCAL"
         StartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT18:00:00")
@@ -252,35 +259,35 @@
         DaysOfWeek   = "Monday,Tuesday,Wednesday,Thursday,Friday"
         Timezone     = "UTC"
     }
-    aaStartRunbook              = @{
+    aaStartRunbook            = @{
         Name         = "Start-VMs"
         Description  = "Starts all VMs in the resource group"
         Path         = "$PSScriptRoot\Runbooks\Start-VMs.ps1"
         LogVerbose   = $true
         ScheduleName = $hubProperties.aaStartSchedule.Name
-        Parameters  = @{
-            "operation"="start"
-            "env"=$AzureEnvironment
+        Parameters   = @{
+            "operation" = "start"
+            "env"       = $AzureEnvironment
         }
     }
-    aaStopRunbook               = @{
+    aaStopRunbook             = @{
         Name         = "Stop-VMs"
         Description  = "Stops all VMs in the resource group"
         Path         = "$PSScriptRoot\Runbooks\Stop-VMs.ps1"
         LogVerbose   = $true
         ScheduleName = $hubProperties.aaStopSchedule.Name
-        Parameters  = @{
-            "operation"="stop"
-            "env"=$AzureEnvironment
+        Parameters   = @{
+            "operation" = "stop"
+            "env"       = $AzureEnvironment
         }
     }
     #LogAnalyticsWorkspace
-    lawSku                      = "PerGB2018"
-    lawRetentionInDays          = 30
+    lawSku                    = "PerGB2018"
+    lawRetentionInDays        = 30
     #VirtualNetworkSubnets
     #JumpSubnetResources
-    SubnetAddressPrefixJMP      = "10.10.1.0/24"
-    NSGRulesJMP                 = @{
+    SubnetAddressPrefixJMP    = "10.10.1.0/24"
+    NSGRulesJMP               = @{
         name                     = AllowRdpInbound
         access                   = Allow
         description              = "Allow inbound RDP from internet"
@@ -293,33 +300,33 @@
         sourcePortRange          = *
     }
     #AFWSubnetResources
-    SubnetAddressPrefixAFW      = "10.10.0.0/24"
+    SubnetAddressPrefixAFW    = "10.10.0.0/24"
     #JumpServerPIP
-    PIPJumpServer               = @{
+    PIPJumpServer             = @{
         name                 = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC -join "-"
         allocationMethod     = "Dynamic"
         sku                  = "Standard"
         tier                 = "Regional"
         idleTimeoutInMinutes = 4
     }
-    PubIPAllocationMethod       = "Dynamic"
-    PubIPSku                    = "Standard"
-    PubIPTier                   = "Regional"
-    PubIPIdleTimeoutInMinutes   = 4
+    PubIPAllocationMethod     = "Dynamic"
+    PubIPSku                  = "Standard"
+    PubIPTier                 = "Regional"
+    PubIPIdleTimeoutInMinutes = 4
     #JumpServer
-    JMPOSDiskCreateOption       = "FromImage"
-    JMPDataDiskCreateOption     = "Empty"
-    JMPOSDiskSizeGB             = 32
-    JMPDataDiskSizeGB           = 32
-    JMPPrivateIPAddress         = "10.10.1.4"
+    JMPOSDiskCreateOption     = "FromImage"
+    JMPDataDiskCreateOption   = "Empty"
+    JMPOSDiskSizeGB           = 32
+    JMPDataDiskSizeGB         = 32
+    JMPPrivateIPAddress       = "10.10.1.4"
     #VirtualNetwork
-    VNetAddressPrefix           = "10.10.0.0/22"
+    VNetAddressPrefix         = "10.10.0.0/22"
     #AzureFirewall
-    FWSku                       = "AZFW_Hub"
-    FWSkuTier                   = "Standard"
-    FWVHub                      = $null
-    FWThreatIntelMode           = "Deny"
-    NatRule1                    = @{
+    FWSku                     = "AZFW_Hub"
+    FWSkuTier                 = "Standard"
+    FWVHub                    = $null
+    FWThreatIntelMode         = "Deny"
+    NatRule1                  = @{
         Name              = "RDPToJumpServer"
         SourceAddress     = $localMachinePublicIP
         TranslatedAddress = $hubResources.VMJMP.PrivateIP
@@ -327,55 +334,55 @@
         DestinationPort   = "50000"
         Protocol          = "TCP"
     }
-    NatRuleCollection           = @{
+    NatRuleCollection         = @{
         Name       = "NATforRDP"
         Priority   = 1100
         ActionType = "Allow"
     }
-    NetworkRule1                = @{
+    NetworkRule1              = @{
         Name               = "JumpAllowInternet"
         Protocol           = "TCP"
         SourceAddress      = $hubJmpServerPrvIp
         DestinationAddress = "*"
         DestinationPort    = @("80", "443")
     }
-    NetworkRule2                = @{
+    NetworkRule2              = @{
         Name               = "HubToSpoke"
         Protocol           = "Any"
         SourceAddress      = $hubResources.Vnet.AddressSpace
         DestinationAddress = $spokeResources.Vnet.AddressSpace
         DestinationPort    = "*"
     }
-    NetworkRule3                = @{
+    NetworkRule3              = @{
         Name               = "SpokeToHub"
         Protocol           = "Any"
         SourceAddress      = $spokeResources.Vnet.AddressSpace
         DestinationAddress = $hubResources.Vnet.AddressSpace
         DestinationPort    = "*"
     }
-    NetworkRuleCollection1      = @{
+    NetworkRuleCollection1    = @{
         Name       = "AllowInternet"
         Priority   = 1200
         ActionType = "Allow"
     }
-    NetworkRuleCollection2      = @{
+    NetworkRuleCollection2    = @{
         Name       = "AllowHubandSpoke"
         Priority   = 1250
         ActionType = "Allow"
     }
-    ApplicationRule1            = @{
+    ApplicationRule1          = @{
         Name          = "AllowAzurePaaSServices"
         SourceAddress = @($hubResources.Vnet.AddressSpace, $spokeResources.Vnet.AddressSpace)
         FQDNTag       = @("MicrosoftActiveProtectionService", "WindowsDiagnostics", "WindowsUpdate", "AzureBackup")
     }
-    ApplicationRule2            = @{
+    ApplicationRule2          = @{
         Name          = "AllowLogAnalytics"
         SourceAddress = @($hubResources.Vnet.AddressSpace, $spokeResources.Vnet.AddressSpace)
         Protocol      = "Https"
         Port          = 443
         TargetFqdn    = @("*.ods.opsinsights.azure.com", "*.oms.opsinsights.azure.com", "*.blob.core.windows.net", "*.azure-automation.net")
     }
-    ApplicationRuleCollection   = @{
+    ApplicationRuleCollection = @{
         Name       = "AllowAzurePaaS"
         Priority   = 1300
         ActionType = "Allow"

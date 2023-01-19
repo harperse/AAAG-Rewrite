@@ -1,14 +1,20 @@
 [Parameter(Mandatory = $true)][Microsoft.Azure.Commands.ActiveDirectory.ParameterSet("Hub", "Spoke", "Both")][string]$HubOrSpoke
 
 switch ($HubOrSpoke) {
-    { $_ -eq ("Hub" -or "Both") } {
+    { $_ -eq ("Hub") } {
+        New-POCAzDeployment -HubOrSpoke "Spoke"
         New-POCAzResourceGroup -HubOrSpoke "Hub"
-        New-POCAzStorageAccount -HubOrSpoke "Hub"
+        #New-POCAzStorageAccount -HubOrSpoke "Hub"
     }
-    { $_ -eq ("Spoke" -or "Both") } {
+    { $_ -eq ("Spoke") } {
         New-POCAzResourceGroup -HubOrSpoke "Spoke"
-        New-POCAzStorageAccount -HubOrSpoke "Spoke"
+        #New-POCAzStorageAccount -HubOrSpoke "Spoke"
     }
+
+# Everything else
+
+
+    <#
     "Hub" {
         
         # Enable VNet Peering
@@ -41,13 +47,13 @@ switch ($HubOrSpoke) {
             Write-Host "Hub VM Public IP FQDN: $hubVmPublicIpFqdn"
         }
 
-        <#
+        # ###
         $connectionMessage = @"
         To log into your new jump server: $serverName, you must change your login name to: $userName and specify the corresponding password you entered at the beginning of this script.
         Specify this DNS hostname for your RDP session: $fqdnEndPoint.
         "@
         Write-Output $connectionMessage
-        #>
+        # ###
 
         #Some other stuff
         if ($DeploymentOption -eq "DeployHubWithFW") {
@@ -97,3 +103,4 @@ switch ($HubOrSpoke) {
     }
     "Spoke" {}
 }
+#>

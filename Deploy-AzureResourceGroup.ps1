@@ -364,90 +364,18 @@ $Subscription = $Subscription.ToUpper()
 Select-AzSubscription -SubscriptionName $Subscription -Verbose
 $subscriptionId = (Select-AzSubscription -SubscriptionName $Subscription).Subscription.id
 
-Switch ($AzureEnvironment) {
-    "AzureCloud"
-    {
-        Write-Output "The list of available regions are :"
-        $regionCodes | Format-Table -AutoSize 
 
-        $hubRegionCode = Get-HubOrSpokeRegion
-        $hubRegionFullName = "$($regionCodes[$($hubRegionCode)])"
-        Write-Output "Hub region selected: $hubRegionCode = $hubRegionFullName"
-        Write-Output ""
 
-        $spokeRegionCode = Get-HubOrSpokeRegion
-        $spokeRegionFullName = "$($regionCodes[$($spokeRegionCode)])"
-        Write-Output "Spoke region selected: $spokeRegionCode = $spokeRegionFullName"
-        Write-Output ""
 
-        $storageDnsSuffix = ".blob.core.windows.net"
-        $dnsNameLabelSuffix = ".cloudapp.azure.com"
-    } # end condition
-    "AzureUSGovernment"
-    {
-        $regionCodeGovSpoke = "USGTX"
-        $regionCodeGovHub = "USGVA"
-        
-        $regionCode = $regionCodeGovSpoke
-        $hubRegionCode = $regionCodeGovHub
-        $hubRegionFullName = $regionCodesGov.USGVA
-        $regionFullName = $regionCodesGov.USGTX
 
-        $storageDnsSuffix = ".blob.core.usgovcloudapi.net"
-        $dnsNameLabelSuffix = ".cloudapp.usgovcloudapi.net"
-    } # end condition
-} # end switch
 
-#region Create resource groups
-$hubResourceGroupName = $hubRegionCode + "-INF-NP-RGP-01"
-$spokeResourceGroupName = $spokeRegionCode + "-APP-NP-RGP-01"
-New-AzResourceGroup -Name $hubResourceGroupName -Location $spokeRegionFullName -Verbose
-New-AzResourceGroup -Name $spokeResourceGroupName -Location $spokeRegionFullName -Verbose
-#endregion Create resource groups
-
-#region Create storage account
-$staPrefixSpoke = "1" # storage account name prefix for spoke
-$staPrefixHub = "2" # storage account name prefix for hub
-$staSuffix = "sta" # storage account name suffix
 
 # Ensure that the storage account name is globally unique in DNS
 
-[hashtable]$hubStaParams = @{
-    staName = $staPrefixHub + $staSuffix + $randomInfix
-    storageContainerName = $StorageContainerName 
-}
 
-[hashtable]$spokeStaParams = @{
-    staName = $staPrefixSpoke + $staSuffix + $randomInfix
-    storageContainerName = $StorageContainerName 
-}
 
 [string]$dateSuffix = (Get-Date -Format o).Substring(0,16).replace(":","")
-$hubStaDeployName = "staHubDeploy-" + $dateSuffix
-$spokeStaDeployName = "staSpokeDeploy-" + $dateSuffix
 
-New-AzResourceGroupDeployment -ResourceGroupName $hubResourceGroupName -Name $hubStaDeployName -TemplateFile $staTemplateFile -TemplateParameterObject $hubStaParams -Mode Incremental -Verbose -ErrorAction SilentlyContinue
-New-AzResourceGroupDeployment -ResourceGroupName $spokeResourceGroupName -Name $spokeStaDeployName -TemplateFile $staTemplateFile -TemplateParameterObject $spokeStaParams -Mode Incremental -Verbose -ErrorAction SilentlyContinue
-$hubStorageAccount = Get-AzStorageAccount -ResourceGroupName $hubResourceGroupName -Name $hubStaParams.staName
-$spokeStorageAccount = Get-AzStorageAccount -ResourceGroupName $spokeResourceGroupName -Name $spokeStaParams.staName
-#endregion Create storage account
-
-#region RUNBOOK PROPERTIES
-$startupScheduleName = "Start 0800 Weekdays LOCAL"
-$startupTime = $nowPlusOneDay.ToString("yyyy-MM-ddT08:00:00")
-$shutdownScheduleName = "Stop 1800 Weekdays LOCAL"
-$shutdownTime = $nowPlusOneDay.ToString("yyyy-MM-ddT18:00:00")
-$nowPlusOneDay = (Get-Date).AddDays(1)
-[string]$utcOffset = (Get-TimeZone).BaseUtcOffSet.hours
-$offset = Format-AutomationAccountScheduleTimeZoneOffset -offset $utcOffset
-
-$scheduleStopSuffix = ":00"
-$fullOffset = $offset + $scheduleStopSuffix
-$scheduledStopTime = $shutdownTime + $fullOffset
-$scheduledStartTime = $startupTime + $fullOffset
-$scheduledExpiryTime ="9999-12-31T00:00:00-00:00"
-# https://devblogs.microsoft.com/scripting/powertip-use-powershell-to-display-time-in-24-hour-format/
-#endregion RUNBOOK PROPERTIES
 
 # Create names for shared resources
 $aaaSuffix = "-AAA-01"
