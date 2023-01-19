@@ -26,6 +26,30 @@ switch ($HubOrSpoke) {
         # Link AAA to ALA
         Set-AzOperationalInsightsLinkedService -ResourceGroupName $hubResources.ResourceGroup.Name -WorkspaceName $hubResources.LogAnalytics.Name -Name "Automation" -ResourceId $hubResources.AutomationAccount.Id 
         # AAA MI rights to Contributor
+        $aaaManagedIdentityID = (Get-AzAutomationAccount -ResourceGroupName $aaaResourceGroupName -Name $AutomationAccountName).Identity.PrincipalId
+        New-AzRoleAssignment -ObjectId $aaaManagedIdentityID -Scope "/subscriptions/$subscriptionId" -RoleDefinitionName "Contributor"
+
+        # Output the FQDN endpoint for RDP connection
+        if ($DeploymentOption -eq "DeployHubWithFW") {
+            $hubFwPublicIp = Get-AzPublicIpAddress -Name $hubProperties.FwName -ResourceGroupName $$hubResources.ResourceGroup.Name -Verbose
+            $hubFwPublicIpFqdn = $hubFwPublicIp.DnsSettings.Fqdn
+            Write-Host "Azure Firewall Public IP FQDN: $hubFwPublicIpFqdn`:50000"
+        }
+        else {
+            $hubVmPublicIp = Get-AzPublicIpAddress -Name $hubProperties.JMPVmName -ResourceGroupName $hubResources.ResourceGroup.Name -Verbose
+            $hubVmPublicIpFqdn = $hubVmPublicIp.DnsSettings.Fqdn
+            Write-Host "Hub VM Public IP FQDN: $hubVmPublicIpFqdn"
+        }
+
+        <#
+        $connectionMessage = @"
+        To log into your new jump server: $serverName, you must change your login name to: $userName and specify the corresponding password you entered at the beginning of this script.
+        Specify this DNS hostname for your RDP session: $fqdnEndPoint.
+        "@
+        Write-Output $connectionMessage
+        #>
+
+        #Some other stuff
         if ($DeploymentOption -eq "DeployHubWithFW") {
             $hubRouteTable = $hubRegionCode + "-INF-NP-UDR-01"
             $hubFwSubnetName = "AzureFirewallSubnet"
@@ -45,16 +69,17 @@ switch ($HubOrSpoke) {
 
 
             $appRouteTableObj = [PSCustomObject]@{
-                tableName = $regionCode + "-APP-NP-UDR-01"
-                zeroRoute = "ZeroTraffic"
-                zeroAddrPrefix = "0.0.0.0/0"
+                tableName       = $regionCode + "-APP-NP-UDR-01"
+                zeroRoute       = "ZeroTraffic"
+                zeroAddrPrefix  = "0.0.0.0/0"
                 zeroNextHopType = $hubRouteNextHopType
                 zeroNextHopAddr = $hubFwPrvIp
-                hubRoute = "RouteToHub"
-                hubAddrPrefix = "10.10.0.0/22"
-                hubNextHopType = $hubRouteNextHopType
-                hubNextHopAddr = $hubFwPrvIp
+                hubRoute        = "RouteToHub"
+                hubAddrPrefix   = "10.10.0.0/22"
+                hubNextHopType  = $hubRouteNextHopType
+                hubNextHopAddr  = $hubFwPrvIp
             } # end PSCustomObject
+
             # Create route confiugration
             $zeroTrafficConfig = New-AzRouteConfig -Name $appRouteTableObj.zeroRoute -AddressPrefix $appRouteTableObj.zeroAddrPrefix -NextHopType $appRouteTableObj.zeroNextHopType -NextHopIpAddress $appRouteTableObj.zeroNextHopAddr -Verbose
             $hubTrafficConfig = New-AzRouteConfig -Name $appRouteTableObj.hubRoute -AddressPrefix $appRouteTableObj.hubAddrPrefix -NextHopType $appRouteTableObj.hubNextHopType -NextHopIpAddress $appRouteTableObj.hubNextHopAddr -Verbose

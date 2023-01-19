@@ -258,6 +258,10 @@
         Path         = "$PSScriptRoot\Runbooks\Start-VMs.ps1"
         LogVerbose   = $true
         ScheduleName = $hubProperties.aaStartSchedule.Name
+        Parameters  = @{
+            "operation"="start"
+            "env"=$AzureEnvironment
+        }
     }
     aaStopRunbook               = @{
         Name         = "Stop-VMs"
@@ -265,6 +269,10 @@
         Path         = "$PSScriptRoot\Runbooks\Stop-VMs.ps1"
         LogVerbose   = $true
         ScheduleName = $hubProperties.aaStopSchedule.Name
+        Parameters  = @{
+            "operation"="stop"
+            "env"=$AzureEnvironment
+        }
     }
     #LogAnalyticsWorkspace
     lawSku                      = "PerGB2018"

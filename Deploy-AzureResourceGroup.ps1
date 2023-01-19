@@ -714,70 +714,8 @@ else
 } # end else
 #endregion deploy spoke
 
-$aaaResourceGroupName = $null
-
-if (($DeploymentOption -eq "DeployHubWithoutFW") -or ($DeploymentOption -eq "DeployHubWithFW"))
-{
-    $aaaResourceGroupName = $hubResourceGroupName
-
-} # end condition
-
-If ($DeploymentOption -eq "DeployHubWithoutFW")
-{
-    $serverName = $hubParameters.hubJumpServerName
-    $userName = $serverName + "\" + $hubParameters.adminUserName
-    $fqdnEndPoint = (Get-AzPublicIpAddress -ResourceGroupName $hubResourceGroupName | Where-Object { $_.Name -match $serverName}).DnsSettings.fqdn
-} # end if
-ElseIf ($DeploymentOption -eq "DeployHubWithFW")
-{
-    $serverName = $hubParameters.hubFwName
-    $userName = $hubParameters.hubJumpServerName + "\" + $hubParameters.adminUserName
-    $fqdnEndPoint = (Get-AzPublicIpAddress -ResourceGroupName $hubResourceGroupName | Where-Object { $_.Name -match $serverName}).DnsSettings.fqdn + ":50000"
-
-} # end elseif
-ElseIf ($DeploymentOption -eq "DeployAppOnly")
-{
-    $fqdnEndPoint = (Get-AzPublicIpAddress -ResourceGroupName $resourceGroupName | Where-Object {$_.Name -match $serverName}).DnsSettings.fqdn
-    $aaaResourceGroupName = $resourceGroupName
-} # end elseif
-Else
-{
-    Write-Verbose $noDeploymentOptionMessage
-    Exit
-} # end else
-#region runbooks
 
 
-# Assign the Automation Account Managed Identity Contributor rights over the subscription so it can startup/shutdown VM(s) and the Az Firewall
-if ($DeploymentOption -ne "DeployAppOnly")
-{
-    $aaaResourceGroupName = $hubResourceGroupName
-}
-
-$aaaManagedIdentityID = (Get-AzAutomationAccount -ResourceGroupName $aaaResourceGroupName -Name $AutomationAccountName).Identity.PrincipalId
-New-AzRoleAssignment -ObjectId $aaaManagedIdentityID -Scope "/subscriptions/$subscriptionId" -RoleDefinitionName "Contributor"
-# https://docs.microsoft.com/en-us/azure/automation/learn/powershell-runbook-managed-identity
-
-# Import runbook modules
-New-AutomationAccountModules -ResourceGroupName $aaaResourceGroupName -Modules $runbookModules -AutomationAccountName $AutomationAccountName -Verbose
-# Allow sufficient time for runbook modules to be imported
-# import and publish runbook scripts
-
-# Get current environment
-$env = (Get-AzSubscription | Select-Object -ExpandProperty ExtendedProperties).Environment
-# VM startup/shutdown runbook parameters
-$startRunbookParams = @{"operation"="start";"env"=$env}
-$stopRunbookParams = @{"operation"="stop";"env"=$env}
-
-
-
-
-
-$connectionMessage = @"
-To log into your new jump server: $serverName, you must change your login name to: $userName and specify the corresponding password you entered at the beginning of this script.
-Specify this DNS hostname for your RDP session: $fqdnEndPoint.
-"@
-Write-Output $connectionMessage
 
 
 
