@@ -1,10 +1,13 @@
-[Parameter(Mandatory = $true)][Microsoft.Azure.Commands.ActiveDirectory.ParameterSet("Hub", "Spoke")][string]$HubOrSpoke
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke")][string]$HubOrSpoke
+)
 
 switch ($HubOrSpoke) {
     "Hub" {
         $hubResources.Add("ResourceGroup", $(New-AzResourceGroup `
                     -Name $hubProperties.resourceGroupName `
-                    -Location $selectedHubRegionCode `
+                    -Location $azHubLocation `
                     -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
             )
         )
@@ -12,7 +15,7 @@ switch ($HubOrSpoke) {
     "Spoke" {
         $spokeResources.Add("ResourceGroup", $(New-AzResourceGroup `
                     -Name $spokeProperties.resourceGroupName `
-                    -Location $selectedSpokeRegionCode `
+                    -Location $azSpokeLocation `
                     -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue })
         )
     }

@@ -1,13 +1,17 @@
-[Parameter(Mandatory = $true)][Microsoft.Azure.Commands.ActiveDirectory.ParameterSet("Hub", "Spoke", "Both")][string]$HubOrSpoke
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke")][string]$HubOrSpoke
+)
+
 
 switch ($HubOrSpoke) {
     { $_ -eq ("Hub") } {
-        New-POCAzDeployment -HubOrSpoke "Spoke"
-        New-POCAzResourceGroup -HubOrSpoke "Hub"
+        .\devPowerShell\New-POCAzDeployment -HubOrSpoke "Spoke"
+        .\devPowerShell\New-POCAzResourceGroup -HubOrSpoke "Hub"
         #New-POCAzStorageAccount -HubOrSpoke "Hub"
     }
     { $_ -eq ("Spoke") } {
-        New-POCAzResourceGroup -HubOrSpoke "Spoke"
+        .\devPowerShell\New-POCAzResourceGroup -HubOrSpoke "Spoke"
         #New-POCAzStorageAccount -HubOrSpoke "Spoke"
     }
 }

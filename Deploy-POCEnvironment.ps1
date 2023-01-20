@@ -24,6 +24,11 @@ Param (
     [Parameter(Mandatory = $false)][bool]$SkipModuleInstall = $true
 )
 
+if ($PSScriptRoot -ne $pwd) {
+    Write-Warning "This script must be run from the directory it is located in. Changing directories."
+    Push-Location $($MyInvocation.MyCommand.Path | Split-Path -Parent)
+}
+
 #region Functions
 
 function New-TextBox {
@@ -198,6 +203,10 @@ Switch ($AzureEnvironment) {
                     Write-Output "The location you entered is not valid. Please try again."
                     exit
                 }
+                if ($azHubLocation -eq $azSpokeLocation) {
+                    Write-Output "The hub and spoke locations cannot be the same. Please try again."
+                    exit
+                }
         
                 $selectedHubRegionCode = $global:regionCodes[$azHubLocation]
                 $selectedSpokeRegionCode = $global:regionCodes[$azSpokeLocation]
@@ -225,8 +234,11 @@ Switch ($AzureEnvironment) {
 } # end switch
 
 $vmAdminUserName = "adm.infra.user"
-#$vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString
-$global:credential = [pscredential]::new($vmAdminUserName, $(Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString))
+$vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment"
+if ($vmAdminPassword -match "^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{12,}$") {
+    $vmAdminPassword = $vmAdminPassword | ConvertTo-SecureString -AsPlainText -Force
+}
+$global:credential = [pscredential]::new($vmAdminUserName, $vmAdminPassword)
 
 if (!($skipModuleInstall)) {
     Write-Output "Setting the PSGallery as a trusted repository for module download and installation (if needed)"
@@ -273,6 +285,7 @@ else {
 # Importing the Az modules
 Write-Output "Importing the Az modules..."
 Write-Output "Expected runtime: 45 seconds"
+Import-Module Az.Accounts -Force -MinimumVersion 2.11.1 -Verbose:$false
 Import-Module Az -Force -Verbose:$false
 
 # Determine the latest VM image version
@@ -286,12 +299,12 @@ switch ($TemplateLanguage) {
     "PowerShellOnly" {
         # Fetch raw files from Github, copy to \DeploymentFiles and launch deployment script
         if ($DeploymentOption -eq "DeployAppOnly") {
-            Write-Output "Deploying the application only"
-            .\devPowerShell\New-POCAzDeployment.ps1 -HubOrSpoke Spoke
+            Write-Output "Deploying the spoke resources only"
+            .\devPowerShell\New-POCAzDeployment.ps1 -HubOrSpoke "Spoke"
         }
         else {
-            Write-Output "Deploying the hub and spoke network"
-            .\devPowerShell\New-POCAzDeployment.ps1 -HubOrSpoke Hub
+            Write-Output "Deploying the hub and spoke resources"
+            .\devPowerShell\New-POCAzDeployment.ps1 -HubOrSpoke "hub"
         }
     }
     "PowerShellWithJSON" {}
