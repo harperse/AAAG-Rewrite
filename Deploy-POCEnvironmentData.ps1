@@ -296,8 +296,8 @@ else {
         direction                = "Inbound"
         priority                 = 100
         protocol                 = "Tcp"
-        sourceAddressPrefix      = *
-        sourcePortRange          = *
+        sourceAddressPrefix      = "*"
+        sourcePortRange          = "*"
     }
     #AFWSubnetResources
     SubnetAddressPrefixAFW    = "10.10.0.0/24"

@@ -21,7 +21,7 @@ Param (
     [ValidateSet("PowerShellOnly", "PowerShellWithJSON", "PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
     [Parameter(Mandatory = $false)][string]$TenantId = "16b3c013-d300-468d-ac64-7eda0820b6d3",
     [Parameter(Mandatory = $false)][string]$SubscriptionId = "ee9312f3-798c-4110-8c32-2cf6ce086f6f",
-    [Parameter(Mandatory = $false)][bool]$SkipModuleInstall = $false
+    [Parameter(Mandatory = $false)][bool]$SkipModuleInstall = $true
 )
 
 #region Functions
@@ -37,11 +37,11 @@ function New-TextBox {
 
     $form = New-Object System.Windows.Forms.Form
     $form.Text = $formText
-    $form.Size = New-Object System.Drawing.Size(300, 200)
+    $form.Size = New-Object System.Drawing.Size(500, 200)
     $form.StartPosition = 'CenterScreen'
 
     $okButton = New-Object System.Windows.Forms.Button
-    $okButton.Location = New-Object System.Drawing.Point(75, 120)
+    $okButton.Location = New-Object System.Drawing.Point(175, 120)
     $okButton.Size = New-Object System.Drawing.Size(75, 23)
     $okButton.Text = 'OK'
     $okButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
@@ -49,7 +49,7 @@ function New-TextBox {
     $form.Controls.Add($okButton)
 
     $cancelButton = New-Object System.Windows.Forms.Button
-    $cancelButton.Location = New-Object System.Drawing.Point(150, 120)
+    $cancelButton.Location = New-Object System.Drawing.Point(250, 120)
     $cancelButton.Size = New-Object System.Drawing.Size(75, 23)
     $cancelButton.Text = 'Cancel'
     $cancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
@@ -58,13 +58,13 @@ function New-TextBox {
 
     $label = New-Object System.Windows.Forms.Label
     $label.Location = New-Object System.Drawing.Point(10, 20)
-    $label.Size = New-Object System.Drawing.Size(280, 20)
+    $label.Size = New-Object System.Drawing.Size(480, 20)
     $label.Text = $labelText
     $form.Controls.Add($label)
 
     $textBox = New-Object System.Windows.Forms.TextBox
     $textBox.Location = New-Object System.Drawing.Point(10, 40)
-    $textBox.Size = New-Object System.Drawing.Size(260, 20)
+    $textBox.Size = New-Object System.Drawing.Size(460, 20)
     $form.Controls.Add($textBox)
 
     $form.Topmost = $true
@@ -245,7 +245,7 @@ if (!($skipModuleInstall)) {
 
     #BEGIN Installing/upgrading/checking required Az modules
     foreach ($requiredModule in $requiredModules) {
-        $installedVersion = $(Get-Package -Name $requiredModule -ProviderName PowerShellGet -ErrorAction SilentlyContinue).Version.ToString() 
+        $installedVersion = $(Get-Module -Name $requiredModule -ListAvailable -ErrorAction SilentlyContinue).Version.ToString() 
         $currentVersion = $(Find-Package -Name $requiredModule -ProviderName PowerShellGet).Version.ToString()
         if (($currentVersion -gt $installedVersion) -or ($null -eq $installedVersion)) {
             Write-Output "Upgrading $requiredModule to version $currentVersion"
@@ -276,16 +276,23 @@ Write-Output "Expected runtime: 45 seconds"
 Import-Module Az -Force -Verbose:$false
 
 # Determine the latest VM image version
-[string]$imageVersion = Get-AzVMImage -Location $azHubLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object { $PSItem.Split(".")[1] -as [int] } | Sort-Object -Descending | Select-Object -First 1
-[string]$selectedVersion = Get-AzVMImage -Location $azHubLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object { $PSItem.Version -like "*$imageVersion*" } | Select-Object -ExpandProperty Version
+[string]$imageVersion = Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object { $PSItem.Split(".")[1] -as [int] } | Sort-Object -Descending | Select-Object -First 1
+[string]$selectedVersion = Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object { $PSItem.Version -like "*$imageVersion*" } | Select-Object -ExpandProperty Version
 
 # Import the configuration data
 . .\Deploy-POCEnvironmentData.ps1
 
 switch ($TemplateLanguage) {
     "PowerShellOnly" {
-        .\devPowerShell\New-POCAzDeployment.ps1
         # Fetch raw files from Github, copy to \DeploymentFiles and launch deployment script
+        if ($DeploymentOption -eq "DeployAppOnly") {
+            Write-Output "Deploying the application only"
+            .\devPowerShell\New-POCAzDeployment.ps1 -HubOrSpoke Spoke
+        }
+        else {
+            Write-Output "Deploying the hub and spoke network"
+            .\devPowerShell\New-POCAzDeployment.ps1 -HubOrSpoke Hub
+        }
     }
     "PowerShellWithJSON" {}
     "PowerShellWithBicep" {}
