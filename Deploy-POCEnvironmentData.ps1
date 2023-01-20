@@ -217,7 +217,7 @@ else {
     storageAccountContainerName          = 'stageartifacts'
     vmAdminUserName                      = 'adm.infra.user'
     vmSize                               = 'Standard_D1_v2'
-    vmImage                              = $(Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
+    vmImage                              = $(Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
 }
 
 [hashtable]$hubProperties = @{

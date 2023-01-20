@@ -224,8 +224,9 @@ Switch ($AzureEnvironment) {
     }
 } # end switch
 
+$vmAdminUserName = "adm.infra.user"
 #$vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString
-$global:credential = [pscredential]::new($globalProperties.vmAdminUserName, $(Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString))
+$global:credential = [pscredential]::new($vmAdminUserName, $(Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString))
 
 if (!($skipModuleInstall)) {
     Write-Output "Setting the PSGallery as a trusted repository for module download and installation (if needed)"
@@ -275,8 +276,8 @@ Write-Output "Expected runtime: 45 seconds"
 Import-Module Az -Force -Verbose:$false
 
 # Determine the latest VM image version
-$imageVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object { $PSItem.Split(".")[1] -as [int] } | Sort-Object -Descending | Select-Object -First 1
-$selectedVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object { $PSItem.Version -like "*$imageVersion*" } | Select-Object -ExpandProperty Version
+[string]$imageVersion = Get-AzVMImage -Location $azHubLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object { $PSItem.Split(".")[1] -as [int] } | Sort-Object -Descending | Select-Object -First 1
+[string]$selectedVersion = Get-AzVMImage -Location $azHubLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object { $PSItem.Version -like "*$imageVersion*" } | Select-Object -ExpandProperty Version
 
 # Import the configuration data
 . .\Deploy-POCEnvironmentData.ps1

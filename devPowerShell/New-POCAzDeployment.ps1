@@ -10,6 +10,7 @@ switch ($HubOrSpoke) {
         New-POCAzResourceGroup -HubOrSpoke "Spoke"
         #New-POCAzStorageAccount -HubOrSpoke "Spoke"
     }
+}
 
 # Everything else
 
