@@ -1,5 +1,7 @@
 #requires -version 7.0
+<#
 #requires -RunAsAdministrator
+#> 
 
 # For IPAddress class
 Using Namespace System.Net
@@ -9,150 +11,89 @@ Using Namespace System.Runtime.InteropServices
 Using Namespace Microsoft.Azure.Commands.Management.Storage.Models
 Using Namespace Microsoft.Azure.Commands.Network.Models
 
-<#
-.SYNOPSIS
-Creates a PoC infrastructure to practice Azure administration, governance, automation, DSC, PowerShell and PowerShell core topics.
-
-.DESCRIPTION
-This script will create a PoC infrastructure to practice Azure administration, governance, automation, DSC, PowerShell and PowerShell core topics.
-
-PRE-REQUISITES:
-
-1. If you already have the Az modules installed, you may still encounter the following error:
-    The script 'Deploy-POCEnvironment.ps1' cannot be run because the following modules that are specified by the "#requires" statements of the script are missing: Az.
-    At line:0 char:0
-To resolve, please run the following command to import the Az modules into your current session.
-Import-Module -Name Az -Verbose
-
-2. Before executing this script, ensure that you change the directory to the directory where the script is located. For example, if the script is in: c:\poc-package-#.#.#\Deploy-POCEnvironment.ps1 
-(where #.#.# represents the verion) then change to this directory using the following command:
-Set-Location -Path C:\poc-package-#.#.#
-
-.PARAMETER StorageAccountContainerName
-This is the storage account container name where the artifacts for this deployment will be uploaded to and referenced during the deployment.
-
-.PARAMETER SpokeTemplateFile
-This is the main ARM template file used for the deployment. This template file will call a series of nested templates, located in the nested templates folder.
-
-.PARAMETER SpokeAAAwithLAWTemplateFile
-This is used for specifying Azure Automation Account and Log Analytics Workspace ARM template file used for the deployment. This template file will call a series of nested templates, located in the nested templates folder.
-
-.PARAMETER ArtifactsStagingDirectory
-This parameter represents the current directory from where this script executes.
-
-.PARAMETER DSCSourceFolder
-This folder contains the DSC scripts, configuration data and the required zipped DSC resource modules
-
-.PARAMETER vmSize
-This is the size for all VMs provisioned in the app (spoke) network. It uses the default value of "Standard_D1_v2" to offer the best performance and availability accross all regions, but can be easily changed if needed in the future.
-
-.PARAMETER ValidateOnly
-This is used to validate the integrity of the ARM template
-
-.PARAMETER AzureEnvironment
-Select the azure environment for this solution from the following options: AzureCloud, AzureUSGovernment
-AzureCloud: [Default] The solution will be deployed to the Azure Commercial cloud environment
-AzureUSGovernment: The solution will be deployed to the Azure US Government cloud environment
-
-.PARAMETER DeploymentOption
-Use this parameter to select from the following: DeployAppOnly, DeployHubWithoutFW, DeployHubWithFW
-DeployAppOnly: [Default] Will deploy the application network only
-DeployHubWithoutFW: Automates the deployment of the hub network without the Azure Firewall resource
-DeployHubWithFW: Automates the deployment o the hub network with the Azure Firewall resource
-
-.PARAMETER skipModules
-This switch parameter is used primarily for development and testing of this script to accelerate the testing and iteration cycles by skipping the time-consuming installation of Az and other modules if the script has previously been executed.
-
-.EXAMPLE
-[Validate template only but do not deploy]
-From the current directory in which this script is located, execute using the following command
-.\Deploy-POCEnvironment.ps1 -ValidateOnly -skipModules -Verbose
-
-.EXAMPLE
-[Deploy infrastrcture]
-From the current directory in which this script is located, execute using the following command or execute from a PowerShell host (VSCode, Visual Studio 2017/2019, PowerShell ISE, etc.)
-. .\Deploy-POCEnvironment.ps1 -Verbose
-
-.EXAMPLE
-[WITH THE -DeploymentOption parameter]
-Please run the script using one of these values for the -DeploymentOption parameter, i.e.
-NOTE: If this parameter isn't specified, the default value DeployAppOnly will be used to deploy just the App network.
-\Deploy-POCEnvironment.ps1 -DeploymentOption DeployAppOnly (Default)
-
-.EXAMPLE
-. .\Deploy-POCEnvironment.ps1 -DeploymentOption DeployHubWithoutFW -Verbose
-
-.EXAMPLE
-. .\Deploy-POCEnvironment.ps1 -DeploymentOption DeployHubWithFW -Verbose
-
-.INPUTS
-None
-
-.OUTPUTS
-The outputs generated from this script includes:
-1. A transcript log file to provide the full details of script execution. It will use the name format: Set-SecureCredentials-TRANSCRIPT-<Date-Time>.log
-
-.NOTES
-
-CONTRIBUTORS
-1. Preston K. Parsard
-2. Zeinab Mokhtarian Koorabbasloo
-3. Robert Lightner
-4. Sean Harper
-
-LEGAL DISCLAIMER:
-This Sample Code is provided for the purpose of illustration only and is not intended to be used in a production environment. 
-THIS SAMPLE CODE AND ANY RELATED INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED,
-INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-We grant You a nonexclusive, royalty-free right to use and modify the Sample Code and to reproduce and distribute the object code form of the Sample Code, provided that You agree:
-(i) to not use Our name, logo, or trademarks to market Your software product in which the Sample Code is embedded;
-(ii) to include a valid copyright notice on Your software product in which the Sample Code is embedded; and
-(iii) to indemnify, hold harmless, and defend Us and Our suppliers from and against any claims or lawsuits, including attorneys' fees, that arise or result from the use or distribution of the Sample Code.
-This posting is provided "AS IS" with no warranties, and confers no rights.
-
-.LINK
-1: https://millerb.co.uk/2019/02/28/My-Vscode-Setup.html#visual-studio-code
-2: https://github.com/DeanCefola/AzureFirewall/blob/master/AzureFirewall.json
-3. https://github.com/Azure/azure-quickstart-templates/tree/master/201-nsg-dmz-in-vnet/
-4. https://docs.microsoft.com/en-us/azure/best-practices-network-security
-5. https://www.softwaretestinghelp.com/what-is-software-testing-life-cycle-stlc/
-6. https://www.testingexcellence.com/software-testing-glossary/
-7. https://www.red-gate.com/simple-talk/cloud/infrastructure-as-a-service/azure-resource-manager-arm-templates/
-8. https://azure.microsoft.com/en-us/blog/create-flexible-arm-templates-using-conditions-and-logical-functions/
-9. https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-ip-addresses-overview-arm
-10. https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-get-started-connect-with-ps
-11. https://azure.microsoft.com/en-us/updates/global-vnet-peering-available-in-azure-government/
-12. https://docs.microsoft.com/en-us/azure/azure-monitor/insights/service-map-configure
-13. https://www.clearpeople.com/insights/blog/2017/april/automation-account-schedules-with-time-zones
-        # https://azure.microsoft.com/en-us/global-infrastructure/regions/
-        # http://map.buildazure.com/
-        # https://azurespeedtest.azurewebsites.net/
-        # https://devblogs.microsoft.com/scripting/powertip-identify-regions-in-azure/
-        # https://stackoverflow.com/questions/66341090/facing-issues-on-deploying-template-for-azure-file-share-storage-account
-
-
-.COMPONENT
-Azure Infrastructure, PowerShell, ARM, JSON
-
-.ROLE
-Automation Engineer
-DevOps Engineer
-Azure Engineer
-Azure Administrator
-Azure Architect
-
-.FUNCTIONALITY
-Deploys an Azure PoC Infrastructure
-
-#>
-
 [CmdletBinding()]
 Param (
+    #[Parameter(Mandatory = $true)]
     [ValidateSet("AzureCloud", "AzureUSGovernment")][string] $AzureEnvironment = "AzureCloud",
-    [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW")][string] $DeploymentOption = "DeployAppOnly",
+    #[Parameter(Mandatory = $true)]
+    [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW")][string] $DeploymentOption = "DeployHubWithoutFW",
+    #[Parameter(Mandatory = $true)]
     [ValidateSet("PowerShellOnly", "PowerShellWithJSON", "PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
-    [switch]$skipModuleInstall
+    [Parameter(Mandatory = $false)][string]$TenantId = "16b3c013-d300-468d-ac64-7eda0820b6d3",
+    [Parameter(Mandatory = $false)][string]$SubscriptionId = "ee9312f3-798c-4110-8c32-2cf6ce086f6f",
+    [Parameter(Mandatory = $false)][bool]$SkipModuleInstall = $false
 )
+
+#region Functions
+
+function New-TextBox {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)][string]$formText,
+        [Parameter(Mandatory = $true)][string]$labelText
+    )
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+
+    $form = New-Object System.Windows.Forms.Form
+    $form.Text = $formText
+    $form.Size = New-Object System.Drawing.Size(300, 200)
+    $form.StartPosition = 'CenterScreen'
+
+    $okButton = New-Object System.Windows.Forms.Button
+    $okButton.Location = New-Object System.Drawing.Point(75, 120)
+    $okButton.Size = New-Object System.Drawing.Size(75, 23)
+    $okButton.Text = 'OK'
+    $okButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
+    $form.AcceptButton = $okButton
+    $form.Controls.Add($okButton)
+
+    $cancelButton = New-Object System.Windows.Forms.Button
+    $cancelButton.Location = New-Object System.Drawing.Point(150, 120)
+    $cancelButton.Size = New-Object System.Drawing.Size(75, 23)
+    $cancelButton.Text = 'Cancel'
+    $cancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+    $form.CancelButton = $cancelButton
+    $form.Controls.Add($cancelButton)
+
+    $label = New-Object System.Windows.Forms.Label
+    $label.Location = New-Object System.Drawing.Point(10, 20)
+    $label.Size = New-Object System.Drawing.Size(280, 20)
+    $label.Text = $labelText
+    $form.Controls.Add($label)
+
+    $textBox = New-Object System.Windows.Forms.TextBox
+    $textBox.Location = New-Object System.Drawing.Point(10, 40)
+    $textBox.Size = New-Object System.Drawing.Size(260, 20)
+    $form.Controls.Add($textBox)
+
+    $form.Topmost = $true
+
+    $form.Add_Shown({ $textBox.Select() })
+    $result = $form.ShowDialog()
+
+    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
+        return $textBox.Text
+    }
+    else { exit }
+}
+
+function Set-AzDefaultInformation {
+    Clear-AzContext -Force -Verbose
+    Connect-AzAccount -Environment $AzureEnvironment -ErrorAction SilentlyContinue -WarningAction SilentlyContinue -OutVariable connectionResult
+    $selectedTenantId = $connectionResult.Context.Tenant.Id
+    Write-Output $(Get-AzSubscription -TenantId $selectedTenantId | Select-Object -Property Name, Id)
+    $selectedSubscription = New-TextBox -formText "Subscription Information" -labelText "Please enter the subscription name or ID you want to use for the hub deployment"
+    switch ($selectedSubscription) {
+        { $_ -match "[\da-zA-Z]{8}-([\da-zA-Z]{4}-){3}[\da-zA-Z]{12}" } {
+            Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Id -eq $selectedSubscription }) -Verbose
+        }
+        { $_ -is [string] } {
+            Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $selectedSubscription }) -Verbose
+        }
+    }
+    Update-AzConfig -DefaultSubscriptionForLogin $selectedSubscription -Verbose -Scope CurrentUser -DisplayBreakingChangeWarning $true -EnableDataCollection $false
+}
 
 #region DefaultHashtables
 
@@ -221,25 +162,23 @@ Param (
 #region PreExecutionHandling
 
 # Handling verbose switch
-$VerbosePreference = "Continue"
+#$VerbosePreference = "Continue"
 
 #BEGIN Creating transcript log directory and transcript files 
 $startTimeStamp = Get-Date
 $startTimeStampAsString = [string]$startTimeStamp.GetDateTimeFormats([char]"s").Replace(":", "-")
-New-Item -Path .\TranscriptLogs -ItemType Directory | Out-Null
+if (!(Test-Path -Path ".\TranscriptLogs")) {
+    New-Item -Path .\TranscriptLogs -ItemType Directory | Out-Null
+}
 Start-Transcript -Path ".\TranscriptLogs\POCEnvironment-$startTimeStampAsString.log"
 Write-Output "Started script: $StartTimeStamp"
 #END Creating transcript log directory and transcript files
 #endregion PreExecutionHandling
 
 #region MainProcessing
-# Importing the Az modules
-Import-Module Az -Verbose -Force
-
 Write-Output "Please see the open dialogue box in your browser to authenticate to your Azure subscription..."
-Clear-AzContext -Force -Verbose
+Set-AzDefaultInformation
 
-Connect-AzAccount -Environment $AzureEnvironment
 # Pre-loading list of Azure locations
 Write-Output "Listing all Azure locations"
 Write-Output $global:regionCodes.Keys | Sort-Object
@@ -247,19 +186,21 @@ Write-Output $global:regionCodes.Keys | Sort-Object
 Switch ($AzureEnvironment) {
     "AzureCloud" { 
         switch ($DeploymentOption) {
-            { $_ -eq ("DeployHubWithFW" -or "DeployHubWithoutFW") } {
-                Do { $azHubLocation = Read-Host "Please type or copy/paste the location for the hub of the hub/spoke model" }
-                Until ($azHubLocation -in $global:regionCodes.Keys)
-        
-                Do { $azSpokeLocation = Read-Host "Please type or copy/paste the location for the spoke of the hub/spoke model" }
-                Until ($azSpokeLocation -in $global:regionCodes.Keys)
+            { ($_ -eq "DeployHubWithFW") -or ($_ -eq "DeployHubWithoutFW") } {
+                #Do { $azHubLocation = Read-Host "Please type or copy/paste the location for the hub of the hub/spoke model" }
+                $azHubLocation = New-TextBox -formText "Hub Location" -labelText "Please type or copy/paste the location for the hub of the hub/spoke model"
+                if ($azHubLocation -notin $global:regionCodes.Keys) {
+                    Write-Output "The location you entered is not valid. Please try again."
+                    exit
+                }
+                $azSpokeLocation = New-TextBox -formText "Spoke Location" -labelText "Please type or copy/paste the location for the spoke of the hub/spoke model"
+                if ($azSpokeLocation -notin $global:regionCodes.Keys) {
+                    Write-Output "The location you entered is not valid. Please try again."
+                    exit
+                }
         
                 $selectedHubRegionCode = $global:regionCodes[$azHubLocation]
                 $selectedSpokeRegionCode = $global:regionCodes[$azSpokeLocation]
-
-                $subscription = Select-AzSubscriptionFromList
-                Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
-                Update-AzConfig -DefaultSubscriptionForLogin $subscription -Verbose -Scope CurrentUser -DisplayBreakingChangeWarning $true -EnableDataCollection $false
             } 
         
             "DeployAppOnly" {
@@ -268,14 +209,11 @@ Switch ($AzureEnvironment) {
         
                 $selectedHubRegionCode = $null
                 $selectedSpokeRegionCode = $global:regionCodes[$azSpokeLocation]
-                $subscription = Select-AzSubscriptionFromList
-                Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
             }
         }
     }
     "AzureUSGovernment" { 
-        Connect-AzAccount -Environment AzureUSGovernment 
-        If (!($DeploymentOption -eq "DeployAppOnly")) {
+        If ($DeploymentOption -ne "DeployAppOnly") {
             $selectedHubRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGTX" }
             $selectedSpokeRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGVA" }
         }
@@ -283,21 +221,11 @@ Switch ($AzureEnvironment) {
             $selectedHubRegionCode = $null
             $selectedSpokeRegionCode = $global:regionCodes.GetEnumerator() | Where-Object { $_.Value -eq "USGTX" }
         }
-        $subscription = Select-AzSubscriptionFromList
-        Select-AzSubscription -Subscription $(Get-AzSubscription | Where-Object { $_.Name -eq $subscription }) -Verbose
     }
 } # end switch
 
-switch ($TemplateLanguage) {
-    "PowerShellOnly" {
-        # Fetch raw files from Github, copy to \DeploymentFiles and launch deployment script
-    }
-    "PowerShellWithJSON" {}
-    "PowerShellWithBicep" {}
-}
-
-$vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString
-$global:credential = [credential]::new($globalProperties.vmAdminUserName, $vmAdminPassword)
+#$vmAdminPassword = Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString
+$global:credential = [pscredential]::new($globalProperties.vmAdminUserName, $(Read-Host "Please enter the password for the VMs in the deployment" -AsSecureString))
 
 if (!($skipModuleInstall)) {
     Write-Output "Setting the PSGallery as a trusted repository for module download and installation (if needed)"
@@ -341,12 +269,26 @@ else {
     ### Validate the required modules are at least installed, EXIT if not
 }
 
+# Importing the Az modules
+Write-Output "Importing the Az modules..."
+Write-Output "Expected runtime: 45 seconds"
+Import-Module Az -Force -Verbose:$false
+
 # Determine the latest VM image version
 $imageVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object { $PSItem.Split(".")[1] -as [int] } | Sort-Object -Descending | Select-Object -First 1
 $selectedVersion = Get-AzVMImage -Location $selectedHubRegionCode -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object { $PSItem.Version -like "*$imageVersion*" } | Select-Object -ExpandProperty Version
 
 # Import the configuration data
 . .\Deploy-POCEnvironmentData.ps1
+
+switch ($TemplateLanguage) {
+    "PowerShellOnly" {
+        .\devPowerShell\New-POCAzDeployment.ps1
+        # Fetch raw files from Github, copy to \DeploymentFiles and launch deployment script
+    }
+    "PowerShellWithJSON" {}
+    "PowerShellWithBicep" {}
+}
 
 #endregion MainProcessing
 

@@ -288,14 +288,14 @@ else {
     #JumpSubnetResources
     SubnetAddressPrefixJMP    = "10.10.1.0/24"
     NSGRulesJMP               = @{
-        name                     = AllowRdpInbound
-        access                   = Allow
+        name                     = "AllowRdpInbound"
+        access                   = "Allow"
         description              = "Allow inbound RDP from internet"
-        destinationAddressPrefix = VirtualNetwork
+        destinationAddressPrefix = "VirtualNetwork"
         destinationPortRange     = 3389
-        direction                = Inbound
+        direction                = "Inbound"
         priority                 = 100
-        protocol                 = Tcp
+        protocol                 = "Tcp"
         sourceAddressPrefix      = *
         sourcePortRange          = *
     }
