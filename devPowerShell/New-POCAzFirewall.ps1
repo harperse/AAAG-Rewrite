@@ -33,7 +33,7 @@ if ($HubOrSpoke -eq "Hub") {
         
     $global:hubResources.Add("Firewall", $(New-AzFirewall `
                 -Name $global:hubProperties.FWName `
-                -ResourceGroupName $global:hubResources.ResourceGroup.Name `
+                -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
                 -Location $global:hubResources.ResourceGroup.Location `
                 -Sku $global:hubProperties.FWSku `
                 -SkuTier $global:hubResources.FWSkuTier `

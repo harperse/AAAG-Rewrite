@@ -6,15 +6,15 @@ param (
 Write-Output "Invocation Info: $($MyInvocation.MyCommand.PSPath)"
 switch ($HubOrSpoke) {
     { $_ -eq ("Hub") } {
-        .\devPowerShell\New-POCAzDeployment -HubOrSpoke "Spoke"
-        .\devPowerShell\New-POCAzResourceGroup -HubOrSpoke "Hub"
-        .\devPowerShell\New-POCAzStorageAccount -HubOrSpoke "Hub"
+        .\devPowerShell\New-POCAzDeployment.ps1 -HubOrSpoke "Spoke"
+        .\devPowerShell\New-POCAzResourceGroup.ps1 -HubOrSpoke "Hub"
+        .\devPowerShell\New-POCAzStorageAccount.ps1 -HubOrSpoke "Hub"
         .\devPowerShell\New-POCAzAutomationAccount.ps1
         .\devPowerShell\New-POCAzOperationalInsightsWorkspace.ps1
     }
     { $_ -eq ("Spoke") } {
-        .\devPowerShell\New-POCAzResourceGroup -HubOrSpoke "Spoke"
-        .\devPowerShell\New-POCAzStorageAccount -HubOrSpoke "Spoke"
+        .\devPowerShell\New-POCAzResourceGroup.ps1 -HubOrSpoke "Spoke"
+        .\devPowerShell\New-POCAzStorageAccount.ps1 -HubOrSpoke "Spoke"
         .\devPowerShell\New-POCAzRecoveryServicesVault.ps1
     }
 }
@@ -36,19 +36,19 @@ switch ($HubOrSpoke) {
 
         # Add ADDS IP for DNS
         # Link AAA to ALA
-        Set-AzOperationalInsightsLinkedService -ResourceGroupName $global:hubResources.ResourceGroup.Name -WorkspaceName $global:hubResources.LogAnalytics.Name -Name "Automation" -ResourceId $global:hubResources.AutomationAccount.Id 
+        Set-AzOperationalInsightsLinkedService -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName -WorkspaceName $global:hubResources.LogAnalytics.Name -Name "Automation" -ResourceId $global:hubResources.AutomationAccount.Id 
         # AAA MI rights to Contributor
         $aaaManagedIdentityID = (Get-AzAutomationAccount -ResourceGroupName $aaaResourceGroupName -Name $AutomationAccountName).Identity.PrincipalId
         New-AzRoleAssignment -ObjectId $aaaManagedIdentityID -Scope "/subscriptions/$subscriptionId" -RoleDefinitionName "Contributor"
 
         # Output the FQDN endpoint for RDP connection
         if ($DeploymentOption -eq "DeployHubWithFW") {
-            $hubFwPublicIp = Get-AzPublicIpAddress -Name $global:hubProperties.FwName -ResourceGroupName $$global:hubResources.ResourceGroup.Name -Verbose
+            $hubFwPublicIp = Get-AzPublicIpAddress -Name $global:hubProperties.FwName -ResourceGroupName $$global:hubResources.ResourceGroup.ResourceGroupName -Verbose
             $hubFwPublicIpFqdn = $hubFwPublicIp.DnsSettings.Fqdn
             Write-Host "Azure Firewall Public IP FQDN: $hubFwPublicIpFqdn`:50000"
         }
         else {
-            $hubVmPublicIp = Get-AzPublicIpAddress -Name $global:hubProperties.JMPVmName -ResourceGroupName $global:hubResources.ResourceGroup.Name -Verbose
+            $hubVmPublicIp = Get-AzPublicIpAddress -Name $global:hubProperties.JMPVmName -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName -Verbose
             $hubVmPublicIpFqdn = $hubVmPublicIp.DnsSettings.Fqdn
             Write-Host "Hub VM Public IP FQDN: $hubVmPublicIpFqdn"
         }

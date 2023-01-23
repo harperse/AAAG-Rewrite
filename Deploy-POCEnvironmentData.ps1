@@ -265,7 +265,7 @@ else {
         StartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT08:00:00")
         ExpiryTime   = "9999-12-31T00:00:00-00:00"
         WeekInterval = 1
-        DaysOfWeek   = "Monday,Tuesday,Wednesday,Thursday,Friday"
+        DaysOfWeek   = @([System.DayOfWeek]::Monday,[System.DayOfWeek]::Tuesday,[System.DayOfWeek]::Wednesday,[System.DayOfWeek]::Thursday,[System.DayOfWeek]::Friday)
         Timezone     = "UTC"
     }
     aaStopSchedule            = @{
@@ -274,7 +274,7 @@ else {
         StartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT18:00:00")
         ExpiryTime   = "9999-12-31T00:00:00-00:00"
         WeekInterval = 1
-        DaysOfWeek   = "Monday,Tuesday,Wednesday,Thursday,Friday"
+        DaysOfWeek   = @([System.DayOfWeek]::Monday,[System.DayOfWeek]::Tuesday,[System.DayOfWeek]::Wednesday,[System.DayOfWeek]::Thursday,[System.DayOfWeek]::Friday)
         Timezone     = "UTC"
     }
     aaStartRunbook            = @{
@@ -283,10 +283,10 @@ else {
         Path         = "$PSScriptRoot\Runbooks\Start-VMs.ps1"
         LogVerbose   = $true
         ScheduleName = $hubProperties.aaStartSchedule.Name
-        Parameters   = @{
-            "operation" = "start"
-            "env"       = $AzureEnvironment
-        }
+    }
+    aaStartRunbookParameters   = @{
+        "operation" = "start"
+        "env"       = $AzureEnvironment
     }
     aaStopRunbook             = @{
         Name         = "Stop-VMs"
@@ -294,10 +294,10 @@ else {
         Path         = "$PSScriptRoot\Runbooks\Stop-VMs.ps1"
         LogVerbose   = $true
         ScheduleName = $hubProperties.aaStopSchedule.Name
-        Parameters   = @{
-            "operation" = "stop"
-            "env"       = $AzureEnvironment
-        }
+    }
+    aaStopRunbookParameters   = @{
+        "operation" = "stop"
+        "env"       = $AzureEnvironment
     }
     #LogAnalyticsWorkspace
     lawSku                    = "PerGB2018"
@@ -411,7 +411,6 @@ else {
 } # end hubProperties
 
 [hashtable]$global:spokeProperties = @{
-    
     #ResourceNames
     resourceGroupName      = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NP", $namingConstructs.rgNC -join "-"
     storageAccountName     = $globalProperties.spokeStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null

@@ -1,6 +1,6 @@
 $global:spokeResources.Add("AVSetADC", $(New-AzAvailabilitySet `
             -Name $global:spokeProperties.AVSetNameADC `
-            -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+            -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
             -Location $global:spokeResources.ResourceGroup.Location `
             -Sku "Aligned" `
             -PlatformFaultDomainCount 2 `
@@ -12,7 +12,7 @@ $global:spokeResources.Add("AVSetADC", $(New-AzAvailabilitySet `
 
 $global:spokeResources.Add("AVSetWES", $(New-AzAvailabilitySet `
             -Name $global:spokeProperties.AVSetNameWES `
-            -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+            -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
             -Location $global:spokeResources.ResourceGroup.Location `
             -Sku "Aligned" `
             -PlatformFaultDomainCount 2 `
@@ -24,7 +24,7 @@ $global:spokeResources.Add("AVSetWES", $(New-AzAvailabilitySet `
 
 $global:spokeResources.Add("AVSetSQL", $(New-AzAvailabilitySet `
             -Name $global:spokeProperties.AVSetNameSQL `
-            -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+            -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
             -Location $global:spokeResources.ResourceGroup.Location `
             -Sku "Aligned" `
             -PlatformFaultDomainCount 2 `
@@ -36,7 +36,7 @@ $global:spokeResources.Add("AVSetSQL", $(New-AzAvailabilitySet `
 
 $global:spokeResources.Add("AVSetDEV", $(New-AzAvailabilitySet `
             -Name $global:spokeProperties.AVSetNameDEV `
-            -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+            -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
             -Location $global:spokeResources.ResourceGroup.Location `
             -Sku "Aligned" `
             -PlatformFaultDomainCount 2 `

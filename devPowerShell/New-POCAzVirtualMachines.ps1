@@ -14,7 +14,7 @@ if ($HubOrSpoke -eq "Hub") {
 
     $nicConfigJMP = New-AzNetworkInterface `
         -Name $global:hubProperties.NICNameJMP `
-        -ResourceGroupName $global:hubResources.ResourceGroup.Name `
+        -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
         -Location $global:hubResources.ResourceGroup.Location `
         -IpConfigurationName $nicIPConfigJMP `
         -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
@@ -59,7 +59,7 @@ if ($HubOrSpoke -eq "Hub") {
         -Disk $dataDiskConfigJMP
 
     $global:hubResources.Add("VMJMP", $(New-AzVM `
-                -ResourceGroupName $global:hubResources.ResourceGroup.Name `
+                -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
                 -Location $global:hubResources.ResourceGroup.Location `
                 -Image $global:globalProperties.vmImage `
                 -VirtualNetworkName $global:hubResources.Vnet.Name `
@@ -73,7 +73,7 @@ if ($HubOrSpoke -eq "Hub") {
 else {
     # Create the domain controller
     $global:spokeResources.Add("VMADC", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
                 -Location $global:spokeResources.ResourceGroup.Location `
                 -Name $global:spokeProperties.vmNameADC `
                 -Size $global:globalProperties.vmSize `
@@ -89,7 +89,7 @@ else {
 
     # Create the web servers
     $global:spokeResources.Add("VMWeb1", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
                 -Location $global:spokeResources.ResourceGroup.Location `
                 -Name $global:spokeProperties.vmNameWeb1 `
                 -Size $global:globalProperties.vmSize `
@@ -104,7 +104,7 @@ else {
     )
 
     $global:spokeResources.Add("VMWeb2", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
                 -Location $global:spokeResources.ResourceGroup.Location `
                 -Name $global:spokeProperties.vmNameWeb2 `
                 -Size $global:globalProperties.vmSize `
@@ -119,7 +119,7 @@ else {
     )
 
     $global:spokeResources.Add("VMSQL1", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
                 -Location $global:spokeResources.ResourceGroup.Location `
                 -Name $global:spokeProperties.vmNameSQL1 `
                 -Size $global:globalProperties.vmSize `
@@ -134,7 +134,7 @@ else {
     )
 
     $global:spokeResources.Add("VMSQL2", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
                 -Location $global:spokeResources.ResourceGroup.Location `
                 -Name $global:spokeProperties.vmNameSQL2 `
                 -Size $global:globalProperties.vmSize `
@@ -149,7 +149,7 @@ else {
     )
 
     $global:spokeResources.Add("VMLNX", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
                 -Location $global:spokeResources.ResourceGroup.Location `
                 -Name $global:spokeProperties.vmNameLNX `
                 -Size $global:globalProperties.vmSize `
@@ -164,7 +164,7 @@ else {
     )
 
     $global:spokeResources.Add("VMDEV", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
+                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
                 -Location $global:spokeResources.ResourceGroup.Location `
                 -Name $global:spokeProperties.vmNameDEV `
                 -Size $global:globalProperties.vmSize `
