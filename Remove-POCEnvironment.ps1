@@ -14,7 +14,7 @@ foreach ($pocResourceGroup in $pocResourceGroups) {
 
 $pocResourcesAfter = Get-AzResource -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
 $pocResourceGroupsAfter = Get-AzResourceGroup -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
-Write-Output "Removed $($pocResourceGroups.Count - $pocResourceGroupsAfter.Count) resource groups and  $($pocResources.Count - $pocResourcesAfter.Count) resources"
+Write-Output "Removed $($pocResourceGroups.Count - $pocResourceGroupsAfter.Count) resource groups and $($pocResources.Count - $pocResourcesAfter.Count) resources"
 
 if ($pocResourceGroupsAfter.Count -gt 0) {
     Write-Output "Failed to remove $($pocResourceGroupsAfter.Count) resource groups"

@@ -36,19 +36,19 @@ switch ($HubOrSpoke) {
 
         # Add ADDS IP for DNS
         # Link AAA to ALA
-        Set-AzOperationalInsightsLinkedService -ResourceGroupName $hubResources.ResourceGroup.Name -WorkspaceName $hubResources.LogAnalytics.Name -Name "Automation" -ResourceId $hubResources.AutomationAccount.Id 
+        Set-AzOperationalInsightsLinkedService -ResourceGroupName $global:hubResources.ResourceGroup.Name -WorkspaceName $global:hubResources.LogAnalytics.Name -Name "Automation" -ResourceId $global:hubResources.AutomationAccount.Id 
         # AAA MI rights to Contributor
         $aaaManagedIdentityID = (Get-AzAutomationAccount -ResourceGroupName $aaaResourceGroupName -Name $AutomationAccountName).Identity.PrincipalId
         New-AzRoleAssignment -ObjectId $aaaManagedIdentityID -Scope "/subscriptions/$subscriptionId" -RoleDefinitionName "Contributor"
 
         # Output the FQDN endpoint for RDP connection
         if ($DeploymentOption -eq "DeployHubWithFW") {
-            $hubFwPublicIp = Get-AzPublicIpAddress -Name $hubProperties.FwName -ResourceGroupName $$hubResources.ResourceGroup.Name -Verbose
+            $hubFwPublicIp = Get-AzPublicIpAddress -Name $hubProperties.FwName -ResourceGroupName $$global:hubResources.ResourceGroup.Name -Verbose
             $hubFwPublicIpFqdn = $hubFwPublicIp.DnsSettings.Fqdn
             Write-Host "Azure Firewall Public IP FQDN: $hubFwPublicIpFqdn`:50000"
         }
         else {
-            $hubVmPublicIp = Get-AzPublicIpAddress -Name $hubProperties.JMPVmName -ResourceGroupName $hubResources.ResourceGroup.Name -Verbose
+            $hubVmPublicIp = Get-AzPublicIpAddress -Name $hubProperties.JMPVmName -ResourceGroupName $global:hubResources.ResourceGroup.Name -Verbose
             $hubVmPublicIpFqdn = $hubVmPublicIp.DnsSettings.Fqdn
             Write-Host "Hub VM Public IP FQDN: $hubVmPublicIpFqdn"
         }

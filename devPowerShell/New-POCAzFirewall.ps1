@@ -31,14 +31,14 @@ if ($HubOrSpoke -eq "Hub") {
     $appRulesCollectionProperties = $hubProperties.ApplicationRuleCollection
     $appRulesCollection = New-AzFirewallApplicationRuleCollection @appRulesCollectionProperties -Rule $applicationRule1, $applicationRule2
         
-    $hubResources.Add("Firewall", $(New-AzFirewall `
+    $global:hubResources.Add("Firewall", $(New-AzFirewall `
                 -Name $hubProperties.FWName `
-                -ResourceGroupName $hubResources.ResourceGroup.Name `
-                -Location $hubResources.ResourceGroup.Location `
+                -ResourceGroupName $global:hubResources.ResourceGroup.Name `
+                -Location $global:hubResources.ResourceGroup.Location `
                 -Sku $hubProperties.FWSku `
-                -SkuTier $hubResources.FWSkuTier `
-                -VirtualHub $hubResources.VHub `
-                -PublicIpAddress $hubResources.JMPPIP `
+                -SkuTier $global:hubResources.FWSkuTier `
+                -VirtualHub $global:hubResources.VHub `
+                -PublicIpAddress $global:hubResources.JMPPIP `
                 -ThreatIntelMode $hubProperties.FWThreatIntelMode `
                 -NatRuleCollection $natRulesCollection `
                 -ApplicationRuleCollection $appRulesCollection `

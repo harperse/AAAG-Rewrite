@@ -9,37 +9,37 @@ $storageAccountProperties = $globalProperties.storageAccountProperties
 
 switch ($HubOrSpoke) {
     "Hub" {
-        Write-Output "Creating storage account $($hubProperties.storageAccountName) in $($hubResources.ResourceGroup.ResourceGroupName)..."
-        $hubResources.Add("StorageAccount", $(New-AzStorageAccount @storageAccountProperties `
-                    -ResourceGroupName $hubResources.ResourceGroup.ResourceGroupName `
+        Write-Output "Creating storage account $($hubProperties.storageAccountName) in $($global:hubResources.ResourceGroup.ResourceGroupName)..."
+        $global:hubResources.Add("StorageAccount", $(New-AzStorageAccount @storageAccountProperties `
+                    -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
                     -Name $hubProperties.storageAccountName `
-                    -Location $hubResources.ResourceGroup.Location `
+                    -Location $global:hubResources.ResourceGroup.Location `
                     -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
             )
         )
     } # end "Hub"
     "Spoke" {
-        Write-Output "Creating storage account $($spokeProperties.storageAccountName) in $($spokeResources.ResourceGroup.ResourceGroupName)..."
-        $spokeResources.Add("StorageAccount", $(New-AzStorageAccount @storageAccountProperties `
-                    -ResourceGroupName $spokeResources.ResourceGroup.ResourceGroupName `
+        Write-Output "Creating storage account $($spokeProperties.storageAccountName) in $($global:spokeResources.ResourceGroup.ResourceGroupName)..."
+        $global:spokeResources.Add("StorageAccount", $(New-AzStorageAccount @storageAccountProperties `
+                    -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
                     -Name $spokeProperties.storageAccountName `
-                    -Location $spokeResources.ResourceGroup.Location `
+                    -Location $global:spokeResources.ResourceGroup.Location `
                     -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
             )
         )
 
         # Update storage account properties
-        write-Output "Updating storage account properties for $($spokeResources.StorageAccount.StorageAccountName)..."
+        write-Output "Updating storage account properties for $($global:spokeResources.StorageAccount.StorageAccountName)..."
         $blobProperties = $spokeProperties.blobProperties
         Update-AzStorageBlobServiceProperty @blobProperties `
-            -ResourceGroupName $spokeResources.ResourceGroup.ResourceGroupName `
-            -StorageAccountName $spokeResources.StorageAccount.StorageAccountName `
+            -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
+            -StorageAccountName $global:spokeResources.StorageAccount.StorageAccountName `
             
         # Add container to spoke storage account
-        Write-Output "Adding container $($globalProperties.storageAccountContainerName) to $($spokeResources.StorageAccount.StorageAccountName)..."
+        Write-Output "Adding container $($globalProperties.storageAccountContainerName) to $($global:spokeResources.StorageAccount.StorageAccountName)..."
         New-AzStorageContainer `
             -Name $globalProperties.storageAccountContainerName `
-            -Context $spokeResources.StorageAccount.Context `
+            -Context $global:spokeResources.StorageAccount.Context `
             -Permission Container `
             -DefaultEncryptionScope '$account-encryption-key' `
             -PreventEncryptionScopeOverride $false

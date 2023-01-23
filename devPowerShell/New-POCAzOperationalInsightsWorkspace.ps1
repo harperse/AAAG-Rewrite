@@ -3,9 +3,10 @@ if (Import-Module Az.MonitoringSolutions) {
 }
 
 # Create log analytics workspace
+Import-Module Az.OperationalInsights
 Write-Output "Creating log analytics workspace $($hubProperties.operationalInsightsWorkspaceName) in $($alaToaaaMap[$selectedHubRegionCode].ala)..."
-$hubResources.Add("OperationalInsightsWorkspace", $(New-AzOperationalInsightsWorkspace `
-            -ResourceGroupName $hubResources.ResourceGroup.Name `
+$global:hubResources.Add("OperationalInsightsWorkspace", $(New-AzOperationalInsightsWorkspace `
+            -ResourceGroupName $global:hubResources.ResourceGroup.Name `
             -Location $alaToaaaMap[$selectedHubRegionCode].ala `
             -Name $hubProperties.operationalInsightsWorkspaceName `
             -Sku $hubProperties.operationalInsightsWorkspaceSku `
@@ -19,6 +20,6 @@ Write-Output "Adding solutions to log analytics workspace $($hubProperties.opera
 foreach ($solution in $lawMonitoringSolutions) {
     New-AzMonitorLogAnalyticsSolution `
         -ResourceGroupName $hubProperties.resourceGroupName `
-        -WorkspaceId $hubResources.OperationalInsightsWorkspace.Id `
+        -WorkspaceId $global:hubResources.OperationalInsightsWorkspace.Id `
         -Type $solution -Verbose
 }

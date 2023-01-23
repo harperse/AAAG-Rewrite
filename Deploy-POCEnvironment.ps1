@@ -105,8 +105,8 @@ function Set-AzDefaultInformation {
 
 #region DefaultHashtables
 
-[hashtable]$hubResources = @{}
-[hashtable]$spokeResources = @{}
+[hashtable]$global:hubResources = @{}
+[hashtable]$global:spokeResources = @{}
 
 [hashtable]$global:regionCodes = @{
     #Africa
@@ -169,8 +169,14 @@ function Set-AzDefaultInformation {
 
 #region PreExecutionHandling
 
+# Clearing the screen
+Clear-Host
+
 # Handling verbose switch
 #$VerbosePreference = "Continue"
+
+# Clearing error record
+$Error.Clear()
 
 #BEGIN Creating transcript log directory and transcript files 
 $startTimeStamp = Get-Date
@@ -231,8 +237,8 @@ Switch ($AzureEnvironment) {
                     exit
                 }
         
-                $selectedHubRegionCode = $global:regionCodes[$azHubLocation]
-                $selectedSpokeRegionCode = $global:regionCodes[$azSpokeLocation]
+                $global:selectedHubRegionCode = $global:regionCodes[$azHubLocation]
+                $global:selectedSpokeRegionCode = $global:regionCodes[$azSpokeLocation]
             } 
         
             "DeployAppOnly" {
@@ -324,8 +330,8 @@ Import-Module Az.Accounts -Force -MinimumVersion 2.11.1 -Verbose:$false
 Import-Module Az -Force -Verbose:$false
 
 # Determine the latest VM image version
-[string]$imageVersion = Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object { $PSItem.Split(".")[1] -as [int] } | Sort-Object -Descending | Select-Object -First 1
-[string]$selectedVersion = Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object { $PSItem.Version -like "*$imageVersion*" } | Select-Object -ExpandProperty Version
+[string]$global:imageVersion = Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object { $PSItem.Split(".")[1] -as [int] } | Sort-Object -Descending | Select-Object -First 1
+[string]$global:selectedVersion = Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Where-Object { $PSItem.Version -like "*$imageVersion*" } | Select-Object -ExpandProperty Version
 
 # Import the configuration data
 . .\Deploy-POCEnvironmentData.ps1

@@ -1,10 +1,10 @@
 #region Strings
 
-[string]$uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
-[string]$localMachinePublicIP = Invoke-RestMethod http://ipinfo.io/json | Select-Object -ExpandProperty ip
-[string]$lawMonitoringSolutions = @("Updates", "ChangeTracking", "Security", "ServiceMap", "AzureActivity", "VMInsights", "AzureAutomation", "NetworkMonitoring")
-[string[]]$requiredModules = @("Az", "Az.MonitoringSolutions", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")
-[string[]]$requiredDSCResources = @("xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")  
+[string]$global:uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
+[string]$global:localMachinePublicIP = Invoke-RestMethod http://ipinfo.io/json | Select-Object -ExpandProperty ip
+[string]$global:lawMonitoringSolutions = @("Updates", "ChangeTracking", "Security", "ServiceMap", "AzureActivity", "VMInsights", "AzureAutomation", "NetworkMonitoring")
+[string[]]$global:requiredModules = @("Az", "Az.MonitoringSolutions", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")
+[string[]]$global:requiredDSCResources = @("xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")  
 
 
 if ($AzureEnvironment -eq "AzureCloud") {
@@ -19,7 +19,7 @@ else {
 
 #region hashtables
 
-[hashtable]$runbookModules = @{
+[hashtable]$global:runbookModules = @{
     "Az.Accounts" = $(Get-Module -Name Az.Accounts).Version.ToString()
     "Az.Resources" = $(Get-Module -Name Az.Resources).Version.ToString()
     "Az.Compute" = $(Get-Module -Name Az.Compute).Version.ToString()
@@ -27,7 +27,7 @@ else {
     "Az.Network" = $(Get-Module -Name Az.Network).Version.ToString()
 }
 
-[hashtable]$alaToaaaMap = @{
+[hashtable]$global:alaToaaaMap = @{
     CZEAS = @{
         reg = "eastasia"
         aaa = "southeastasia"
@@ -200,7 +200,7 @@ else {
     } # end ht
 } # end alaToaaaMap
 
-[hashtable]$namingConstructs = @{
+[hashtable]$global:namingConstructs = @{
     staNC    = 'sta'
     rgNC     = 'RGP-01'
     vNetNC   = 'VNT-01'
@@ -215,7 +215,7 @@ else {
     fwNC     = 'AFW-01'
 } # end namingConstructs
 
-[hashtable]$globalProperties = @{
+[hashtable]$global:globalProperties = @{
     tagKey                      = "Creator"
     tagValue                    = "Microsoft Governance POC Script"
     storageAccountProperties    = @{
@@ -240,7 +240,7 @@ else {
     spokeStaPrefix              = 2
 } # end globalProperties
 
-[hashtable]$hubProperties = @{
+[hashtable]$global:hubProperties = @{
     #ResourceNames
     resourceGroupName         = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.rgNC -join "-"
     storageAccountName        = $globalProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
@@ -410,7 +410,7 @@ else {
 
 } # end hubProperties
 
-[hashtable]$spokeProperties = @{
+[hashtable]$global:spokeProperties = @{
     
     #ResourceNames
     resourceGroupName      = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NP", $namingConstructs.rgNC -join "-"
@@ -437,9 +437,8 @@ else {
     #StorageAccount
     blobProperties         = @{
         EnableChangeFeed            = $false
-        EnableVersioning            = $false
         EnableDeleteRetentionPolicy = $false
-        DeleteRetentionPolicyDays   = $false
+        DeleteRetentionPolicyDays   = 7
     }
     #VirtualNetworkSubnets
     SubnetAddressPrefixADC = "10.20.10.0/28"
