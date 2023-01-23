@@ -3,16 +3,19 @@ param (
     [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke")][string]$HubOrSpoke
 )
 
-Write-Output "Invocation Info: $($MyInvocation.MyCommand)"
+Write-Output "Invocation Info: $($MyInvocation.MyCommand.PSPath)"
 switch ($HubOrSpoke) {
     { $_ -eq ("Hub") } {
         .\devPowerShell\New-POCAzDeployment -HubOrSpoke "Spoke"
         .\devPowerShell\New-POCAzResourceGroup -HubOrSpoke "Hub"
         .\devPowerShell\New-POCAzStorageAccount -HubOrSpoke "Hub"
+        .\devPowerShell\New-POCAzAutomationAccount.ps1
+        .\devPowerShell\New-POCAzOperationalInsightsWorkspace.ps1
     }
     { $_ -eq ("Spoke") } {
         .\devPowerShell\New-POCAzResourceGroup -HubOrSpoke "Spoke"
         .\devPowerShell\New-POCAzStorageAccount -HubOrSpoke "Spoke"
+        .\devPowerShell\New-POCAzRecoveryServicesVault.ps1
     }
 }
 

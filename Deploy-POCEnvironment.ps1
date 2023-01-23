@@ -188,24 +188,44 @@ Write-Output "Please see the open dialogue box in your browser to authenticate t
 Set-AzDefaultInformation
 
 # Pre-loading list of Azure locations
-Write-Output "Listing all Azure locations"
-Write-Output $global:regionCodes.Keys | Sort-Object
+if (!($hubLocation -or $spokeLocation)) {
+    Write-Output "Listing all Azure locations"
+    Write-Output $global:regionCodes.Keys | Sort-Object
+}
 
 Switch ($AzureEnvironment) {
     "AzureCloud" { 
         switch ($DeploymentOption) {
             { ($_ -eq "DeployHubWithFW") -or ($_ -eq "DeployHubWithoutFW") } {
-                #Do { $azHubLocation = Read-Host "Please type or copy/paste the location for the hub of the hub/spoke model" }
-                $azHubLocation = New-TextBox -formText "Hub Location" -labelText "Please type or copy/paste the location for the hub of the hub/spoke model"
+                # Getting hub location
+                if (!($hubLocation)) {
+                    $azHubLocation = New-TextBox -formText "Hub Location" -labelText "Please type or copy/paste the location for the hub of the hub/spoke model"
+                } 
+                else {
+                    $azHubLocation = $hubLocation
+                }
+
+                # Validating hub location
                 if ($azHubLocation -notin $global:regionCodes.Keys) {
                     Write-Output "The location you entered is not valid. Please try again."
                     exit
                 }
-                $azSpokeLocation = New-TextBox -formText "Spoke Location" -labelText "Please type or copy/paste the location for the spoke of the hub/spoke model"
+
+                # Getting spoke location
+                if (!($spokeLocation)) {
+                    $azSpokeLocation = New-TextBox -formText "Spoke Location" -labelText "Please type or copy/paste the location for the spoke of the hub/spoke model"
+                } 
+                else {
+                    $azSpokeLocation = $spokeLocation
+                }
+
+                # Validating spoke location
                 if ($azSpokeLocation -notin $global:regionCodes.Keys) {
                     Write-Output "The location you entered is not valid. Please try again."
                     exit
                 }
+
+                #Making sure the hub and spoke locations are not the same
                 if ($azHubLocation -eq $azSpokeLocation) {
                     Write-Output "The hub and spoke locations cannot be the same. Please try again."
                     exit
@@ -216,8 +236,18 @@ Switch ($AzureEnvironment) {
             } 
         
             "DeployAppOnly" {
-                Do { $azAppLocation = Read-Host "Please type or copy/paste the location for the application deployment" }
-                Until ($azAppLocation -in $global:regionCodes.Keys)
+                if (!($spokeLocation)) {
+                    $azSpokeLocation = New-TextBox -formText "Spoke Location" -labelText "Please type or copy/paste the location for the spoke of the hub/spoke model"
+                } 
+                else {
+                    $azSpokeLocation = $spokeLocation
+                }
+
+                # Validating spoke location
+                if ($azSpokeLocation -notin $global:regionCodes.Keys) {
+                    Write-Output "The location you entered is not valid. Please try again."
+                    exit
+                }
         
                 $selectedHubRegionCode = $null
                 $selectedSpokeRegionCode = $global:regionCodes[$azSpokeLocation]
@@ -269,6 +299,7 @@ if (!($skipModuleInstall)) {
     }
     #END Installing/upgrading/checking Az modules
 
+    <#
     #BEGIN Installing/upgrading required DSC resources
     foreach ($requiredDSCResource in $requiredDSCResources) {
         $installedDSCResourceVersion = $(Get-Package -Name $requiredDSCResource -ErrorAction SilentlyContinue).Version.ToString()
@@ -280,6 +311,7 @@ if (!($skipModuleInstall)) {
         }
     }
     #END Installing/upgrading required DSC resources
+    #>
 }
 else {
     ### Validate the required modules are at least installed, EXIT if not

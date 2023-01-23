@@ -5,7 +5,7 @@
 [string]$lawMonitoringSolutions = @("Updates", "ChangeTracking", "Security", "ServiceMap", "AzureActivity", "VMInsights", "AzureAutomation", "NetworkMonitoring")
 [string[]]$requiredModules = @("Az", "Az.MonitoringSolutions", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")
 [string[]]$requiredDSCResources = @("xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")  
-[string[]]$runbookModules = @("Az.Accounts", "Az.Resources", "Az.Compute", "Az.Automation", "Az.Network")
+
 
 if ($AzureEnvironment -eq "AzureCloud") {
     [string]$storageDnsSuffix = ".blob.core.windows.net"
@@ -18,6 +18,14 @@ else {
 #endregion Strings
 
 #region hashtables
+
+[hashtable]$runbookModules = @{
+    "Az.Accounts" = $(Get-Module -Name Az.Accounts).Version.ToString()
+    "Az.Resources" = $(Get-Module -Name Az.Resources).Version.ToString()
+    "Az.Compute" = $(Get-Module -Name Az.Compute).Version.ToString()
+    "Az.Automation" = $(Get-Module -Name Az.Automation).Version.ToString()
+    "Az.Network" = $(Get-Module -Name Az.Network).Version.ToString()
+}
 
 [hashtable]$alaToaaaMap = @{
     CZEAS = @{
@@ -223,7 +231,6 @@ else {
         RequireInfrastructureEncryption = $true
     } # end storageAccountProperties
     storageAccountContainerName = 'stageartifacts'
-    vmAdminUserName             = 'adm.infra.user'
     vmSize                      = 'Standard_D1_v2'
     vmImage                     = $(Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
     hubNC                       = 'INF'

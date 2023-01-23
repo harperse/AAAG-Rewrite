@@ -5,6 +5,7 @@ param (
 
 switch ($HubOrSpoke) {
     "Hub" {
+        Write-Output "Creating resource group $($hubProperties.resourceGroupName) in $($azHubLocation)..."
         $hubResources.Add("ResourceGroup", $(New-AzResourceGroup `
                     -Name $hubProperties.resourceGroupName `
                     -Location $azHubLocation `
@@ -14,6 +15,7 @@ switch ($HubOrSpoke) {
         )
     } # end "Hub"
     "Spoke" {
+        Write-Output "Creating resource group $($spokeProperties.resourceGroupName) in $($azSpokeLocation)..."
         $spokeResources.Add("ResourceGroup", $(New-AzResourceGroup `
                     -Name $spokeProperties.resourceGroupName `
                     -Location $azSpokeLocation `
