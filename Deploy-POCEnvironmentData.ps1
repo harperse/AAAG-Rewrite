@@ -3,7 +3,7 @@
 [string]$uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
 [string]$localMachinePublicIP = Invoke-RestMethod http://ipinfo.io/json | Select-Object -ExpandProperty ip
 [string]$lawMonitoringSolutions = @("Updates", "ChangeTracking", "Security", "ServiceMap", "AzureActivity", "VMInsights", "AzureAutomation", "NetworkMonitoring")
-[string[]]$requiredModules = @("Az", "Az.MonitoringSolutions", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare")
+[string[]]$requiredModules = @("Az", "Az.MonitoringSolutions", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")
 [string[]]$requiredDSCResources = @("xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")  
 [string[]]$runbookModules = @("Az.Accounts", "Az.Resources", "Az.Compute", "Az.Automation", "Az.Network")
 
@@ -208,16 +208,24 @@ else {
 }
 
 [hashtable]$globalProperties = @{
-    tagKey                               = "Creator"
-    tagValue                             = "Microsoft Governance POC Script"
-    storageAccountKind                   = "StorageV2"
-    storageAccountSkuName                = "Standard_LRS"
-    storageAccountAccessTier             = "Hot"
-    storageAccountEnableHttpsTrafficOnly = $true
-    storageAccountContainerName          = 'stageartifacts'
-    vmAdminUserName                      = 'adm.infra.user'
-    vmSize                               = 'Standard_D1_v2'
-    vmImage                              = $(Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
+    tagKey                      = "Creator"
+    tagValue                    = "Microsoft Governance POC Script"
+    storageAccountProperties    = @{
+        Kind                            = "StorageV2"
+        SkuName                         = "Standard_LRS"
+        AccessTier                      = "Hot"
+        EnableHttpsTrafficOnly          = $true
+        AllowBlobPublicAccess           = $true
+        AllowSharedKeyAccess            = $true
+        AllowCrossTenantReplication     = $true
+        MinimumTlsVersion               = "TLS1_2"
+        NetworkRuleSet                  = @{"Bypass" = "AzureServices"; "DefaultAction" = "Allow" }
+        RequireInfrastructureEncryption = $true
+    }
+    storageAccountContainerName = 'stageartifacts'
+    vmAdminUserName             = 'adm.infra.user'
+    vmSize                      = 'Standard_D1_v2'
+    vmImage                     = $(Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
 }
 
 [hashtable]$hubProperties = @{
@@ -418,6 +426,13 @@ else {
     vmNameLinux1           = $selectedSpokeRegionCode, $spokeProperties.spokeLNXNC, "NPLNX01" -join $null
     vmNameDev1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPDEV01" -join $null
     pipNameDev1            = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPDEV01-PIP" -join $null
+    #StorageAccount
+    blobProperties = @{
+        EnableChangeFeed = $false
+        EnableVersioning = $false
+        EnableDeleteRetentionPolicy = $false
+        DeleteRetentionPolicyDays = $false
+    }
     #VirtualNetworkSubnets
     SubnetAddressPrefixADC = "10.20.10.0/28"
     SubnetAddressPrefixSRV = "10.20.10.16/28"

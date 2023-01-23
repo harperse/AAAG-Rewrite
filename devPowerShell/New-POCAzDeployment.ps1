@@ -8,11 +8,11 @@ switch ($HubOrSpoke) {
     { $_ -eq ("Hub") } {
         .\devPowerShell\New-POCAzDeployment -HubOrSpoke "Spoke"
         .\devPowerShell\New-POCAzResourceGroup -HubOrSpoke "Hub"
-        #New-POCAzStorageAccount -HubOrSpoke "Hub"
+        New-POCAzStorageAccount -HubOrSpoke "Hub"
     }
     { $_ -eq ("Spoke") } {
         .\devPowerShell\New-POCAzResourceGroup -HubOrSpoke "Spoke"
-        #New-POCAzStorageAccount -HubOrSpoke "Spoke"
+        New-POCAzStorageAccount -HubOrSpoke "Spoke"
     }
 }
 
