@@ -4,22 +4,22 @@ if (Import-Module Az.MonitoringSolutions) {
 
 # Create log analytics workspace
 Import-Module Az.OperationalInsights
-Write-Output "Creating log analytics workspace $($hubProperties.operationalInsightsWorkspaceName) in $($alaToaaaMap[$selectedHubRegionCode].ala)..."
+Write-Output "Creating log analytics workspace $($global:hubProperties.operationalInsightsWorkspaceName) in $($alaToaaaMap[$selectedHubRegionCode].ala)..."
 $global:hubResources.Add("OperationalInsightsWorkspace", $(New-AzOperationalInsightsWorkspace `
             -ResourceGroupName $global:hubResources.ResourceGroup.Name `
             -Location $alaToaaaMap[$selectedHubRegionCode].ala `
-            -Name $hubProperties.operationalInsightsWorkspaceName `
-            -Sku $hubProperties.operationalInsightsWorkspaceSku `
-            -RetentionInDays $hubProperties.operationalInsightsWorkspaceRetentionInDays `
-            -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
+            -Name $global:hubProperties.operationalInsightsWorkspaceName `
+            -Sku $global:hubProperties.operationalInsightsWorkspaceSku `
+            -RetentionInDays $global:hubProperties.operationalInsightsWorkspaceRetentionInDays `
+            -Tag @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
     )
 )
 
 # Add solutions to log analytics workspace
-Write-Output "Adding solutions to log analytics workspace $($hubProperties.operationalInsightsWorkspaceName)..."
+Write-Output "Adding solutions to log analytics workspace $($global:hubProperties.operationalInsightsWorkspaceName)..."
 foreach ($solution in $lawMonitoringSolutions) {
     New-AzMonitorLogAnalyticsSolution `
-        -ResourceGroupName $hubProperties.resourceGroupName `
+        -ResourceGroupName $global:hubProperties.resourceGroupName `
         -WorkspaceId $global:hubResources.OperationalInsightsWorkspace.Id `
         -Type $solution -Verbose
 }

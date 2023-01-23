@@ -5,13 +5,13 @@ switch ($HubOrSpoke) {
     "Hub" {
 
         $jmpSubnet = New-AzVirtualNetworkSubnetConfig `
-            -Name $hubProperties.SubnetNameJMP `
-            -AddressPrefix $hubProperties.SubnetAddressPrefixJMP `
+            -Name $global:hubProperties.SubnetNameJMP `
+            -AddressPrefix $global:hubProperties.SubnetAddressPrefixJMP `
             -Tag @{ $globalResources.TagName = $globalResources.TagValue }
 
         $subnets += $jmpSubnet
 
-        $pipJumpServerProperties = $hubProperties.PIPJumpServer
+        $pipJumpServerProperties = $global:hubProperties.PIPJumpServer
         $global:hubResources.Add("JMPPIP", $(New-AzPublicIpAddress @pipJumpServerProperties `
                     -ResourceGroupName $global:hubResources.ResourceGroup.Name `
                     -Location $global:hubResources.ResourceGroup.Location `
@@ -20,11 +20,11 @@ switch ($HubOrSpoke) {
             )
         )
 
-        $nsgRuleProperties = $hubProperties.NSGRuleNameJMP
+        $nsgRuleProperties = $global:hubProperties.NSGRuleNameJMP
         $nsgRule = New-AzNetworkSecurityRuleConfig @nsgRuleProperties 
 
         New-AzNetworkSecurityGroup `
-            -Name $hubProperties.NSGNameJMP `
+            -Name $global:hubProperties.NSGNameJMP `
             -ResourceGroupName $global:hubResources.ResourceGroup.Name `
             -Location $global:hubResources.ResourceGroup.Location `
             -SecurityRules $nsgRule `
@@ -33,18 +33,18 @@ switch ($HubOrSpoke) {
 
         if ($global:DeploymentOption -eq "DeployHubWithFW") {
             New-AzVirtualNetworkSubnetConfig `
-                -Name $hubProperties.SubnetNameAFW `
-                -AddressPrefix $hubProperties.SubnetAddressPrefixAFW `
+                -Name $global:hubProperties.SubnetNameAFW `
+                -AddressPrefix $global:hubProperties.SubnetAddressPrefixAFW `
                 -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
 
             $subnets += $afwSubnet
         }
 
         $global:hubResources.Add("Vnet", $(New-AzVirtualNetwork `
-                    -Name $hubProperties.VnetName `
+                    -Name $global:hubProperties.VnetName `
                     -ResourceGroupName $global:hubResources.ResourceGroup.Name `
                     -Location $global:hubResources.ResourceGroup.Location `
-                    -AddressPrefix $hubProperties.VnetAddressPrefix `
+                    -AddressPrefix $global:hubProperties.VnetAddressPrefix `
                     -Subnet $subnets `
                     -Tag @{ $globalResources.TagName = $globalResources.TagValue }
             )
@@ -52,21 +52,21 @@ switch ($HubOrSpoke) {
     }
     "Spoke" {
         $adcSubnet = New-AzVirtualNetworkSubnetConfig `
-            -Name $spokeProperties.SubnetNameADC `
-            -AddressPrefix $spokeProperties.SubnetAddressPrefixADC `
+            -Name $global:spokeProperties.SubnetNameADC `
+            -AddressPrefix $global:spokeProperties.SubnetAddressPrefixADC `
             -Tag @{ $globalResources.TagName = $globalResources.TagValue }
 
         $subnets += $adcSubnet
         
         $srvSubnet = New-AzVirtualNetworkSubnetConfig `
-            -Name $spokeProperties.SubnetNameSRV `
-            -AddressPrefix $spokeProperties.SubnetAddressPrefixSRV `
+            -Name $global:spokeProperties.SubnetNameSRV `
+            -AddressPrefix $global:spokeProperties.SubnetAddressPrefixSRV `
             -Tag @{ $globalResources.TagName = $globalResources.TagValue }
 
         $subnets += $srvSubnet
 
         New-AzNetworkSecurityGroup `
-            -Name $spokeProperties.NSGNameADC `
+            -Name $global:spokeProperties.NSGNameADC `
             -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
             -Location $global:spokeResources.ResourceGroup.Location `
             -SecurityRules $global:spokeResources.NSGRulesADC `
@@ -74,7 +74,7 @@ switch ($HubOrSpoke) {
             -Tag @{ $globalResources.TagName = $globalResources.TagValue }
 
         New-AzNetworkSecurityGroup `
-            -Name $spokeProperties.NSGNameSRV `
+            -Name $global:spokeProperties.NSGNameSRV `
             -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
             -Location $global:spokeResources.ResourceGroup.Location `
             -SecurityRules $global:spokeResources.NSGRulesSRV `
@@ -82,10 +82,10 @@ switch ($HubOrSpoke) {
             -Tag @{ $globalResources.TagName = $globalResources.TagValue }
 
         $global:spokeResources.Add("Vnet", $(New-AzVirtualNetwork `
-                    -Name $spokeProperties.VnetName `
+                    -Name $global:spokeProperties.VnetName `
                     -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
                     -Location $global:spokeResources.ResourceGroup.Location `
-                    -AddressPrefix $spokeProperties.VnetAddressPrefix `
+                    -AddressPrefix $global:spokeProperties.VnetAddressPrefix `
                     -Subnet $subnets `
                     -Tag @{ $globalResources.TagName = $globalResources.TagValue }
             )

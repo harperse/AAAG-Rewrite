@@ -1,5 +1,5 @@
 $global:spokeResources.Add("AVSetADC", $(New-AzAvailabilitySet `
-            -Name $spokeProperties.AVSetNameADC `
+            -Name $global:spokeProperties.AVSetNameADC `
             -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
             -Location $global:spokeResources.ResourceGroup.Location `
             -Sku "Aligned" `
@@ -11,7 +11,7 @@ $global:spokeResources.Add("AVSetADC", $(New-AzAvailabilitySet `
 )
 
 $global:spokeResources.Add("AVSetWES", $(New-AzAvailabilitySet `
-            -Name $spokeProperties.AVSetNameWES `
+            -Name $global:spokeProperties.AVSetNameWES `
             -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
             -Location $global:spokeResources.ResourceGroup.Location `
             -Sku "Aligned" `
@@ -23,7 +23,7 @@ $global:spokeResources.Add("AVSetWES", $(New-AzAvailabilitySet `
 )
 
 $global:spokeResources.Add("AVSetSQL", $(New-AzAvailabilitySet `
-            -Name $spokeProperties.AVSetNameSQL `
+            -Name $global:spokeProperties.AVSetNameSQL `
             -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
             -Location $global:spokeResources.ResourceGroup.Location `
             -Sku "Aligned" `
@@ -35,7 +35,7 @@ $global:spokeResources.Add("AVSetSQL", $(New-AzAvailabilitySet `
 )
 
 $global:spokeResources.Add("AVSetDEV", $(New-AzAvailabilitySet `
-            -Name $spokeProperties.AVSetNameDEV `
+            -Name $global:spokeProperties.AVSetNameDEV `
             -ResourceGroupName $global:spokeResources.ResourceGroup.Name `
             -Location $global:spokeResources.ResourceGroup.Location `
             -Sku "Aligned" `

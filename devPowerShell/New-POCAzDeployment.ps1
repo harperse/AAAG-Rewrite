@@ -43,12 +43,12 @@ switch ($HubOrSpoke) {
 
         # Output the FQDN endpoint for RDP connection
         if ($DeploymentOption -eq "DeployHubWithFW") {
-            $hubFwPublicIp = Get-AzPublicIpAddress -Name $hubProperties.FwName -ResourceGroupName $$global:hubResources.ResourceGroup.Name -Verbose
+            $hubFwPublicIp = Get-AzPublicIpAddress -Name $global:hubProperties.FwName -ResourceGroupName $$global:hubResources.ResourceGroup.Name -Verbose
             $hubFwPublicIpFqdn = $hubFwPublicIp.DnsSettings.Fqdn
             Write-Host "Azure Firewall Public IP FQDN: $hubFwPublicIpFqdn`:50000"
         }
         else {
-            $hubVmPublicIp = Get-AzPublicIpAddress -Name $hubProperties.JMPVmName -ResourceGroupName $global:hubResources.ResourceGroup.Name -Verbose
+            $hubVmPublicIp = Get-AzPublicIpAddress -Name $global:hubProperties.JMPVmName -ResourceGroupName $global:hubResources.ResourceGroup.Name -Verbose
             $hubVmPublicIpFqdn = $hubVmPublicIp.DnsSettings.Fqdn
             Write-Host "Hub VM Public IP FQDN: $hubVmPublicIpFqdn"
         }

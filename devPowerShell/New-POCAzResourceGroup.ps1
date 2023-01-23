@@ -5,21 +5,21 @@ param (
 
 switch ($HubOrSpoke) {
     "Hub" {
-        Write-Output "Creating resource group $($hubProperties.resourceGroupName) in $($azHubLocation)..."
+        Write-Output "Creating resource group $($global:hubProperties.resourceGroupName) in $($azHubLocation)..."
         $global:hubResources.Add("ResourceGroup", $(New-AzResourceGroup `
-                    -Name $hubProperties.resourceGroupName `
+                    -Name $global:hubProperties.resourceGroupName `
                     -Location $azHubLocation `
-                    -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue } `
+                    -Tag @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue } `
                     -Force
             )
         )
     } # end "Hub"
     "Spoke" {
-        Write-Output "Creating resource group $($spokeProperties.resourceGroupName) in $($azSpokeLocation)..."
+        Write-Output "Creating resource group $($global:spokeProperties.resourceGroupName) in $($azSpokeLocation)..."
         $global:spokeResources.Add("ResourceGroup", $(New-AzResourceGroup `
-                    -Name $spokeProperties.resourceGroupName `
+                    -Name $global:spokeProperties.resourceGroupName `
                     -Location $azSpokeLocation `
-                    -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue } `
+                    -Tag @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue } `
                     -Force
             )
         )
