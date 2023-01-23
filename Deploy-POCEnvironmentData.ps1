@@ -20,11 +20,11 @@ else {
 #region hashtables
 
 [hashtable]$global:runbookModules = @{
-    "Az.Accounts" = $(Get-Module -Name Az.Accounts).Version.ToString()
-    "Az.Resources" = $(Get-Module -Name Az.Resources).Version.ToString()
-    "Az.Compute" = $(Get-Module -Name Az.Compute).Version.ToString()
+    "Az.Accounts"   = $(Get-Module -Name Az.Accounts).Version.ToString()
+    "Az.Resources"  = $(Get-Module -Name Az.Resources).Version.ToString()
+    "Az.Compute"    = $(Get-Module -Name Az.Compute).Version.ToString()
     "Az.Automation" = $(Get-Module -Name Az.Automation).Version.ToString()
-    "Az.Network" = $(Get-Module -Name Az.Network).Version.ToString()
+    "Az.Network"    = $(Get-Module -Name Az.Network).Version.ToString()
 }
 
 [hashtable]$global:alaToaaaMap = @{
@@ -265,8 +265,24 @@ else {
         StartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT08:00:00")
         ExpiryTime   = "9999-12-31T00:00:00-00:00"
         WeekInterval = 1
-        DaysOfWeek   = @([System.DayOfWeek]::Monday,[System.DayOfWeek]::Tuesday,[System.DayOfWeek]::Wednesday,[System.DayOfWeek]::Thursday,[System.DayOfWeek]::Friday)
+        DaysOfWeek   = @([System.DayOfWeek]::Monday, [System.DayOfWeek]::Tuesday, [System.DayOfWeek]::Wednesday, [System.DayOfWeek]::Thursday, [System.DayOfWeek]::Friday)
         Timezone     = "UTC"
+    }
+    aaStartImportRunbook      = @{
+        Name        = "Start-VMs"
+        Description = "Starts all VMs in the resource group"
+        Path        = "$PSScriptRoot\Runbooks\Manage-CostForPoCVirtualMachinesStart.ps1"
+        LogVerbose  = $true
+        Published   = $true
+    }
+    aaStartRegisterRunbook    = @{
+        RunbookName  = $hubProperties.aaStartImportRunbook.Name
+        ScheduleName = $hubProperties.aaStartSchedule.Name
+        RunOn        = "Azure"
+        Parameters   = @{
+            "operation" = "start"
+            "env"       = $AzureEnvironment
+        }
     }
     aaStopSchedule            = @{
         Description  = "Stop 1800 Weekdays LOCAL"
@@ -274,30 +290,24 @@ else {
         StartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT18:00:00")
         ExpiryTime   = "9999-12-31T00:00:00-00:00"
         WeekInterval = 1
-        DaysOfWeek   = @([System.DayOfWeek]::Monday,[System.DayOfWeek]::Tuesday,[System.DayOfWeek]::Wednesday,[System.DayOfWeek]::Thursday,[System.DayOfWeek]::Friday)
+        DaysOfWeek   = @([System.DayOfWeek]::Monday, [System.DayOfWeek]::Tuesday, [System.DayOfWeek]::Wednesday, [System.DayOfWeek]::Thursday, [System.DayOfWeek]::Friday)
         Timezone     = "UTC"
     }
-    aaStartRunbook            = @{
-        Name         = "Start-VMs"
-        Description  = "Starts all VMs in the resource group"
-        Path         = "$PSScriptRoot\Runbooks\Start-VMs.ps1"
-        LogVerbose   = $true
-        ScheduleName = $hubProperties.aaStartSchedule.Name
+    aaStopImportRunbook       = @{
+        Name        = "Stop-VMs"
+        Description = "Stops all VMs in the resource group"
+        Path        = "$PSScriptRoot\Runbooks\Manage-CostForPoCVirtualMachinesStop.ps1"
+        LogVerbose  = $true
+        Published   = $true
     }
-    aaStartRunbookParameters   = @{
-        "operation" = "start"
-        "env"       = $AzureEnvironment
-    }
-    aaStopRunbook             = @{
-        Name         = "Stop-VMs"
-        Description  = "Stops all VMs in the resource group"
-        Path         = "$PSScriptRoot\Runbooks\Stop-VMs.ps1"
-        LogVerbose   = $true
+    aaStopRegisterRunbook     = @{
+        RunbookName  = $hubProperties.aaStopImportRunbook.Name
         ScheduleName = $hubProperties.aaStopSchedule.Name
-    }
-    aaStopRunbookParameters   = @{
-        "operation" = "stop"
-        "env"       = $AzureEnvironment
+        RunOn        = "Azure"
+        Parameters   = @{
+            "operation" = "stop"
+            "env"       = $AzureEnvironment
+        }
     }
     #LogAnalyticsWorkspace
     lawSku                    = "PerGB2018"
@@ -434,11 +444,7 @@ else {
     vmNameDev1             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPDEV01" -join $null
     pipNameDev1            = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPDEV01-PIP" -join $null
     #StorageAccount
-    blobProperties         = @{
-        EnableChangeFeed            = $false
-        EnableDeleteRetentionPolicy = $false
-        DeleteRetentionPolicyDays   = 7
-    }
+    blobEnableChangeFeed   = $false
     #VirtualNetworkSubnets
     SubnetAddressPrefixADC = "10.20.10.0/28"
     SubnetAddressPrefixSRV = "10.20.10.16/28"

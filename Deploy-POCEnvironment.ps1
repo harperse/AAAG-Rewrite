@@ -23,7 +23,7 @@ Param (
     #[Parameter(Mandatory = $false)][string]$SubscriptionId = "ee9312f3-798c-4110-8c32-2cf6ce086f6f",
     [Parameter(Mandatory = $false)][string]$hubLocation = "eastus",
     [Parameter(Mandatory = $false)][string]$spokeLocation = "eastus2",
-    [Parameter(Mandatory = $false)][bool]$SkipModuleInstall = $true
+    [Parameter(Mandatory = $false)][bool]$SkipModuleInstall = $false
 )
 
 if ($PSScriptRoot -ne $pwd) {

@@ -4,7 +4,7 @@ if (!(Import-Module Az.MonitoringSolutions)) {
 
 # Create log analytics workspace
 Import-Module Az.OperationalInsights
-Write-Output "Creating log analytics workspace $($global:hubProperties.operationalInsightsWorkspaceName) in $($alaToaaaMap[$selectedHubRegionCode].ala)..."
+Write-Output "Creating log analytics workspace $($global:hubProperties.lawName) in $($global:hubResources.ResourceGroup.ResourceGroupName)..."
 $global:hubResources.Add("OperationalInsightsWorkspace", $(New-AzOperationalInsightsWorkspace `
             -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
             -Location $alaToaaaMap[$selectedHubRegionCode].ala `
@@ -20,6 +20,8 @@ Write-Output "Adding solutions to log analytics workspace $($global:hubPropertie
 foreach ($solution in $lawMonitoringSolutions) {
     New-AzMonitorLogAnalyticsSolution `
         -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
-        -WorkspaceId $global:hubResources.OperationalInsightsWorkspace.WorkspaceId `
-        -Type $solution -Verbose
+        -Location $global:HubResources.OperationalInsightsWorkspace.Location `
+        -WorkspaceResourceId $global:hubResources.OperationalInsightsWorkspace.ResourceId `
+        -Type $solution `
+        -Tag @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
 }

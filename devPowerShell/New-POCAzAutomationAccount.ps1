@@ -27,36 +27,33 @@ foreach ($runbookModule in $runbookModules.GetEnumerator()) {
 # Add runbooks to automation account
 Write-Output "Adding runbooks to automation account $($global:hubProperties.aaName)..."
 [hashtable]$aaStartSchedule = $global:hubProperties.aaStartSchedule
-[hashtable]$aaStopSchedule = $global:hubProperties.aaStopSchedule
-[hashtable]$aaStartRunbook = $global:hubProperties.aaStartRunbook
-[hashtable]$aaStopRunbook = $global:hubProperties.aaStopRunbook
-[hashtable]$aaStartRunbookParameters = $global:hubProperties.aaStartRunbookParameters
-[hashtable]$aaStopRunbookParameters = $global:hubProperties.aaStopRunbookParameters
-
+[hashtable]$aaStartImportRunbook = $global:hubProperties.aaStartImportRunbook
+[hashtable]$aaStartRegisterRunbook = $global:hubProperties.aaStartRegisterRunbook
 New-AzAutomationSchedule @aaStartSchedule `
     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
+    -AutomationAccountName $global:hubProperties.aaName
+
+Import-AzAutomationRunbook @aaStartImportRunbook `
+    -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
     -AutomationAccountName $global:hubProperties.aaName `
-    -Tag @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
-    
+    -Tags @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
+
+Register-AzAutomationScheduledRunbook @aaStartRegisterRunbook `
+    -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
+    -AutomationAccountName $global:hubProperties.aaName
+
+[hashtable]$aaStopSchedule = $global:hubProperties.aaStopSchedule
+[hashtable]$aaStopImportRunbook = $global:hubProperties.aaStopImportRunbook
+[hashtable]$aaStopRegisterRunbook = $global:hubProperties.aaStopRegisterRunbook
 New-AzAutomationSchedule @aaStopSchedule `
     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
-    -AutomationAccountName $global:hubProperties.aaName `
-    -Tag @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
-
-Import-AzAutomationRunbook @aaStartRunbook `
-    -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
     -AutomationAccountName $global:hubProperties.aaName
-
-Register-AzAutomationScheduledRunbook @aaStartRunbook `
-    -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
-    -AutomationAccountName $global:hubProperties.aaName `
-    -Parameters $aaStartRunbookParameters
     
-Import-AzAutomationRunbook @aaStopRunbook `
-    -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
-    -AutomationAccountName $global:hubProperties.aaName
-
-Register-AzAutomationScheduledRunbook @aaStopRunbook `
+Import-AzAutomationRunbook @aaStopImportRunbook `
     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
     -AutomationAccountName $global:hubProperties.aaName `
-    -Parameters $aaStopRunbookParameters
+    -Tags @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
+
+Register-AzAutomationScheduledRunbook @aaStopRegisterRunbook `
+    -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
+    -AutomationAccountName $global:hubProperties.aaName

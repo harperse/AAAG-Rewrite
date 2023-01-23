@@ -30,10 +30,10 @@ switch ($HubOrSpoke) {
 
         # Update storage account properties
         write-Output "Updating storage account properties for $($global:spokeResources.StorageAccount.StorageAccountName)..."
-        $blobProperties = $global:spokeProperties.blobProperties
-        Update-AzStorageBlobServiceProperty @blobProperties `
+        Update-AzStorageBlobServiceProperty `
             -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
             -StorageAccountName $global:spokeResources.StorageAccount.StorageAccountName `
+            -EnableChangeFeed $global:spokeProperties.blobEnableChangeFeed
             
         # Add container to spoke storage account
         Write-Output "Adding container $($global:globalProperties.storageAccountContainerName) to $($global:spokeResources.StorageAccount.StorageAccountName)..."
