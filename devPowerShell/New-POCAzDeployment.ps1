@@ -3,22 +3,20 @@ param (
     [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke")][string]$HubOrSpoke
 )
 
-
+Write-Output "Invocation Info: $($MyInvocation.MyCommand)"
 switch ($HubOrSpoke) {
     { $_ -eq ("Hub") } {
         .\devPowerShell\New-POCAzDeployment -HubOrSpoke "Spoke"
         .\devPowerShell\New-POCAzResourceGroup -HubOrSpoke "Hub"
-        New-POCAzStorageAccount -HubOrSpoke "Hub"
+        .\devPowerShell\New-POCAzStorageAccount -HubOrSpoke "Hub"
     }
     { $_ -eq ("Spoke") } {
         .\devPowerShell\New-POCAzResourceGroup -HubOrSpoke "Spoke"
-        New-POCAzStorageAccount -HubOrSpoke "Spoke"
+        .\devPowerShell\New-POCAzStorageAccount -HubOrSpoke "Spoke"
     }
 }
 
 # Everything else
-
-
     <#
     "Hub" {
         

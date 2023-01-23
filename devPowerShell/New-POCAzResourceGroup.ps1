@@ -17,7 +17,8 @@ switch ($HubOrSpoke) {
         $spokeResources.Add("ResourceGroup", $(New-AzResourceGroup `
                     -Name $spokeProperties.resourceGroupName `
                     -Location $azSpokeLocation `
-                    -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
+                    -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue } `
+                    -Force
             )
         )
     } # end "Spoke"

@@ -23,16 +23,17 @@ switch ($HubOrSpoke) {
             )
         )
 
-        $blobProperties = $spokeResources.blobProperties
-        Update-AzStorageBlobServiceProperty @blobProperties -Context $spokeResources.StorageAccount.Context
-
+        $blobProperties = $spokeProperties.blobProperties
+        Update-AzStorageBlobServiceProperty @blobProperties `
+            -ResourceGroupName $spokeResources.ResourceGroup.ResourceGroupName `
+            -StorageAccountName $spokeResources.StorageAccount.StorageAccountName `
+            
         # Add container to spoke storage account
         New-AzStorageContainer `
             -Name $globalProperties.storageAccountContainerName `
             -Context $spokeResources.StorageAccount.Context `
             -Permission Container `
             -DefaultEncryptionScope '$account-encryption-key' `
-            -PreventEncryptionScopeOverride $false `
-            -PublicAccess "None"
+            -PreventEncryptionScopeOverride $false
     } # end "Spoke"
 } # end switch ($HubOrSpoke)

@@ -10,11 +10,11 @@
 if ($AzureEnvironment -eq "AzureCloud") {
     [string]$storageDnsSuffix = ".blob.core.windows.net"
     [string]$dnsNameLabelSuffix = ".cloudapp.azure.com"
-}
+} # end if ($AzureEnvironment -eq "AzureCloud")
 else {
     [string]$storageDnsSuffix = ".blob.core.usgovcloudapi.net"
     [string]$dnsNameLabelSuffix = ".cloudapp.usgovcloudapi.net"
-}
+} # end else
 #endregion Strings
 
 #region hashtables
@@ -190,7 +190,7 @@ else {
         aaa = "usgovvirginia"
         ala = "usgovvirginia"
     } # end ht
-} # end hashtable
+} # end alaToaaaMap
 
 [hashtable]$namingConstructs = @{
     staNC    = 'sta'
@@ -205,7 +205,7 @@ else {
     pipNC    = 'PIP-01'
     udrNC    = 'UDR-01'
     fwNC     = 'AFW-01'
-}
+} # end namingConstructs
 
 [hashtable]$globalProperties = @{
     tagKey                      = "Creator"
@@ -221,31 +221,34 @@ else {
         MinimumTlsVersion               = "TLS1_2"
         NetworkRuleSet                  = @{"Bypass" = "AzureServices"; "DefaultAction" = "Allow" }
         RequireInfrastructureEncryption = $true
-    }
+    } # end storageAccountProperties
     storageAccountContainerName = 'stageartifacts'
     vmAdminUserName             = 'adm.infra.user'
     vmSize                      = 'Standard_D1_v2'
     vmImage                     = $(Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
-}
+    hubNC                       = 'INF'
+    hubStaPrefix                = 1
+    spokeNC                     = "APP"
+    spokeLNXNC                  = "POC"
+    spokeStaPrefix              = 2
+} # end globalProperties
 
 [hashtable]$hubProperties = @{
-    hubNC                     = 'INF'
-    hubStaPrefix              = 1
     #ResourceNames
-    resourceGroupName         = $selectedHubRegionCode, $hubProperties.hubNC, "NP", $namingConstructs.rgNC -join "-"
-    storageAccountName        = $hubProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
+    resourceGroupName         = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.rgNC -join "-"
+    storageAccountName        = $globalProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
     aaName                    = $selectedHubRegionCode, $namingConstructs.aaaNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.aaaNC -join "-"
-    lawName                   = $selectedHubRegionCode, $hubResources.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.alaNC -join "-"
-    SubnetNameJMP             = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.subnetNC -join "-"
-    NSGNameJMP                = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.nsgNC -join "-"
-    PubIPNameJMP              = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC -join "-"
-    JMPVMName                 = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-01" -join "-"
-    JMPNicName                = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-NIC-01" -join "-"
-    JMPOSDiskName             = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-OSDisk-01" -join "-"
-    JMPDataDiskName           = $selectedHubRegionCode, $hubResources.hubNC, "NP-JMP-DataDisk-01" -join "-"
+    lawName                   = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.alaNC -join "-"
+    SubnetNameJMP             = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.subnetNC -join "-"
+    NSGNameJMP                = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.nsgNC -join "-"
+    PubIPNameJMP              = $selectedHubRegionCode, $globalProperties.hubNC, $namingConstructs.pipNC -join "-"
+    JMPVMName                 = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-01" -join "-"
+    JMPNicName                = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-NIC-01" -join "-"
+    JMPOSDiskName             = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-OSDisk-01" -join "-"
+    JMPDataDiskName           = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-DataDisk-01" -join "-"
     SubnetNameAFW             = "AzureFirewallSubnet"
-    VNetName                  = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.vnetNC -join "-"
-    FWName                    = $selectedHubRegionCode, $hubResources.hubNC, "NP", $namingConstructs.fwNC -join "-"
+    VNetName                  = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.vnetNC -join "-"
+    FWName                    = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.fwNC -join "-"
     #AutomationAccount
     aaPlan                    = "Basic"
     aaAssignSystemIdentity    = $true # For reference only
@@ -398,40 +401,38 @@ else {
     #VirtualMachines
     #VirtualNetworkPeering
 
-}
+} # end hubProperties
 
 [hashtable]$spokeProperties = @{
-    spokeNC                = "APP"
-    spokeLNXNC             = "POC"
-    spokeStaPrefix         = 2
+    
     #ResourceNames
-    resourceGroupName      = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NP", $namingConstructs.rgNC -join "-"
-    storageAccountName     = $spokeProperties.spokeStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
+    resourceGroupName      = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NP", $namingConstructs.rgNC -join "-"
+    storageAccountName     = $globalProperties.spokeStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
     rsvName                = "rsv", $uniqueGUIDIdentifier -join $null
     nsgNameADC             = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.nsgNC -join "-"
     nsgNameSRV             = $selectedSpokeRegionCode, "SRV", "NP", $namingConstructs.nsgNC -join "-"
     SubnetNameADC          = $selectedSpokeRegionCode, "ADC-NP-SUB-01"
     SubnetNameSRV          = $selectedSpokeRegionCode, "SRV-NP-SUB-01"
-    VnetName               = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NP", $namingConstructs.vnetNC -join "-"
+    VnetName               = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NP", $namingConstructs.vnetNC -join "-"
     AVSetNameADC           = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.avsetNC -join "-"
     AVSetNameWES           = $selectedSpokeRegionCode, "WES", "NP", $namingConstructs.avsetNC -join "-"
     AVSetNameSQL           = $selectedSpokeRegionCode, "SQL", "NP", $namingConstructs.avsetNC -join "-"
     AVSetNameLNX           = $selectedSpokeRegionCode, "LNX", "NP", $namingConstructs.avsetNC -join "-"
     AVSetNameDEV           = $selectedSpokeRegionCode, "DEV", "NP", $namingConstructs.avsetNC -join "-"
-    vmNameADC              = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPADC01" -join $null
-    vmNameWeb1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPWES01" -join $null
-    vmNameWeb2             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPWES02" -join $null
-    vmNameSQL1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPSQL01" -join $null
-    vmNameSQL2             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPSQL02" -join $null
-    vmNameLinux1           = $selectedSpokeRegionCode, $spokeProperties.spokeLNXNC, "NPLNX01" -join $null
-    vmNameDev1             = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPDEV01" -join $null
-    pipNameDev1            = $selectedSpokeRegionCode, $spokeProperties.spokeNC, "NPDEV01-PIP" -join $null
+    vmNameADC              = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPADC01" -join $null
+    vmNameWeb1             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPWES01" -join $null
+    vmNameWeb2             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPWES02" -join $null
+    vmNameSQL1             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPSQL01" -join $null
+    vmNameSQL2             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPSQL02" -join $null
+    vmNameLinux1           = $selectedSpokeRegionCode, $globalProperties.spokeLNXNC, "NPLNX01" -join $null
+    vmNameDev1             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPDEV01" -join $null
+    pipNameDev1            = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPDEV01-PIP" -join $null
     #StorageAccount
-    blobProperties = @{
-        EnableChangeFeed = $false
-        EnableVersioning = $false
+    blobProperties         = @{
+        EnableChangeFeed            = $false
+        EnableVersioning            = $false
         EnableDeleteRetentionPolicy = $false
-        DeleteRetentionPolicyDays = $false
+        DeleteRetentionPolicyDays   = $false
     }
     #VirtualNetworkSubnets
     SubnetAddressPrefixADC = "10.20.10.0/28"
@@ -475,6 +476,6 @@ else {
     #DevServer
     
     
-}
+} # end spokeProperties
 
 #endregion hashtables

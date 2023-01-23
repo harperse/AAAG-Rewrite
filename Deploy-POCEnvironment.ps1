@@ -19,8 +19,10 @@ Param (
     [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW")][string] $DeploymentOption = "DeployHubWithoutFW",
     #[Parameter(Mandatory = $true)]
     [ValidateSet("PowerShellOnly", "PowerShellWithJSON", "PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
-    [Parameter(Mandatory = $false)][string]$TenantId = "16b3c013-d300-468d-ac64-7eda0820b6d3",
-    [Parameter(Mandatory = $false)][string]$SubscriptionId = "ee9312f3-798c-4110-8c32-2cf6ce086f6f",
+    #[Parameter(Mandatory = $false)][string]$TenantId = "16b3c013-d300-468d-ac64-7eda0820b6d3",
+    #[Parameter(Mandatory = $false)][string]$SubscriptionId = "ee9312f3-798c-4110-8c32-2cf6ce086f6f",
+    [Parameter(Mandatory = $false)][string]$hubLocation = "eastus",
+    [Parameter(Mandatory = $false)][string]$spokeLocation = "eastus2",
     [Parameter(Mandatory = $false)][bool]$SkipModuleInstall = $true
 )
 
@@ -84,8 +86,9 @@ function New-TextBox {
 }
 
 function Set-AzDefaultInformation {
-    Clear-AzContext -Force -Verbose
+    #Clear-AzContext -Force -Verbose
     Connect-AzAccount -Environment $AzureEnvironment -ErrorAction SilentlyContinue -WarningAction SilentlyContinue -OutVariable connectionResult
+    ### NEED AN IF STATEMENT HERE
     $selectedTenantId = $connectionResult.Context.Tenant.Id
     Write-Output $(Get-AzSubscription -TenantId $selectedTenantId | Select-Object -Property Name, Id)
     $selectedSubscription = New-TextBox -formText "Subscription Information" -labelText "Please enter the subscription name or ID you want to use for the hub deployment"
