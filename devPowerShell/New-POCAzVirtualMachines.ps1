@@ -17,7 +17,7 @@ if ($HubOrSpoke -eq "Hub") {
         -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
         -Location $global:hubResources.ResourceGroup.Location `
         -IpConfigurationName $nicIPConfigJMP `
-        -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+        -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
         -AsJob
 
     $osDiskConfigJMP = New-AzDiskConfig `
@@ -25,7 +25,7 @@ if ($HubOrSpoke -eq "Hub") {
         -Location $global:hubResources.ResourceGroup.Location `
         -CreateOption $global:hubProperties.JMPOSDiskCreateOption `
         -DiskSizeGB $global:hubProperties.JMPOSDiskSizeGB `
-        -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+        -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
         -AsJob
 
     $dataDiskConfigJMP = New-AzDiskConfig `
@@ -33,13 +33,13 @@ if ($HubOrSpoke -eq "Hub") {
         -Location $global:hubResources.ResourceGroup.Location `
         -CreateOption $global:hubProperties.JMPDataDiskCreateOption `
         -DiskSizeGB $global:hubProperties.JMPDataDiskSizeGB `
-        -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+        -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
         -AsJob
 
     $vmConfigJMP = New-AzVMConfig `
         -VMName $global:hubProperties.JMPVMName `
         -VMSize $global:globalProperties.vmSize `
-        -Tags @{ $globalResources.TagName = $globalResources.TagValue } `
+        -Tags @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
 
     $vmConfigJMP = Add-AzNetworkInterface `
         -VM $vmConfigJMP `
@@ -65,7 +65,7 @@ if ($HubOrSpoke -eq "Hub") {
                 -VirtualNetworkName $global:hubResources.Vnet.Name `
                 -Credential $credential `
                 -VM $vmConfigJMP `
-                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
                 -AsJob
         )
     )
@@ -82,7 +82,7 @@ else {
                 -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameADC `
                 -AvailabilitySetName $global:spokeResources.AVSetADC.Name `
-                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
                 -AsJob
         )
     )
@@ -98,7 +98,7 @@ else {
                 -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetWeb.Name `
-                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
                 -AsJob
         )
     )
@@ -113,7 +113,7 @@ else {
                 -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetWeb.Name `
-                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
                 -AsJob
         )
     )
@@ -128,7 +128,7 @@ else {
                 -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetSQL.Name `
-                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
                 -AsJob
         )
     )
@@ -143,7 +143,7 @@ else {
                 -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetSQL.Name `
-                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
                 -AsJob
         )
     )
@@ -158,7 +158,7 @@ else {
                 -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetLNX.Name `
-                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
                 -AsJob
         )
     )
@@ -173,7 +173,7 @@ else {
                 -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetDEV.Name `
-                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
                 -AsJob
         )
     )

@@ -4,12 +4,12 @@ Write-Output "Removing $($pocResources.Count) resources from $($pocResourceGroup
 
 foreach ($pocResource in $pocResources) {
     Write-Output "Removing $($pocResource.ResourceGroupName)/$($pocResource.ResourceName)"
-    Remove-AzResource -ResourceId $pocResource.Id -Force | Out-Null
+    Remove-AzResource -ResourceId $pocResource.Id -Force -ErrorAction SilentlyContinue | Out-Null
 }
 
 foreach ($pocResourceGroup in $pocResourceGroups) {
     Write-Output "Removing $($pocResourceGroup.ResourceGroupName)"
-    Remove-AzResourceGroup -Name $pocResourceGroup.ResourceGroupName -Force | Out-Null
+    Remove-AzResourceGroup -Name $pocResourceGroup.ResourceGroupName -Force -ErrorAction SilentlyContinue | Out-Null
 }
 
 $pocResourcesAfter = Get-AzResource -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }

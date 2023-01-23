@@ -43,7 +43,7 @@ if ($HubOrSpoke -eq "Hub") {
                 -NatRuleCollection $natRulesCollection `
                 -ApplicationRuleCollection $appRulesCollection `
                 -NetworkRuleCollection $networkRulesCollection1, $networkRulesCollection2 `
-                -Tag @{ $globalResources.TagName = $globalResources.TagValue } `
+                -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
                 -Verbose -AsJob 
         )
     )

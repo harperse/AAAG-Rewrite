@@ -274,11 +274,11 @@ else {
         Path        = "$PSScriptRoot\Runbooks\Manage-CostForPoCVirtualMachinesStart.ps1"
         LogVerbose  = $true
         Published   = $true
+        Type        = "PowerShell"
     }
     aaStartRegisterRunbook    = @{
-        RunbookName  = $hubProperties.aaStartImportRunbook.Name
+        RunbookName  = "Start-VMs"
         ScheduleName = $hubProperties.aaStartSchedule.Name
-        RunOn        = "Azure"
         Parameters   = @{
             "operation" = "start"
             "env"       = $AzureEnvironment
@@ -299,11 +299,11 @@ else {
         Path        = "$PSScriptRoot\Runbooks\Manage-CostForPoCVirtualMachinesStop.ps1"
         LogVerbose  = $true
         Published   = $true
+        Type        = "PowerShell"
     }
     aaStopRegisterRunbook     = @{
-        RunbookName  = $hubProperties.aaStopImportRunbook.Name
+        RunbookName  = "Stop-VMs"
         ScheduleName = $hubProperties.aaStopSchedule.Name
-        RunOn        = "Azure"
         Parameters   = @{
             "operation" = "stop"
             "env"       = $AzureEnvironment
