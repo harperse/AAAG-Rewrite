@@ -1,10 +1,10 @@
-$pocResources = Get-AzResource -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
-$pocResourceGroups = Get-AzResourceGroup -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
+$pocResources = Get-AzResource -Tag $global:globalProperties.globalTags
+$pocResourceGroups = Get-AzResourceGroup -Tag $global:globalProperties.globalTags
 Write-Output "Removing $($pocResources.Count) resources from $($pocResourceGroups.Count) resource groups"
 
 foreach ($pocResource in $pocResources) {
     Write-Output "Removing $($pocResource.ResourceGroupName)/$($pocResource.ResourceName)"
-    Remove-AzResource -ResourceId $pocResource.Id -Force -ErrorAction SilentlyContinue 6| Out-Null
+    Remove-AzResource -ResourceId $pocResource.Id -Force -ErrorAction SilentlyContinue | Out-Null
 }
 
 foreach ($pocResourceGroup in $pocResourceGroups) {
@@ -12,8 +12,8 @@ foreach ($pocResourceGroup in $pocResourceGroups) {
     Remove-AzResourceGroup -Name $pocResourceGroup.ResourceGroupName -Force -ErrorAction SilentlyContinue | Out-Null
 }
 
-$pocResourcesAfter = Get-AzResource -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
-$pocResourceGroupsAfter = Get-AzResourceGroup -Tag @{ $globalProperties.tagKey = $globalProperties.tagValue }
+$pocResourcesAfter = Get-AzResource -Tag $global:globalProperties.globalTags
+$pocResourceGroupsAfter = Get-AzResourceGroup -Tag $global:globalProperties.globalTags
 Write-Output "Removed $($pocResourceGroups.Count - $pocResourceGroupsAfter.Count) resource groups and $($pocResources.Count - $pocResourcesAfter.Count) resources"
 
 if ($pocResourceGroupsAfter.Count -gt 0) {

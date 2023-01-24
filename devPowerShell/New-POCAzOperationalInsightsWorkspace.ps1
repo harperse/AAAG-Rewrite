@@ -23,5 +23,4 @@ foreach ($solution in $lawMonitoringSolutions) {
         -Location $global:HubResources.OperationalInsightsWorkspace.Location `
         -WorkspaceResourceId $global:hubResources.OperationalInsightsWorkspace.ResourceId `
         -Type $solution
-        -Tag $global:globalProperties.globalTags
 }
