@@ -5,6 +5,6 @@ $global:spokeResources.Add("RSV", $(New-AzRecoveryServicesVault `
             -Name $global:spokeProperties.rsvName `
             -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
             -Location $global:spokeResources.ResourceGroup.Location `
-            -Tag @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
+            -Tag @{ "$($global:globalProperties.TagName)" = $global:globalProperties.TagValue }
     )
 )

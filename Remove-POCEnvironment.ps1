@@ -4,7 +4,7 @@ Write-Output "Removing $($pocResources.Count) resources from $($pocResourceGroup
 
 foreach ($pocResource in $pocResources) {
     Write-Output "Removing $($pocResource.ResourceGroupName)/$($pocResource.ResourceName)"
-    Remove-AzResource -ResourceId $pocResource.Id -Force -ErrorAction SilentlyContinue | Out-Null
+    Remove-AzResource -ResourceId $pocResource.Id -Force -ErrorAction SilentlyContinue 6| Out-Null
 }
 
 foreach ($pocResourceGroup in $pocResourceGroups) {

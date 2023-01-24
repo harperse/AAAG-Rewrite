@@ -427,8 +427,8 @@ else {
     rsvName                = "rsv", $uniqueGUIDIdentifier -join $null
     nsgNameADC             = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.nsgNC -join "-"
     nsgNameSRV             = $selectedSpokeRegionCode, "SRV", "NP", $namingConstructs.nsgNC -join "-"
-    SubnetNameADC          = $selectedSpokeRegionCode, "ADC-NP-SUB-01"
-    SubnetNameSRV          = $selectedSpokeRegionCode, "SRV-NP-SUB-01"
+    SubnetNameADC          = $selectedSpokeRegionCode, "ADC-NP-SUB-01" -join "-"
+    SubnetNameSRV          = $selectedSpokeRegionCode, "SRV-NP-SUB-01" -join "-"
     VnetName               = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NP", $namingConstructs.vnetNC -join "-"
     AVSetNameADC           = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.avsetNC -join "-"
     AVSetNameWES           = $selectedSpokeRegionCode, "WES", "NP", $namingConstructs.avsetNC -join "-"
@@ -452,7 +452,7 @@ else {
     VnetAddressPrefix      = "10.20.10.0/26"
     #UserDefinedRoutes
     UserDefinedRoutes      = @{
-        tableName       = $selectedSpokeRegionCode + "-APP-NP-UDR-01"
+        tableName       = $selectedSpokeRegionCode, "APP-NP-UDR-01" -join "-"
         zeroRoute       = "ZeroTraffic"
         zeroAddrPrefix  = "0.0.0.0/0"
         zeroNextHopType = $hubRouteNextHopType

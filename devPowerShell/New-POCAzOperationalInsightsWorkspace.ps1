@@ -11,7 +11,7 @@ $global:hubResources.Add("OperationalInsightsWorkspace", $(New-AzOperationalInsi
             -Name $global:hubProperties.lawName `
             -Sku $global:hubProperties.lawSku `
             -RetentionInDays $global:hubProperties.lawRetentionInDays `
-            -Tag @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
+            -Tag @{ "$($global:globalProperties.TagName)" = $global:globalProperties.TagValue }
     )
 )
 
@@ -23,5 +23,5 @@ foreach ($solution in $lawMonitoringSolutions) {
         -Location $global:HubResources.OperationalInsightsWorkspace.Location `
         -WorkspaceResourceId $global:hubResources.OperationalInsightsWorkspace.ResourceId `
         -Type $solution `
-        -Tag @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
+        -Tag @{ "$($global:globalProperties.TagName)" = $global:globalProperties.TagValue }
 }

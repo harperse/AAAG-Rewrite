@@ -7,7 +7,7 @@ $global:hubResources.Add("AutomationAccount", $(New-AzAutomationAccount `
             -Name $global:hubProperties.aaName `
             -Plan $global:hubProperties.aaPlan `
             -AssignSystemIdentity `
-            -Tag @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
+            -Tag @{ "$($global:globalProperties.TagName)" = $global:globalProperties.TagValue }
     )
 )
 
