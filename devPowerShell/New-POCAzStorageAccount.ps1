@@ -14,7 +14,7 @@ switch ($HubOrSpoke) {
                     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
                     -Name $global:hubProperties.storageAccountName `
                     -Location $global:hubResources.ResourceGroup.Location `
-                    -Tag @{ "$($global:globalProperties.TagName)" = $global:globalProperties.TagValue }
+                    -Tag $global:globalProperties.globalTags
             )
         )
     } # end "Hub"
@@ -24,7 +24,7 @@ switch ($HubOrSpoke) {
                     -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
                     -Name $global:spokeProperties.storageAccountName `
                     -Location $global:spokeResources.ResourceGroup.Location `
-                    -Tag @{ "$($global:globalProperties.TagName)" = $global:globalProperties.TagValue }
+                    -Tag $global:globalProperties.globalTags
             )
         )
 

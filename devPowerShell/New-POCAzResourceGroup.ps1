@@ -9,7 +9,7 @@ switch ($HubOrSpoke) {
         $global:hubResources.Add("ResourceGroup", $(New-AzResourceGroup `
                     -Name $global:hubProperties.resourceGroupName `
                     -Location $azHubLocation `
-                    -Tag @{ "$($global:globalProperties.TagName)" = $global:globalProperties.TagValue } `
+                    -Tag $global:globalProperties.globalTags `
                     -Force
             )
         )
@@ -19,7 +19,7 @@ switch ($HubOrSpoke) {
         $global:spokeResources.Add("ResourceGroup", $(New-AzResourceGroup `
                     -Name $global:spokeProperties.resourceGroupName `
                     -Location $azSpokeLocation `
-                    -Tag @{ "$($global:globalProperties.TagName)" = $global:globalProperties.TagValue } `
+                    -Tag $global:globalProperties.globalTags `
                     -Force
             )
         )

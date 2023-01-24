@@ -3,7 +3,7 @@
 [string]$global:uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
 [string]$global:localMachinePublicIP = Invoke-RestMethod http://ipinfo.io/json | Select-Object -ExpandProperty ip
 [string]$global:lawMonitoringSolutions = @("Updates", "ChangeTracking", "Security", "ServiceMap", "AzureActivity", "VMInsights", "AzureAutomation", "NetworkMonitoring")
-[string[]]$global:requiredModules = @("Az", "Az.MonitoringSolutions", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")
+
 [string[]]$global:requiredDSCResources = @("xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")  
 
 
@@ -216,8 +216,9 @@ else {
 } # end namingConstructs
 
 [hashtable]$global:globalProperties = @{
-    tagKey                      = "Creator"
-    tagValue                    = "Microsoft Governance POC Script"
+    globalTags = @{
+        "Creator" = "Microsoft Governance POC Script"
+    }
     storageAccountProperties    = @{
         Kind                            = "StorageV2"
         SkuName                         = "Standard_LRS"

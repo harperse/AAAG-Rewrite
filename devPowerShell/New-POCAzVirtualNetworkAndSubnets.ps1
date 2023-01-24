@@ -12,7 +12,7 @@ switch ($HubOrSpoke) {
         $global:hubResources.Add("JMPPIP", $(New-AzPublicIpAddress @pipJumpServerProperties `
                     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
                     -Location $global:hubResources.ResourceGroup.Location `
-                    -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue } `
+                    -Tag $global:globalProperties.globalTags `
                     -AsJob
             )
         )
@@ -47,7 +47,7 @@ switch ($HubOrSpoke) {
                     -Location $global:hubResources.ResourceGroup.Location `
                     -AddressPrefix $global:hubProperties.VnetAddressPrefix `
                     -Subnet $subnets `
-                    -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue }
+                    -Tag $global:globalProperties.globalTags
             )
         )
     }
@@ -87,7 +87,7 @@ switch ($HubOrSpoke) {
                     -Location $global:spokeResources.ResourceGroup.Location `
                     -AddressPrefix $global:spokeProperties.VnetAddressPrefix `
                     -Subnet $subnets `
-                    -Tag @{ "$($global:globalProperties.TagName)" = $global:globalProperties.TagValue }
+                    -Tag $global:globalProperties.globalTags
             )
         )
     }

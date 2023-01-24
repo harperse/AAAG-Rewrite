@@ -31,6 +31,8 @@ if ($PSScriptRoot -ne $pwd) {
     Push-Location $($MyInvocation.MyCommand.Path | Split-Path -Parent)
 }
 
+[string[]]$global:requiredModules = @("Az", "Az.MonitoringSolutions", "AzureAutomation", "xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")
+
 #region Functions
 
 function New-TextBox {

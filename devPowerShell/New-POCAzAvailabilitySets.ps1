@@ -6,7 +6,7 @@ $global:spokeResources.Add("AVSetADC", $(New-AzAvailabilitySet `
             -PlatformFaultDomainCount 2 `
             -PlatformUpdateDomainCount 5 `
             -Managed $true `
-            -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue }
+            -Tag $global:globalProperties.globalTags
     )
 )
 
@@ -18,7 +18,7 @@ $global:spokeResources.Add("AVSetWES", $(New-AzAvailabilitySet `
             -PlatformFaultDomainCount 2 `
             -PlatformUpdateDomainCount 5 `
             -Managed $true `
-            -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue }
+            -Tag $global:globalProperties.globalTags
     )
 )
 
@@ -30,7 +30,7 @@ $global:spokeResources.Add("AVSetSQL", $(New-AzAvailabilitySet `
             -PlatformFaultDomainCount 2 `
             -PlatformUpdateDomainCount 5 `
             -Managed $true `
-            -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue }
+            -Tag $global:globalProperties.globalTags
     )
 )
 
@@ -42,6 +42,6 @@ $global:spokeResources.Add("AVSetDEV", $(New-AzAvailabilitySet `
             -PlatformFaultDomainCount 2 `
             -PlatformUpdateDomainCount 5 `
             -Managed $true `
-            -Tag @{ $global:globalProperties.TagName = $global:globalProperties.TagValue }
+            -Tag $global:globalProperties.globalTags
     )
 )

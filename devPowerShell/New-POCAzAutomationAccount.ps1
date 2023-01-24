@@ -7,7 +7,7 @@ $global:hubResources.Add("AutomationAccount", $(New-AzAutomationAccount `
             -Name $global:hubProperties.aaName `
             -Plan $global:hubProperties.aaPlan `
             -AssignSystemIdentity `
-            -Tag @{ "$($global:globalProperties.TagName)" = $global:globalProperties.TagValue }
+            -Tag $global:globalProperties.globalTags
     )
 )
 
@@ -36,7 +36,7 @@ New-AzAutomationSchedule @aaStartSchedule `
 Import-AzAutomationRunbook @aaStartImportRunbook `
     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
     -AutomationAccountName $global:hubProperties.aaName `
-    -Tags @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
+    -Tags $global:globalProperties.globalTags
 
 Register-AzAutomationScheduledRunbook @aaStartRegisterRunbook `
     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
@@ -52,7 +52,7 @@ New-AzAutomationSchedule @aaStopSchedule `
 Import-AzAutomationRunbook @aaStopImportRunbook `
     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
     -AutomationAccountName $global:hubProperties.aaName `
-    -Tags @{ $global:globalProperties.tagKey = $global:globalProperties.tagValue }
+    -Tags $global:globalProperties.globalTags
 
 Register-AzAutomationScheduledRunbook @aaStopRegisterRunbook `
     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
