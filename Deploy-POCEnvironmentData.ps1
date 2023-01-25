@@ -206,6 +206,7 @@ else {
     alaNC    = 'ALA-01'
     aaaNC    = 'AAA-01'
     afwNC    = 'AFW-01'
+    avsetNC  = 'AVS-01'
     subnetNC = 'SUB-01'
     nsgNC    = 'NSG-01'
     pipNC    = 'PIP-01'
@@ -228,7 +229,7 @@ else {
         RequireInfrastructureEncryption = $true
     } # end storageAccountProperties
     storageAccountContainerName = 'stageartifacts'
-    vmSize                      = 'Standard_D2_v2_Promo'
+    vmSize                      = 'Standard_D2_v3'
     vmImageJMP                  = $(Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
     vmImage                     = "Win2019Datacenter"
     hubNC                       = 'INF'

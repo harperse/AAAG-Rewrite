@@ -4,7 +4,6 @@ $spokeAvSetProperties = @{
     Sku = "Aligned"
     PlatformFaultDomainCount = 2
     PlatformUpdateDomainCount = 5 
-    Managed = $true
     Tag = $global:globalProperties.globalTags
 }
 $global:spokeResources.Add("AVSetADC", $(New-AzAvailabilitySet @spokeAvSetProperties -Name $global:spokeProperties.AVSetNameADC))

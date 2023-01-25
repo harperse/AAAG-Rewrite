@@ -135,6 +135,7 @@ else {
     $global:spokeResources.Add("VMDEV", $(New-AzVM @spokeVMProperties `
                 -Name $global:spokeProperties.vmNameDEV `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
+                -Image "UbuntuLTS" `
                 -AvailabilitySetName $global:spokeResources.AVSetDEV.Name `
         )
     )
