@@ -1,15 +1,19 @@
 # Create automation account
 Import-Module Az.Automation
 Write-Output "Creating automation account $($global:hubProperties.aaName) in $($alaToaaaMap[$selectedHubRegionCode].aaa)..."
-$global:hubResources.Add("AutomationAccount", $(New-AzAutomationAccount `
-            -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
-            -Location $alaToaaaMap[$selectedHubRegionCode].aaa `
+New-AzAutomationAccount `
+    -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
+    -Location $alaToaaaMap[$selectedHubRegionCode].aaa `
+    -Name $global:hubProperties.aaName `
+    -Plan $global:hubProperties.aaPlan `
+    -AssignSystemIdentity `
+    -Tag $global:globalProperties.globalTags
+$global:hubResources.Add("AutomationAccount", $(Get-AzAutomationAccount `
             -Name $global:hubProperties.aaName `
-            -Plan $global:hubProperties.aaPlan `
-            -AssignSystemIdentity `
-            -Tag $global:globalProperties.globalTags
+            -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
     )
 )
+
 
 # Add modules to automation account
 Write-Output "Adding modules to automation account $($global:hubProperties.aaName)..."

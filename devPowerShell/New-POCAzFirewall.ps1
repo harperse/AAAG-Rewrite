@@ -35,20 +35,24 @@ if ($HubOrSpoke -eq "Hub") {
     $appRulesCollectionProperties = $global:hubProperties.ApplicationRuleCollection
     $appRulesCollection = New-AzFirewallApplicationRuleCollection @appRulesCollectionProperties -Rule $applicationRule1, $applicationRule2
         
-    $global:hubResources.Add("Firewall", $(New-AzFirewall `
+    New-AzFirewall `
+        -Name $global:hubProperties.FWName `
+        -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
+        -Location $global:hubResources.ResourceGroup.Location `
+        -Sku $global:hubProperties.FWSku `
+        -SkuTier $global:hubResources.FWSkuTier `
+        -VirtualHub $global:hubResources.VHub `
+        -PublicIpAddress $global:hubResources.JMPPIP `
+        -ThreatIntelMode $global:hubProperties.FWThreatIntelMode `
+        -NatRuleCollection $natRulesCollection `
+        -ApplicationRuleCollection $appRulesCollection `
+        -NetworkRuleCollection $networkRulesCollection1, $networkRulesCollection2 `
+        -Tag $global:globalProperties.globalTags `
+        -Verbose
+    $global:hubResources.Add("Firewall", $(Get-AzFirewall `
                 -Name $global:hubProperties.FWName `
                 -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
                 -Location $global:hubResources.ResourceGroup.Location `
-                -Sku $global:hubProperties.FWSku `
-                -SkuTier $global:hubResources.FWSkuTier `
-                -VirtualHub $global:hubResources.VHub `
-                -PublicIpAddress $global:hubResources.JMPPIP `
-                -ThreatIntelMode $global:hubProperties.FWThreatIntelMode `
-                -NatRuleCollection $natRulesCollection `
-                -ApplicationRuleCollection $appRulesCollection `
-                -NetworkRuleCollection $networkRulesCollection1, $networkRulesCollection2 `
-                -Tag $global:globalProperties.globalTags `
-                -Verbose  
         )
     )
 }

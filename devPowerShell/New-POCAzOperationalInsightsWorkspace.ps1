@@ -5,13 +5,16 @@ if (!(Import-Module Az.MonitoringSolutions)) {
 
 # Create log analytics workspace
 Write-Output "Creating log analytics workspace $($global:hubProperties.lawName) in $($global:hubResources.ResourceGroup.ResourceGroupName)..."
-$global:hubResources.Add("OperationalInsightsWorkspace", $(New-AzOperationalInsightsWorkspace `
-            -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
-            -Location $alaToaaaMap[$selectedHubRegionCode].ala `
+New-AzOperationalInsightsWorkspace `
+    -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
+    -Location $alaToaaaMap[$selectedHubRegionCode].ala `
+    -Name $global:hubProperties.lawName `
+    -Sku $global:hubProperties.lawSku `
+    -RetentionInDays $global:hubProperties.lawRetentionInDays `
+    -Tag $global:globalProperties.globalTags
+$global:hubResources.Add("OperationalInsightsWorkspace", $(Get-AzOperationalInsightsWorkspace `
             -Name $global:hubProperties.lawName `
-            -Sku $global:hubProperties.lawSku `
-            -RetentionInDays $global:hubProperties.lawRetentionInDays `
-            -Tag $global:globalProperties.globalTags
+            -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
     )
 )
 

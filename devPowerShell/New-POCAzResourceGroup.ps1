@@ -6,21 +6,27 @@ param (
 switch ($HubOrSpoke) {
     "Hub" {
         Write-Output "Creating resource group $($global:hubProperties.resourceGroupName) in $($azHubLocation)..."
-        $global:hubResources.Add("ResourceGroup", $(New-AzResourceGroup `
+        New-AzResourceGroup `
+            -Name $global:hubProperties.resourceGroupName `
+            -Location $azHubLocation `
+            -Tag $global:globalProperties.globalTags `
+            -Force
+        $global:hubResources.Add("ResourceGroup", $(Get-AzResourceGroup `
                     -Name $global:hubProperties.resourceGroupName `
                     -Location $azHubLocation `
-                    -Tag $global:globalProperties.globalTags `
-                    -Force
             )
         )
     } # end "Hub"
     "Spoke" {
         Write-Output "Creating resource group $($global:spokeProperties.resourceGroupName) in $($azSpokeLocation)..."
-        $global:spokeResources.Add("ResourceGroup", $(New-AzResourceGroup `
+        New-AzResourceGroup `
+            -Name $global:spokeProperties.resourceGroupName `
+            -Location $azSpokeLocation `
+            -Tag $global:globalProperties.globalTags `
+            -Force
+        $global:spokeResources.Add("ResourceGroup", $(Get-AzResourceGroup `
                     -Name $global:spokeProperties.resourceGroupName `
                     -Location $azSpokeLocation `
-                    -Tag $global:globalProperties.globalTags `
-                    -Force
             )
         )
     } # end "Spoke"

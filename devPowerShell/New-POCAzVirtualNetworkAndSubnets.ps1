@@ -13,7 +13,6 @@ switch ($HubOrSpoke) {
                     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
                     -Location $global:hubResources.ResourceGroup.Location `
                     -Tag $global:globalProperties.globalTags `
-                    
             )
         )
 
