@@ -13,7 +13,7 @@ switch ($HubOrSpoke) {
                     -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
                     -Location $global:hubResources.ResourceGroup.Location `
                     -Tag $global:globalProperties.globalTags `
-                    -AsJob
+                    
             )
         )
 
@@ -50,6 +50,11 @@ switch ($HubOrSpoke) {
                     -Tag $global:globalProperties.globalTags
             )
         )
+
+        $global:hubResources.Add("SubnetJMP", $($(Get-AzVirtualNetwork -Name $global:hubResources.Vnet.Name).Subnets | Where-Object { $_.Name -eq $global:hubProperties.SubnetNameJMP }))
+        if ($global:DeploymentOption -eq "DeployHubWithFW") {
+            $global:hubResources.Add("SubnetAFW", $($(Get-AzVirtualNetwork -Name $global:hubResources.Vnet.Name).Subnets | Where-Object { $_.Name -eq $global:hubProperties.SubnetNameAFW }))
+        }
     }
     "Spoke" {
         $subnets = @()
@@ -90,5 +95,8 @@ switch ($HubOrSpoke) {
                     -Tag $global:globalProperties.globalTags
             )
         )
+
+        $global:spokeResources.Add("SubnetADC", $($(Get-AzVirtualNetwork -Name $global:spokeResources.Vnet.Name).Subnets | Where-Object { $_.Name -eq $global:spokeProperties.SubnetNameADC }))
+        $global:spokeResources.Add("SubnetSRV", $($(Get-AzVirtualNetwork -Name $global:spokeResources.Vnet.Name).Subnets | Where-Object { $_.Name -eq $global:spokeProperties.SubnetNameSRV }))
     }
 }

@@ -3,9 +3,7 @@
 [string]$global:uniqueGUIDIdentifier = $(New-Guid).Guid.ToString().Split("-")[0]
 [string]$global:localMachinePublicIP = Invoke-RestMethod http://ipinfo.io/json | Select-Object -ExpandProperty ip
 [string]$global:lawMonitoringSolutions = @("Updates", "ChangeTracking", "Security", "ServiceMap", "AzureActivity", "VMInsights", "AzureAutomation", "NetworkMonitoring")
-
 [string[]]$global:requiredDSCResources = @("xActiveDirectory", "xComputerManagement", "xStorage", "xNetworking", "xSmbShare", "PSDesiredStateConfiguration")  
-
 
 if ($AzureEnvironment -eq "AzureCloud") {
     [string]$storageDnsSuffix = ".blob.core.windows.net"
@@ -216,9 +214,7 @@ else {
 } # end namingConstructs
 
 [hashtable]$global:globalProperties = @{
-    globalTags = @{
-        "Creator" = "Microsoft Governance POC Script"
-    }
+    globalTags                  = @{ "Creator" = "Microsoft Governance POC Script" }
     storageAccountProperties    = @{
         Kind                            = "StorageV2"
         SkuName                         = "Standard_LRS"
@@ -232,8 +228,9 @@ else {
         RequireInfrastructureEncryption = $true
     } # end storageAccountProperties
     storageAccountContainerName = 'stageartifacts'
-    vmSize                      = 'Standard_D1_v2'
-    vmImage                     = $(Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
+    vmSize                      = 'Standard_D2_v2_Promo'
+    #vmImage                     = $(Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
+    vmImage                    = "Win2022AzureEdition"
     hubNC                       = 'INF'
     hubStaPrefix                = 1
     spokeNC                     = "APP"
@@ -245,11 +242,13 @@ else {
     #ResourceNames
     resourceGroupName         = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.rgNC -join "-"
     storageAccountName        = $globalProperties.hubStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
-    aaName                    = $selectedHubRegionCode, $namingConstructs.aaaNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.aaaNC -join "-"
+    aaName                    = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.aaaNC -join "-"
     lawName                   = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $uniqueGUIDIdentifier, $namingConstructs.alaNC -join "-"
+    NICIPConfigNameJMP1       = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.subnetNC, "config1" -join "-"
+    NICIPConfigNameJMP2       = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.subnetNC, "config2" -join "-"
     SubnetNameJMP             = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.subnetNC -join "-"
     NSGNameJMP                = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.nsgNC -join "-"
-    PubIPNameJMP              = $selectedHubRegionCode, $globalProperties.hubNC, $namingConstructs.pipNC -join "-"
+    #PubIPNameJMP              = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.pipNC -join "-"
     JMPVMName                 = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-01" -join "-"
     JMPNicName                = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-NIC-01" -join "-"
     JMPOSDiskName             = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-OSDisk-01" -join "-"
@@ -332,8 +331,8 @@ else {
     SubnetAddressPrefixAFW    = "10.10.0.0/24"
     #JumpServerPIP
     PIPJumpServer             = @{
-        name                 = $selectedHubRegionCode, $hubResources.hubNC, $namingConstructs.pipNC -join "-"
-        allocationMethod     = "Dynamic"
+        name                 = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.pipNC -join "-"
+        allocationMethod     = "Static"
         sku                  = "Standard"
         tier                 = "Regional"
         idleTimeoutInMinutes = 4
@@ -441,9 +440,9 @@ else {
     vmNameWeb2             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPWES02" -join $null
     vmNameSQL1             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPSQL01" -join $null
     vmNameSQL2             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPSQL02" -join $null
-    vmNameLinux1           = $selectedSpokeRegionCode, $globalProperties.spokeLNXNC, "NPLNX01" -join $null
-    vmNameDev1             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPDEV01" -join $null
-    pipNameDev1            = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPDEV01-PIP" -join $null
+    vmNameLNX              = $selectedSpokeRegionCode, $globalProperties.spokeLNXNC, "NPLNX01" -join $null
+    vmNameDev              = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPDEV01" -join $null
+    pipNameDev             = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NPDEV01-PIP" -join $null
     #StorageAccount
     blobEnableChangeFeed   = $false
     #VirtualNetworkSubnets

@@ -279,6 +279,10 @@ $vmAdminPassword = Read-Host "Please enter the password for the VMs in the deplo
 if ($vmAdminPassword -match "^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{12,}$") {
     $vmAdminPassword = $vmAdminPassword | ConvertTo-SecureString -AsPlainText -Force
 }
+else {
+    Write-Output "The password you entered does not meet the complexity requirements. Please try again."
+    exit
+}
 $global:credential = [pscredential]::new($vmAdminUserName, $vmAdminPassword)
 
 if (!($skipModuleInstall)) {

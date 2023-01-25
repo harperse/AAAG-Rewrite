@@ -1,180 +1,141 @@
-[Parameter(Mandatory = $true)][ParameterSet("Hub", "Spoke")][string]$HubOrSpoke
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke")][string]$HubOrSpoke
+)
 
-
+Import-Module -Name Az.Compute -Force
 if ($HubOrSpoke -eq "Hub") {
     # Create the Jumpbox VM
-    $nicIPConfigJMP = New-AzNetworkInterfaceIpConfig `
-        -Name $global:hubProperties.NICIPConfigNameJMP `
-        -SubnetId $global:hubResources.SubnetJMP.Id `
+    $nicIPConfigJMP1 = New-AzNetworkInterfaceIpConfig `
+        -Name $global:hubProperties.NICIPConfigNameJMP1 `
+        -Subnet $global:hubResources.SubnetJMP `
         -PrivateIpAddress $global:hubResources.JMPPrivateIPAddress `
-        -PublicIpAddressId $global:hubResources.PubIPJMP.Id `
         -PrivateIpAddressVersion IPv4 `
-        -Primary `
-        -AsJob
+        -Primary
+         
+    $nicIPConfigJMP2 = New-AzNetworkInterfaceIpConfig `
+        -Name $hubProperties.NICIPConfigNameJMP2 `
+        -Subnet $global:hubResources.SubnetJMP `
+        -PublicIpAddress $global:hubResources.PubIPJMP 
 
     $nicConfigJMP = New-AzNetworkInterface `
-        -Name $global:hubProperties.NICNameJMP `
+        -Name $global:hubProperties.JMPNicName `
         -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
         -Location $global:hubResources.ResourceGroup.Location `
-        -IpConfigurationName $nicIPConfigJMP `
-        -Tag $global:globalProperties.globalTags `
-        -AsJob
+        -IpConfiguration @($nicIPConfigJMP1, $nicIPConfigJMP2) `
+        -Tag $global:globalProperties.globalTags
 
     $osDiskConfigJMP = New-AzDiskConfig `
-        -SkuName $global:globalProperties.storageAccountSkuName `
+        -OsType Windows `
         -Location $global:hubResources.ResourceGroup.Location `
-        -CreateOption $global:hubProperties.JMPOSDiskCreateOption `
-        -DiskSizeGB $global:hubProperties.JMPOSDiskSizeGB `
-        -Tag $global:globalProperties.globalTags `
-        -AsJob
+        -Architecture X64 `
+        -SkuName Premium_LRS `
+        -Tier P30 `
+        -DiskSizeGB 128 `
+        -HyperVGeneration V2 `
+        -ImageReference @{"Id" = $global:globalProperties.vmImage.Id } `
+        -CreateOption FromImage `
+        -Tag $global:globalProperties.globalTags
 
-    $dataDiskConfigJMP = New-AzDiskConfig `
-        -SkuName $global:globalProperties.storageAccountSkuName `
-        -Location $global:hubResources.ResourceGroup.Location `
-        -CreateOption $global:hubProperties.JMPDataDiskCreateOption `
-        -DiskSizeGB $global:hubProperties.JMPDataDiskSizeGB `
-        -Tag $global:globalProperties.globalTags `
-        -AsJob
+    $osDiskJMP = New-AzDisk `
+        -Disk $osDiskConfigJMP `
+        -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
+        -DiskName $hubProperties.JMPOSDiskName
 
     $vmConfigJMP = New-AzVMConfig `
         -VMName $global:hubProperties.JMPVMName `
         -VMSize $global:globalProperties.vmSize `
-        -Tag $global:globalProperties.globalTags
+        -Tags $global:globalProperties.globalTags
 
-    $vmConfigJMP = Add-AzNetworkInterface `
+    $vmConfigJMP = Add-AzVMNetworkInterface `
         -VM $vmConfigJMP `
         -Id $nicConfigJMP.Id
-
+    
     $vmConfigJMP = Set-AzVMOSDisk `
         -VM $vmConfigJMP `
-        -Name $global:hubProperties.JMPOSDiskName `
-        -Disk $osDiskConfigJMP `
-        -Caching ReadWrite `
-        -CreateOption $global:hubProperties.JMPOSDiskCreateOption `
-        -Windows
+        -CreateOption FromImage `
+        -ManagedDiskId $($osDiskJMP).Id
 
     $vmConfigJMP = Add-AzVMDataDisk `
         -VM $vmConfigJMP `
         -Name $global:hubProperties.JMPDataDiskName `
-        -Disk $dataDiskConfigJMP
+        -DiskSizeInGB $global:hubProperties.JMPDataDiskSizeGB `
+        -Lun 1 `
+        -CreateOption Empty `
+        -DeleteOption Delete `
+        -Caching ReadOnly
+
+    $vmConfigJMP = Set-AzVMSourceImage `
+        -VM $vmConfigJMP `
+        -PublisherName 'MicrosoftWindowsServer' `
+        -Offer 'WindowsServer' `
+        -Skus '2022-datacenter-azure-edition' `
+        -Version latest
 
     $global:hubResources.Add("VMJMP", $(New-AzVM `
                 -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
                 -Location $global:hubResources.ResourceGroup.Location `
-                -Image $global:globalProperties.vmImage `
-                -VirtualNetworkName $global:hubResources.Vnet.Name `
-                -Credential $credential `
-                -VM $vmConfigJMP `
-                -Tag $global:globalProperties.globalTags `
-                -AsJob
+                -VM $vmConfigJMP
         )
     )
 }
 else {
+    $spokeVMProperties = @{
+        ResourceGroupName  = $global:spokeResources.ResourceGroup.ResourceGroupName
+        Location           = $global:spokeResources.ResourceGroup.Location
+        VirtualNetworkName = $global:spokeResources.Vnet.Name
+        Size               = $global:globalProperties.vmSize
+        Image              = $global:globalProperties.vmImage
+        Credential         = $global:credential
+    }
     # Create the domain controller
-    $global:spokeResources.Add("VMADC", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
-                -Location $global:spokeResources.ResourceGroup.Location `
-                -Name $global:spokeProperties.vmNameADC `
-                -Size $global:globalProperties.vmSize `
-                -Image $global:globalProperties.vmImage `
-                -VirtualNetworkName $global:spokeResources.Vnet.Name `
-                -Credential $global:credential `
-                -SubnetName $global:spokeProperties.SubnetNameADC `
-                -AvailabilitySetName $global:spokeResources.AVSetADC.Name `
-                -Tag $global:globalProperties.globalTags `
-                -AsJob
+    $global:spokeResources.Add("VMADC", $(New-AzVM @spokeVMProperties `
+            -Name $global:spokeProperties.vmNameADC `
+            -SubnetName $global:spokeProperties.SubnetNameADC `
+            -AvailabilitySetName $global:spokeResources.AVSetADC.Name
         )
     )
 
     # Create the web servers
-    $global:spokeResources.Add("VMWeb1", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
-                -Location $global:spokeResources.ResourceGroup.Location `
+    $global:spokeResources.Add("VMWeb1", $(New-AzVM @spokeVMProperties `
                 -Name $global:spokeProperties.vmNameWeb1 `
-                -Size $global:globalProperties.vmSize `
-                -Image $global:globalProperties.vmImage `
-                -VirtualNetworkName $global:spokeResources.Vnet.Name `
-                -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetWeb.Name `
-                -Tag $global:globalProperties.globalTags `
-                -AsJob
         )
     )
 
-    $global:spokeResources.Add("VMWeb2", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
-                -Location $global:spokeResources.ResourceGroup.Location `
+    $global:spokeResources.Add("VMWeb2", $(New-AzVM @spokeVMProperties `
                 -Name $global:spokeProperties.vmNameWeb2 `
-                -Size $global:globalProperties.vmSize `
-                -Image $global:globalProperties.vmImage `
-                -VirtualNetworkName $global:spokeResources.Vnet.Name `
-                -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetWeb.Name `
-                -Tag $global:globalProperties.globalTags `
-                -AsJob
         )
     )
 
-    $global:spokeResources.Add("VMSQL1", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
-                -Location $global:spokeResources.ResourceGroup.Location `
+    $global:spokeResources.Add("VMSQL1", $(New-AzVM @spokeVMProperties `
                 -Name $global:spokeProperties.vmNameSQL1 `
-                -Size $global:globalProperties.vmSize `
-                -Image $global:globalProperties.vmImage `
-                -VirtualNetworkName $global:spokeResources.Vnet.Name `
-                -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetSQL.Name `
-                -Tag $global:globalProperties.globalTags `
-                -AsJob
         )
     )
 
-    $global:spokeResources.Add("VMSQL2", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
-                -Location $global:spokeResources.ResourceGroup.Location `
+    $global:spokeResources.Add("VMSQL2", $(New-AzVM @spokeVMProperties `
                 -Name $global:spokeProperties.vmNameSQL2 `
-                -Size $global:globalProperties.vmSize `
-                -Image $global:globalProperties.vmImage `
-                -VirtualNetworkName $global:spokeResources.Vnet.Name `
-                -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetSQL.Name `
-                -Tag $global:globalProperties.globalTags `
-                -AsJob
         )
     )
 
-    $global:spokeResources.Add("VMLNX", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
-                -Location $global:spokeResources.ResourceGroup.Location `
+    $global:spokeResources.Add("VMLNX", $(New-AzVM @spokeVMProperties `
                 -Name $global:spokeProperties.vmNameLNX `
-                -Size $global:globalProperties.vmSize `
-                -Image $global:globalProperties.vmImage `
-                -VirtualNetworkName $global:spokeResources.Vnet.Name `
-                -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetLNX.Name `
-                -Tag $global:globalProperties.globalTags `
-                -AsJob
         )
     )
 
-    $global:spokeResources.Add("VMDEV", $(New-AzVM `
-                -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
-                -Location $global:spokeResources.ResourceGroup.Location `
+    $global:spokeResources.Add("VMDEV", $(New-AzVM @spokeVMProperties `
                 -Name $global:spokeProperties.vmNameDEV `
-                -Size $global:globalProperties.vmSize `
-                -Image $global:globalProperties.vmImage `
-                -VirtualNetworkName $global:spokeResources.Vnet.Name `
-                -Credential $global:credential `
                 -SubnetName $global:spokeProperties.SubnetNameSRV `
                 -AvailabilitySetName $global:spokeResources.AVSetDEV.Name `
-                -Tag $global:globalProperties.globalTags `
-                -AsJob
         )
     )
 }

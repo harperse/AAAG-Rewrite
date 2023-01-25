@@ -44,7 +44,7 @@ if ($HubOrSpoke -eq "Hub") {
                 -ApplicationRuleCollection $appRulesCollection `
                 -NetworkRuleCollection $networkRulesCollection1, $networkRulesCollection2 `
                 -Tag $global:globalProperties.globalTags `
-                -Verbose -AsJob 
+                -Verbose  
         )
     )
 }

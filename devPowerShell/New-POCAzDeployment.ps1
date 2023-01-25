@@ -12,12 +12,14 @@ switch ($HubOrSpoke) {
         .\devPowerShell\New-POCAzAutomationAccount.ps1
         .\devPowerShell\New-POCAzOperationalInsightsWorkspace.ps1
         .\devPowerShell\New-POCAzVirtualNetworkAndSubnets.ps1 -HubOrSpoke "Hub"
+        .\devPowerShell\New-POCAzVirtualMachines.ps1 -HubOrSpoke "Hub"
     }
     { $_ -eq ("Spoke") } {
         .\devPowerShell\New-POCAzResourceGroup.ps1 -HubOrSpoke "Spoke"
         .\devPowerShell\New-POCAzStorageAccount.ps1 -HubOrSpoke "Spoke"
         .\devPowerShell\New-POCAzRecoveryServicesVault.ps1
         .\devPowerShell\New-POCAzVirtualNetworkAndSubnets.ps1 -HubOrSpoke "Spoke"
+        .\devPowerShell\New-POCAzVirtualMachines.ps1 -HubOrSpoke "Spoke"
     }
 }
 
