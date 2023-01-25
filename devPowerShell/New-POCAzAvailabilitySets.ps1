@@ -1,3 +1,5 @@
+Import-Module Az.AvailabilitySet -Force
+
 $spokeAvSetProperties = @{
     ResourceGroupName = $global:spokeResources.ResourceGroup.ResourceGroupName
     Location = $global:spokeResources.ResourceGroup.Location

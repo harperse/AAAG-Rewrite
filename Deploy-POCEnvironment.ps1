@@ -333,7 +333,7 @@ else {
 Write-Output "Importing the Az modules..."
 Write-Output "Expected runtime: 45 seconds"
 Import-Module Az.Accounts -Force -MinimumVersion 2.11.1 -Verbose:$false
-Import-Module Az -Force -Verbose:$false
+#Import-Module Az -Force -Verbose:$false
 
 # Determine the latest VM image version
 [string]$global:imageVersion = Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" | Select-Object -ExpandProperty Version | ForEach-Object { $PSItem.Split(".")[1] -as [int] } | Sort-Object -Descending | Select-Object -First 1

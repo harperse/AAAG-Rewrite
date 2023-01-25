@@ -3,10 +3,10 @@ param (
     [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke")][string]$HubOrSpoke
 )
 
+Import-Module -Name Az.Storage -Force
 $storageAccountProperties = $global:globalProperties.storageAccountProperties
 
 # Create storage account
-
 switch ($HubOrSpoke) {
     "Hub" {
         Write-Output "Creating storage account $($global:hubProperties.storageAccountName) in $($global:hubResources.ResourceGroup.ResourceGroupName)..."

@@ -1,5 +1,9 @@
-[Parameter(Mandatory = $true)][ParameterSet("Hub", "Spoke")][string]$HubOrSpoke
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke")][string]$HubOrSpoke
+)
 
+Import-Module -Name Az.Network -Force
 if ($HubOrSpoke -eq "Hub") {
     $natRule1Properties = $global:hubProperties.NatRule1
     $natRule1 = New-AzFirewallNatRule @natRule1Properties

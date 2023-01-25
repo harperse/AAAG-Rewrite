@@ -3,7 +3,7 @@ param (
     [Parameter(Mandatory = $true)][ValidateSet("Hub", "Spoke")][string]$HubOrSpoke
 )
 
-
+Import-Module -Name Az.Network -Force
 switch ($HubOrSpoke) {
     "Hub" {
         $subnets = @()

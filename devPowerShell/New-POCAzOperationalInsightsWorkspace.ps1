@@ -1,9 +1,9 @@
+Import-Module Az.OperationalInsights -Force
 if (!(Import-Module Az.MonitoringSolutions)) {
     Install-Module Az.MonitoringSolutions -Force -Scope CurrentUser -Repository PSGallery
 }
 
 # Create log analytics workspace
-Import-Module Az.OperationalInsights
 Write-Output "Creating log analytics workspace $($global:hubProperties.lawName) in $($global:hubResources.ResourceGroup.ResourceGroupName)..."
 $global:hubResources.Add("OperationalInsightsWorkspace", $(New-AzOperationalInsightsWorkspace `
             -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
