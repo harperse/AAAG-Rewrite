@@ -33,14 +33,14 @@ if ($HubOrSpoke -eq "Hub") {
         -Tier P30 `
         -DiskSizeGB 128 `
         -HyperVGeneration V2 `
-        -ImageReference @{"Id" = $global:globalProperties.vmImage.Id } `
+        -ImageReference @{"Id" = $global:globalProperties.vmImageJMP.Id } `
         -CreateOption FromImage `
         -Tag $global:globalProperties.globalTags
 
     $osDiskJMP = New-AzDisk `
         -Disk $osDiskConfigJMP `
         -ResourceGroupName $global:hubResources.ResourceGroup.ResourceGroupName `
-        -DiskName $hubProperties.JMPOSDiskName
+        -DiskName $hubProperties.JMPOSDiskName 
 
     $vmConfigJMP = New-AzVMConfig `
         -VMName $global:hubProperties.JMPVMName `
@@ -54,7 +54,7 @@ if ($HubOrSpoke -eq "Hub") {
     $vmConfigJMP = Set-AzVMOSDisk `
         -VM $vmConfigJMP `
         -CreateOption FromImage `
-        -ManagedDiskId $($osDiskJMP).Id
+        -ManagedDiskId $osDiskJMP.Id
 
     $vmConfigJMP = Add-AzVMDataDisk `
         -VM $vmConfigJMP `

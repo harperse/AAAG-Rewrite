@@ -19,6 +19,7 @@ switch ($HubOrSpoke) {
         .\devPowerShell\New-POCAzStorageAccount.ps1 -HubOrSpoke "Spoke"
         .\devPowerShell\New-POCAzRecoveryServicesVault.ps1
         .\devPowerShell\New-POCAzVirtualNetworkAndSubnets.ps1 -HubOrSpoke "Spoke"
+        .\devPowerShell\New-POCAzAvailabilitySets.ps1
         .\devPowerShell\New-POCAzVirtualMachines.ps1 -HubOrSpoke "Spoke"
     }
 }

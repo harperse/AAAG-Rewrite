@@ -229,8 +229,8 @@ else {
     } # end storageAccountProperties
     storageAccountContainerName = 'stageartifacts'
     vmSize                      = 'Standard_D2_v2_Promo'
-    #vmImage                     = $(Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
-    vmImage                    = "Win2022AzureEdition"
+    vmImageJMP                  = $(Get-AzVMImage -Location $azSpokeLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus "2022-datacenter-azure-edition-smalldisk" -Version "$selectedVersion")
+    vmImage                     = "Win2019Datacenter"
     hubNC                       = 'INF'
     hubStaPrefix                = 1
     spokeNC                     = "APP"
