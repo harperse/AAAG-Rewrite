@@ -1,5 +1,6 @@
-$pocResources = Get-AzResource -Tag $global:globalProperties.globalTags
-$pocResourceGroups = Get-AzResourceGroup -Tag $global:globalProperties.globalTags
+$globalTags = @{ "Creator" = "Microsoft Governance POC Script" }
+$pocResources = Get-AzResource -Tag $globalTags
+$pocResourceGroups = Get-AzResourceGroup -Tag $globalTags
 Write-Output "Removing $($pocResources.Count) resources from $($pocResourceGroups.Count) resource groups"
 
 foreach ($pocResource in $pocResources) {
@@ -12,8 +13,8 @@ foreach ($pocResourceGroup in $pocResourceGroups) {
     Remove-AzResourceGroup -Name $pocResourceGroup.ResourceGroupName -Force -ErrorAction SilentlyContinue | Out-Null
 }
 
-$pocResourcesAfter = Get-AzResource -Tag $global:globalProperties.globalTags
-$pocResourceGroupsAfter = Get-AzResourceGroup -Tag $global:globalProperties.globalTags
+$pocResourcesAfter = Get-AzResource -Tag $globalTags
+$pocResourceGroupsAfter = Get-AzResourceGroup -Tag $globalTags
 Write-Output "Removed $($pocResourceGroups.Count - $pocResourceGroupsAfter.Count) resource groups and $($pocResources.Count - $pocResourcesAfter.Count) resources"
 
 if ($pocResourceGroupsAfter.Count -gt 0) {
