@@ -18,87 +18,79 @@ Configuration adsCnfgInstall
 	$dcFeaturesToAdd = @(
 		$rsatDnsServer = @{
 			Ensure = "Present";
-			Name = "RSAT-DNS-Server"
+			Name   = "RSAT-DNS-Server"
 		} # end hashtable
 		$rsatAdCenter = @{
 			Ensure = "Present";
-			Name = "RSAT-AD-AdminCenter"
+			Name   = "RSAT-AD-AdminCenter"
 		} # end hashtable
 		$rsatADDS = @{
 			Ensure = "Present";
-			Name = "RSAT-ADDS"
+			Name   = "RSAT-ADDS"
 		} # end hashatable
 		$rsatAdPowerShell = @{
 			Ensure = "Present";
-			Name = "RSAT-AD-PowerShell"
+			Name   = "RSAT-AD-PowerShell"
 		} # end hashtable
 		$rsatAdTools = @{
 			Ensure = "Present";
-			Name = "RSAT-AD-Tools"
+			Name   = "RSAT-AD-Tools"
 		} # end hashatale
 		$rsatGPMC = @{
 			Ensure = "Present";
-			Name = "GPMC"
+			Name   = "GPMC"
 		} # end hashtable
 	) # end array
 
 	Node localhost
 	{
-  		LocalConfigurationManager
-		{
-			ConfigurationMode = 'ApplyAndAutoCorrect'
-			RebootNodeIfNeeded = $true
-			ActionAfterReboot = 'ContinueConfiguration'
+		LocalConfigurationManager {
+			ConfigurationMode    = 'ApplyAndAutoCorrect'
+			RebootNodeIfNeeded   = $true
+			ActionAfterReboot    = 'ContinueConfiguration'
 			AllowModuleOverwrite = $true
 		} # end LCM
 
-		ForEach ($dcFeature in $dcFeaturesToAdd)
-		{
-			WindowsFeature "$($dcFeature.Name)"
-				{
-					Ensure = "$($dcFeature.Present)"
-					Name = "$($dcFeature.Name)"
-				} # end resource
+		ForEach ($dcFeature in $dcFeaturesToAdd) {
+			WindowsFeature "$($dcFeature.Name)" {
+				Ensure = "$($dcFeature.Present)"
+				Name   = "$($dcFeature.Name)"
+			} # end resource
 		} # end foreach
 
-		WindowsFeature "AD-Domain-Services"
-		{
+		WindowsFeature "AD-Domain-Services" {
 			Ensure = "Present";
-			Name = "AD-Domain-Services"
+			Name   = "AD-Domain-Services"
 		} # end hashtable
 
-		WindowsFeature "RSAT-Role-Tools"
-		{
+		WindowsFeature "RSAT-Role-Tools" {
 			Ensure = "Present";
-			Name = "RSAT-Role-Tools"
+			Name   = "RSAT-Role-Tools"
 		} # end hashtable
 
-		xWaitForDisk WaitForDataDiskProvisioning
-		{
-			DiskId = $dataDiskNumber
-			RetryCount = $Node.RetryCount
+		xWaitForDisk WaitForDataDiskProvisioning {
+			DiskId           = $dataDiskNumber
+			RetryCount       = $Node.RetryCount
 			RetryIntervalSec = $Node.RetryIntervalSec
-			DependsOn = "[WindowsFeature]RSAT-Role-Tools"
+			DependsOn        = "[WindowsFeature]RSAT-Role-Tools"
 		} # end resource
 
-		xDisk ConfigureDataDisk
-		{
-			DiskId = $dataDiskNumber
+		xDisk ConfigureDataDisk {
+			DiskId      = $dataDiskNumber
 			DriveLetter = $dataDiskDriveLetter
-			FSLabel = "DATA"
-			DependsOn = "[xWaitforDisk]WaitForDataDiskProvisioning"
+			FSLabel     = "DATA"
+			DependsOn   = "[xWaitforDisk]WaitForDataDiskProvisioning"
 		} # end resource
 
-		xADDomain CreateForest
-		{
-			DomainName = $domainName
+		xADDomain CreateForest {
+			DomainName                    = $domainName
 			DomainAdministratorCredential = [System.Management.Automation.PSCredential]$DomainCreds
 			SafemodeAdministratorPassword = [System.Management.Automation.PSCredential]$DomainCreds
-			DomainNetbiosName = $netbiosDomainName
-			DatabasePath = $dataDiskDriveLetter + ":\NTDS"
-			LogPath = $dataDiskDriveLetter + ":\LOGS"
-			SysvolPath = $dataDiskDriveLetter + ":\SYSV"
-			DependsOn = "[xDisk]ConfigureDataDisk", "[WindowsFeature]AD-Domain-Services"
+			DomainNetbiosName             = $netbiosDomainName
+			DatabasePath                  = $dataDiskDriveLetter + ":\NTDS"
+			LogPath                       = $dataDiskDriveLetter + ":\LOGS"
+			SysvolPath                    = $dataDiskDriveLetter + ":\SYSV"
+			DependsOn                     = "[xDisk]ConfigureDataDisk", "[WindowsFeature]AD-Domain-Services"
 		} # end resource
 	} # end node
 } # end configuration
