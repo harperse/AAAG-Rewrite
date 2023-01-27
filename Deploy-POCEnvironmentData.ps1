@@ -18,11 +18,11 @@ else {
 #region hashtables
 
 [hashtable]$global:runbookModules = @{
-    "Az.Accounts"   = $(Get-Module -Name Az.Accounts).Version.ToString()
-    "Az.Resources"  = $(Get-Module -Name Az.Resources).Version.ToString()
-    "Az.Compute"    = $(Get-Module -Name Az.Compute).Version.ToString()
-    "Az.Automation" = $(Get-Module -Name Az.Automation).Version.ToString()
-    "Az.Network"    = $(Get-Module -Name Az.Network).Version.ToString()
+    "Az.Accounts"   = $(Get-Module -Name Az.Accounts -ListAvailable).Version.ToString()
+    "Az.Resources"  = $(Get-Module -Name Az.Resources -ListAvailable).Version.ToString()
+    "Az.Compute"    = $(Get-Module -Name Az.Compute -ListAvailable).Version.ToString()
+    "Az.Automation" = $(Get-Module -Name Az.Automation -ListAvailable).Version.ToString()
+    "Az.Network"    = $(Get-Module -Name Az.Network -ListAvailable).Version.ToString()
 }
 
 [hashtable]$global:alaToaaaMap = @{
@@ -200,9 +200,9 @@ else {
 
 [hashtable]$global:namingConstructs = @{
     staNC    = 'sta'
+    rsvNC    = 'rsv'
     rgNC     = 'RGP-01'
     vNetNC   = 'VNT-01'
-    rsvNC    = 'RSV-01'
     alaNC    = 'ALA-01'
     aaaNC    = 'AAA-01'
     afwNC    = 'AFW-01'
@@ -239,6 +239,7 @@ else {
     spokeStaPrefix              = 2
 } # end globalProperties
 
+# Properties for resources in the hub region
 [hashtable]$global:hubProperties = @{
     #ResourceNames
     resourceGroupName         = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.rgNC -join "-"
@@ -252,8 +253,8 @@ else {
     #PubIPNameJMP              = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.pipNC -join "-"
     JMPVMName                 = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-01" -join "-"
     JMPNicName                = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-NIC-01" -join "-"
-    JMPOSDiskName             = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-OSDisk-01" -join "-"
-    JMPDataDiskName           = $selectedHubRegionCode, $globalProperties.hubNC, "NP-JMP-DataDisk-01" -join "-"
+    JMPOSDiskName             = $selectedHubRegionCode, $globalProperties.hubNC, "NPJMPOSDisk01_$($uniqueGUIDIdentifier)" -join $null
+    JMPDataDiskName           = $selectedHubRegionCode, $globalProperties.hubNC, "NPJMPDataDisk01_$($uniqueGUIDIdentifier)" -join $null
     SubnetNameAFW             = "AzureFirewallSubnet"
     VNetName                  = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.vnetNC -join "-"
     FWName                    = $selectedHubRegionCode, $globalProperties.hubNC, "NP", $namingConstructs.fwNC -join "-"
@@ -279,7 +280,7 @@ else {
     }
     aaStartRegisterRunbook    = @{
         RunbookName  = "Start-VMs"
-        ScheduleName = $hubProperties.aaStartSchedule.Name
+        ScheduleName = "Start 0800 Weekdays LOCAL"
         Parameters   = @{
             "operation" = "start"
             "env"       = $AzureEnvironment
@@ -304,7 +305,7 @@ else {
     }
     aaStopRegisterRunbook     = @{
         RunbookName  = "Stop-VMs"
-        ScheduleName = $hubProperties.aaStopSchedule.Name
+        ScheduleName = "Stop 1800 Weekdays LOCAL"
         Parameters   = @{
             "operation" = "stop"
             "env"       = $AzureEnvironment
@@ -421,11 +422,12 @@ else {
 
 } # end hubProperties
 
+# Properties for resources in the spoke region
 [hashtable]$global:spokeProperties = @{
     #ResourceNames
     resourceGroupName      = $selectedSpokeRegionCode, $globalProperties.spokeNC, "NP", $namingConstructs.rgNC -join "-"
     storageAccountName     = $globalProperties.spokeStaPrefix, $namingConstructs.staNC, $uniqueGUIDIdentifier -join $null
-    rsvName                = "rsv", $uniqueGUIDIdentifier -join $null
+    rsvName                = $namingConstructs.rsvNC, $uniqueGUIDIdentifier -join $null
     nsgNameADC             = $selectedSpokeRegionCode, "ADC", "NP", $namingConstructs.nsgNC -join "-"
     nsgNameSRV             = $selectedSpokeRegionCode, "SRV", "NP", $namingConstructs.nsgNC -join "-"
     SubnetNameADC          = $selectedSpokeRegionCode, "ADC-NP-SUB-01" -join "-"

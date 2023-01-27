@@ -4,25 +4,46 @@ param (
 )
 
 Write-Output "Invocation Info: $($MyInvocation.MyCommand.PSPath)"
-switch ($HubOrSpoke) {
-    { $_ -eq ("Hub") } {
-        .\devPowerShell\New-POCAzDeployment.ps1 -HubOrSpoke "Spoke"
-        .\devPowerShell\New-POCAzResourceGroup.ps1 -HubOrSpoke "Hub"
-        .\devPowerShell\New-POCAzStorageAccount.ps1 -HubOrSpoke "Hub"
-        .\devPowerShell\New-POCAzAutomationAccount.ps1
-        .\devPowerShell\New-POCAzOperationalInsightsWorkspace.ps1
-        .\devPowerShell\New-POCAzVirtualNetworkAndSubnets.ps1 -HubOrSpoke "Hub"
-        .\devPowerShell\New-POCAzVirtualMachines.ps1 -HubOrSpoke "Hub"
+switch ($TemplateLanguage) {
+    { $_ -eq ("Bicep") } {
+        Write-Output "Bicep is not yet supported for this script."
+        break
     }
-    { $_ -eq ("Spoke") } {
-        .\devPowerShell\New-POCAzResourceGroup.ps1 -HubOrSpoke "Spoke"
-        .\devPowerShell\New-POCAzStorageAccount.ps1 -HubOrSpoke "Spoke"
-        .\devPowerShell\New-POCAzRecoveryServicesVault.ps1
-        .\devPowerShell\New-POCAzVirtualNetworkAndSubnets.ps1 -HubOrSpoke "Spoke"
-        .\devPowerShell\New-POCAzAvailabilitySets.ps1
-        .\devPowerShell\New-POCAzVirtualMachines.ps1 -HubOrSpoke "Spoke"
+    { $_ -eq ("ARM") } {
+        Write-Output "ARM is not yet supported for this script."
+        break
+    }
+    { $_ -eq ("PowerShell") } {
+        switch ($HubOrSpoke) {
+            { $_ -eq ("Hub") } {
+                .\devPowerShell\New-POCAzDeployment.ps1 -HubOrSpoke "Spoke"
+                .\devPowerShell\New-POCAzResourceGroup.ps1 -HubOrSpoke "Hub"
+                .\devPowerShell\New-POCAzStorageAccount.ps1 -HubOrSpoke "Hub"
+                .\devPowerShell\New-POCAzAutomationAccount.ps1
+                .\devPowerShell\New-POCAzOperationalInsightsWorkspace.ps1
+                .\devPowerShell\New-POCAzVirtualNetworkAndSubnets.ps1 -HubOrSpoke "Hub"
+                .\devPowerShell\New-POCAzVirtualMachines.ps1 -HubOrSpoke "Hub"
+            }
+            { $_ -eq ("Spoke") } {
+                .\devPowerShell\New-POCAzResourceGroup.ps1 -HubOrSpoke "Spoke"
+                .\devPowerShell\New-POCAzStorageAccount.ps1 -HubOrSpoke "Spoke"
+                .\devPowerShell\New-POCAzRecoveryServicesVault.ps1
+                .\devPowerShell\New-POCAzVirtualNetworkAndSubnets.ps1 -HubOrSpoke "Spoke"
+                .\devPowerShell\New-POCAzAvailabilitySets.ps1
+                .\devPowerShell\New-POCAzVirtualMachines.ps1 -HubOrSpoke "Spoke"
+            }
+        }
+    }
+    { $_ -eq ("Terraform") } {
+        Write-Output "Terraform is not yet supported for this script."
+        break
+    }
+    { $_ -eq ("Azure CLI") } {
+        Write-Output "Azure CLI is not yet supported for this script."
+        break
     }
 }
+
 
 # Everything else
     <#

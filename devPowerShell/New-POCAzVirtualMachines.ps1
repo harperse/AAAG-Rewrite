@@ -34,7 +34,7 @@ if ($HubOrSpoke -eq "Hub") {
         -Architecture X64 `
         -SkuName Premium_LRS `
         -Tier P30 `
-        -DiskSizeGB 128 `
+        -DiskSizeGB 127 `
         -HyperVGeneration V2 `
         -ImageReference @{"Id" = $global:globalProperties.vmImageJMP.Id } `
         -CreateOption FromImage `
@@ -50,6 +50,7 @@ if ($HubOrSpoke -eq "Hub") {
     $vmConfigJMP = New-AzVMConfig `
         -VMName $global:hubProperties.JMPVMName `
         -VMSize $global:globalProperties.vmSize `
+        -ImageReferenceId $global:globalProperties.vmImageJMP.Id `
         -Tags $global:globalProperties.globalTags
 
     # Add the NIC to the VM config
@@ -61,7 +62,18 @@ if ($HubOrSpoke -eq "Hub") {
     $vmConfigJMP = Set-AzVMOSDisk `
         -VM $vmConfigJMP `
         -CreateOption FromImage `
-        -ManagedDiskId $osDiskJMP.Id
+        -Name $global:hubProperties.JMPOSDiskName `
+        -DeleteOption Detach `
+        -DiskSizeInGB 127 `
+        -Windows 
+        #-ManagedDiskId $global:hubResources.OSDiskJMP.Id `
+
+    $vmConfigJMP = Set-AzVMOperatingSystem `
+        -VM $vmConfigJMP `
+        -Windows `
+        -ComputerName $global:hubProperties.JMPVMName `
+        -Credential $global:credential `
+        -EnableAutoUpdate
 
     # Add the data disk to the VM config
     $vmConfigJMP = Add-AzVMDataDisk `
@@ -158,7 +170,7 @@ else {
     New-AzVM @spokeVMProperties `
         -Name $global:spokeProperties.vmNameLNX `
         -SubnetName $global:spokeProperties.SubnetNameSRV `
-        -Image "UbuntuLTS" `
+        -Image "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest" `
         -AvailabilitySetName $global:spokeResources.AVSetLNX.Name
     $global:spokeResources.Add("VMLNX", $(Get-AzVM `
                 -ResourceGroupName $global:spokeResources.ResourceGroup.ResourceGroupName `
