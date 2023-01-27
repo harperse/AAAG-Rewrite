@@ -215,7 +215,7 @@ var ipObj = {
   prvIpJumpServer: '${substring(hubVnetObj.hubJmpSubnetRange, 0, 8)}4'
   prvIpAllocationMethod: 'Static'
   prvIPAddressVersion: 'IPv4'
-  createhubPublicIPUri: uri(storageObj.stageLocation, 'nested/01.00.00.createHubPublicIP.json${_artifactsLocationSasToken}')
+  createhubPublicIPUri: uri(storageObj.stageLocation, 'nested/01.00.00.createHubPublicIP.bicep${_artifactsLocationSasToken}')
 }
 var hubVnetObj = {
   hubVnetName: hubVnetName
@@ -224,7 +224,7 @@ var hubVnetObj = {
   hubJmpSubnetRange: hubJmpSubnetRange
   hubJumpSubnetNSG: hubJumpSubnetNSG
   location: hubLocation
-  createHubVnetWithFWUri: uri(storageObj.stageLocation, 'nested/01.02.02.createHubVnetWithFW.json${_artifactsLocationSasToken}')
+  createHubVnetWithFWUri: uri(storageObj.stageLocation, 'nested/01.02.02.createHubVnetWithFW.bicep${_artifactsLocationSasToken}')
 }
 var sourceAddressPrefix = '${localMachinePublicIP}/32'
 var nsgObj = {
@@ -244,12 +244,12 @@ var nsgObj = {
       sourcePortRange: '*'
     }
   }
-  createHubNSGUri: uri(storageObj.stageLocation, 'nested/01.01.00.createHubNSG.json${_artifactsLocationSasToken}')
+  createHubNSGUri: uri(storageObj.stageLocation, 'nested/01.01.00.createHubNSG.bicep${_artifactsLocationSasToken}')
 }
 var nicObj = {
   hubJumpServerNic: hubJumpServerNic
   location: hubLocation
-  createHubJmpServerFwNicUri: uri(storageObj.stageLocation, 'nested/01.04.01.createHubJmpServerFwNic.json${_artifactsLocationSasToken}')
+  createHubJmpServerFwNicUri: uri(storageObj.stageLocation, 'nested/01.04.01.createHubJmpServerFwNic.bicep${_artifactsLocationSasToken}')
 }
 var jmpServerObj = {
   credObj: {
@@ -265,7 +265,7 @@ var jmpServerObj = {
   imageVersion: 'latest'
   diskNameOs: toUpper('${hubJumpServerName}-DSK-SYST')
   diskNameData: toUpper('${hubJumpServerName}-DSK-DTA1')
-  createHubJumpServerUri: uri(storageObj.stageLocation, 'nested/01.05.00.createHubJmpServer.json${_artifactsLocationSasToken}')
+  createHubJumpServerUri: uri(storageObj.stageLocation, 'nested/01.05.00.createHubJmpServer.bicep${_artifactsLocationSasToken}')
 }
 var routeTableObj = {
   hubRouteTable: hubRouteTable
@@ -358,12 +358,12 @@ var hubFwObj = {
       }
     }
   ]
-  createHubAzureFwUri: uri(storageObj.stageLocation, 'nested/01.02.03.createHubAzureFw.json${_artifactsLocationSasToken}')
+  createHubAzureFwUri: uri(storageObj.stageLocation, 'nested/01.02.03.createHubAzureFw.bicep${_artifactsLocationSasToken}')
 }
 var autoAcctName = AutomationAccountName
-//var createAutoAcctUri = uri(storageObj.stageLocation, 'nested/09.12.00.createAutoAcct.json${_artifactsLocationSasToken}')
+//var createAutoAcctUri = uri(storageObj.stageLocation, 'nested/09.12.00.createAutoAcct.bicep${_artifactsLocationSasToken}')
 var omsWorkspaceName = azureLogAnalyticsWorkspaceName
-//var createOmsWorkspaceUri = uri(storageObj.stageLocation, 'nested/10.13.00.createOmsWorkspace.json${_artifactsLocationSasToken}')
+//var createOmsWorkspaceUri = uri(storageObj.stageLocation, 'nested/10.13.00.createOmsWorkspace.bicep${_artifactsLocationSasToken}')
 var automationSchedule = {
   startupScheduleName: startupScheduleName
   shutdownScheduleName: shutdownScheduleName
@@ -372,7 +372,7 @@ var automationSchedule = {
   scheduledExpiryTime: scheduledExpiryTime
 }
 
-module _01_00_00_linkedDeploymentCreateHubPublicIP 'nested/01.00.00.createHubPublicIP.json' /*TODO: replace with correct path to [variables('ipObj').createhubPublicIPUri]*/ = {
+module _01_00_00_linkedDeploymentCreateHubPublicIP 'nested/01.00.00.createHubPublicIP.bicep' /*TODO: replace with correct path to [variables('ipObj').createhubPublicIPUri]*/ = {
   name: '01.00.00.linkedDeploymentCreateHubPublicIP'
   params: {
     ipObj: ipObj
@@ -380,20 +380,21 @@ module _01_00_00_linkedDeploymentCreateHubPublicIP 'nested/01.00.00.createHubPub
   }
 }
 
-module _01_01_00_linkedDeploymentCreateHubNSG 'nested/01.01.00.createHubNSG.json' /*TODO: replace with correct path to [variables('nsgObj').createHubNSGUri]*/ = {
+module _01_01_00_linkedDeploymentCreateHubNSG 'nested/01.01.00.createHubNSG.bicep' /*TODO: replace with correct path to [variables('nsgObj').createHubNSGUri]*/ = {
   name: '01.01.00.linkedDeploymentCreateHubNSG'
   params: {
     nsgObj: nsgObj
   }
 }
 
-module _01_02_02_linkedDeploymentCreateHubVnetWithFW 'nested/01.02.02.createHubVnetWithFW.json' /*TODO: replace with correct path to [variables('hubVnetObj').createHubVnetWithFWUri]*/ = {
+module _01_02_02_linkedDeploymentCreateHubVnetWithFW 'nested/01.02.02.createHubVnetWithFW.bicep' /*TODO: replace with correct path to [variables('hubVnetObj').createHubVnetWithFWUri]*/ = {
   name: '01.02.02.linkedDeploymentCreateHubVnetWithFW'
   params: {
     hubVnetObj: hubVnetObj
     routeTableObj: routeTableObj
     hubFwObj: hubFwObj
     hubJmpSubnetNSGId1: _01_01_00_linkedDeploymentCreateHubNSG.outputs.nsgResourceId1
+    location: hubLocation
   }
   dependsOn: [
     _01_00_00_linkedDeploymentCreateHubPublicIP
@@ -401,7 +402,7 @@ module _01_02_02_linkedDeploymentCreateHubVnetWithFW 'nested/01.02.02.createHubV
   ]
 }
 
-module _01_02_03_linkedDeploymentCreateHubAzureFw 'nested/01.02.03.createHubAzureFw.json' /*TODO: replace with correct path to [variables('hubFwObj').createHubAzureFwUri]*/ = {
+module _01_02_03_linkedDeploymentCreateHubAzureFw 'nested/01.02.03.createHubAzureFw.bicep' /*TODO: replace with correct path to [variables('hubFwObj').createHubAzureFwUri]*/ = {
   name: '01.02.03.linkedDeploymentCreateHubAzureFw'
   params: {
     hubFwObj: hubFwObj
@@ -415,7 +416,7 @@ module _01_02_03_linkedDeploymentCreateHubAzureFw 'nested/01.02.03.createHubAzur
   ]
 }
 
-module _01_04_01_linkedDeploymentCreateHubJmpServerFwNic 'nested/01.04.01.createHubJmpServerFwNic.json' /*TODO: replace with correct path to [variables('nicObj').createHubJmpServerFwNicUri]*/ = {
+module _01_04_01_linkedDeploymentCreateHubJmpServerFwNic 'nested/01.04.01.createHubJmpServerFwNic.bicep' /*TODO: replace with correct path to [variables('nicObj').createHubJmpServerFwNicUri]*/ = {
   name: '01.04.01.linkedDeploymentCreateHubJmpServerFwNic'
   params: {
     nicObj: nicObj
@@ -424,7 +425,7 @@ module _01_04_01_linkedDeploymentCreateHubJmpServerFwNic 'nested/01.04.01.create
   }
 }
 
-module _01_05_00_linkedDeploymentCreateHubJmpServer 'nested/01.05.00.createHubJmpServer.json' /*TODO: replace with correct path to [variables('jmpServerObj').createHubJumpServerUri]*/ = {
+module _01_05_00_linkedDeploymentCreateHubJmpServer 'nested/01.05.00.createHubJmpServer.bicep' /*TODO: replace with correct path to [variables('jmpServerObj').createHubJumpServerUri]*/ = {
   name: '01.05.00.linkedDeploymentCreateHubJmpServer'
   params: {
     jmpServerObj: jmpServerObj
@@ -437,7 +438,7 @@ module _01_05_00_linkedDeploymentCreateHubJmpServer 'nested/01.05.00.createHubJm
   ]
 }
 
-module _09_12_00_linkedDeploymentCreateAutoAcct 'nested/09.12.00.createAutoAcct.json' /*TODO: replace with correct path to [variables('createAutoAcctUri')]*/ = if (hubDeploymentOption == 'DeployHubWithFW') {
+module _09_12_00_linkedDeploymentCreateAutoAcct 'nested/09.12.00.createAutoAcct.bicep' /*TODO: replace with correct path to [variables('createAutoAcctUri')]*/ = if (hubDeploymentOption == 'DeployHubWithFW') {
   name: '09.12.00.linkedDeploymentCreateAutoAcct'
   params: {
     autoAcctName: autoAcctName
@@ -447,7 +448,7 @@ module _09_12_00_linkedDeploymentCreateAutoAcct 'nested/09.12.00.createAutoAcct.
   dependsOn: []
 }
 
-module _10_13_00_linkedDeploymentCreateOmsWorkspace 'nested/10.13.00.createOmsWorkspace.json' /*TODO: replace with correct path to [variables('createOmsWorkspaceUri')]*/ = if (hubDeploymentOption == 'DeployHubWithFW') {
+module _10_13_00_linkedDeploymentCreateOmsWorkspace 'nested/10.13.00.createOmsWorkspace.bicep' /*TODO: replace with correct path to [variables('createOmsWorkspaceUri')]*/ = if (hubDeploymentOption == 'DeployHubWithFW') {
   name: '10.13.00.linkedDeploymentCreateOmsWorkspace'
   params: {
     omsWorkspaceName: omsWorkspaceName
