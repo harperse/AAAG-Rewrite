@@ -23,7 +23,7 @@ else {
     "Az.Compute"    = $(Get-Module -Name Az.Compute -ListAvailable).Version.ToString()
     "Az.Automation" = $(Get-Module -Name Az.Automation -ListAvailable).Version.ToString()
     "Az.Network"    = $(Get-Module -Name Az.Network -ListAvailable).Version.ToString()
-}
+} # end $global:runbookModules
 
 [hashtable]$global:alaToaaaMap = @{
     CZEAS = @{
@@ -196,7 +196,7 @@ else {
         aaa = "usgovvirginia"
         ala = "usgovvirginia"
     } # end ht
-} # end alaToaaaMap
+} # end $global:alaToaaaMap
 
 [hashtable]$global:namingConstructs = @{
     staNC    = 'sta'
@@ -237,6 +237,13 @@ else {
     spokeNC                     = "APP"
     spokeLNXNC                  = "POC"
     spokeStaPrefix              = 2
+    aaLocation                  = $alaToaaaMap[$selectedHubRegionCode].aaa
+    lawLocation                 = $alaToaaaMap[$selectedHubRegionCode].ala
+    startSchedule               = "Start 0800 Weekdays LOCAL"
+    stopSchedule                = "Stop 1800 Weekdays LOCAL"
+    startScheduleTime           = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT08:00:00")
+    stopScheduleTime            = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT18:00:00")
+    scheduleExpiryTime          = "9999-12-31T00:00:00-00:00"
 } # end globalProperties
 
 # Properties for resources in the hub region
@@ -262,10 +269,10 @@ else {
     aaPlan                    = "Basic"
     aaAssignSystemIdentity    = $true # For reference only
     aaStartSchedule           = @{
-        Description  = "Start 0800 Weekdays LOCAL"
-        Name         = "Start 0800 Weekdays LOCAL"
-        StartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT08:00:00")
-        ExpiryTime   = "9999-12-31T00:00:00-00:00"
+        Description  = $globalProperties.startSchedule
+        Name         = $globalProperties.startSchedule
+        StartTime    = $globalProperties.startScheduleTime
+        ExpiryTime   = $globalProperties.scheduleExpiryTime
         WeekInterval = 1
         DaysOfWeek   = @([System.DayOfWeek]::Monday, [System.DayOfWeek]::Tuesday, [System.DayOfWeek]::Wednesday, [System.DayOfWeek]::Thursday, [System.DayOfWeek]::Friday)
         Timezone     = "UTC"
@@ -280,17 +287,17 @@ else {
     }
     aaStartRegisterRunbook    = @{
         RunbookName  = "Start-VMs"
-        ScheduleName = "Start 0800 Weekdays LOCAL"
+        ScheduleName = $globalProperties.startSchedule
         Parameters   = @{
             "operation" = "start"
             "env"       = $AzureEnvironment
         }
     }
     aaStopSchedule            = @{
-        Description  = "Stop 1800 Weekdays LOCAL"
-        Name         = "Stop 1800 Weekdays LOCAL"
-        StartTime    = [datetime]::utcnow.AddDays(1).ToString("yyyy-MM-ddT18:00:00")
-        ExpiryTime   = "9999-12-31T00:00:00-00:00"
+        Description  = $globalProperties.stopSchedule
+        Name         = $globalProperties.stopSchedule
+        StartTime    = $globalProperties.stopScheduleTime
+        ExpiryTime   = $globalProperties.scheduleExpiryTime
         WeekInterval = 1
         DaysOfWeek   = @([System.DayOfWeek]::Monday, [System.DayOfWeek]::Tuesday, [System.DayOfWeek]::Wednesday, [System.DayOfWeek]::Thursday, [System.DayOfWeek]::Friday)
         Timezone     = "UTC"
@@ -305,7 +312,7 @@ else {
     }
     aaStopRegisterRunbook     = @{
         RunbookName  = "Stop-VMs"
-        ScheduleName = "Stop 1800 Weekdays LOCAL"
+        ScheduleName = $globalProperties.stopSchedule
         Parameters   = @{
             "operation" = "stop"
             "env"       = $AzureEnvironment

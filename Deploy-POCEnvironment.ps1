@@ -354,8 +354,51 @@ switch ($TemplateLanguage) {
             .\devPowerShell\New-POCAzDeployment.ps1 -HubOrSpoke "hub"
         }
     }
-    "PowerShellWithJSON" {}
-    "PowerShellWithBicep" {}
+    "PowerShellWithJSON" {
+        .\devJSON\New-POCAzParametersFile.ps1
+        # Fetch raw files from Github, copy to \DeploymentFiles and launch deployment script
+        if ($DeploymentOption -eq "DeployAppOnly") {
+            Write-Output "Deploying the spoke resources only"
+            New-AzResourceGroupDeployment -ResourceGroupName $global:spokeResources.ResourceGroup.Name -TemplateFile .\DeploymentFiles\azureDeploy.json -TemplateParameterFile .\DeploymentFiles\azureDeploy.parameters.json -Verbose
+        }
+        elseif ($DeploymentOption -eq "DeployHubwithoutFW") {
+            Write-Output "Deploying the hub and spoke resources"
+            New-AzResourceGroupDeployment -ResourceGroupName $global:spokeResources.ResourceGroup.Name -TemplateFile .\DeploymentFiles\azureDeploy.json -TemplateParameterFile .\DeploymentFiles\azureDeploy.parameters.json -Verbose
+            New-AzResourceGroupDeployment -ResourceGroupName $global:spokeResources.ResourceGroup.Name -TemplateFile .\DeploymentFiles\azureDeployHubWithoutFW.json -TemplateParameterFile .\DeploymentFiles\azureDeployHubWithoutFW.parameters.json -Verbose
+        }
+        elseif ($DeploymentOption -eq "DeployHubwithFW") {
+            Write-Output "Deploying the hub and spoke resources"
+            New-AzResourceGroupDeployment -ResourceGroupName $global:spokeResources.ResourceGroup.Name -TemplateFile .\DeploymentFiles\azureDeploy.json -TemplateParameterFile .\DeploymentFiles\azureDeploy.parameters.json -Verbose
+            New-AzResourceGroupDeployment -ResourceGroupName $global:spokeResources.ResourceGroup.Name -TemplateFile .\DeploymentFiles\azureDeployHubWithFW.json -TemplateParameterFile .\DeploymentFiles\azureDeployHubWithFW.parameters.json -Verbose
+        }
+        else {
+            Write-Output "Unable to deploy resources"
+            exit
+        }
+    }
+    "PowerShellWithBicep" {
+        .\devJSON\New-POCAzParametersFile.ps1
+        # Fetch raw files from Github, copy to \DeploymentFiles and launch deployment script
+        if ($DeploymentOption -eq "DeployAppOnly") {
+            Write-Output "Deploying the spoke resources only"
+            New-AzResourceGroupDeployment -ResourceGroupName $global:spokeResources.ResourceGroup.Name -TemplateFile .\DeploymentFiles\azureDeploy.bicep -TemplateParameterFile .\DeploymentFiles\azureDeploy.parameters.json -Verbose
+        }
+        elseif ($DeploymentOption -eq "DeployHubwithoutFW") {
+            Write-Output "Deploying the hub and spoke resources"
+            New-AzResourceGroupDeployment -ResourceGroupName $global:spokeResources.ResourceGroup.Name -TemplateFile .\DeploymentFiles\azureDeploy.bicep -TemplateParameterFile .\DeploymentFiles\azureDeploy.parameters.json -Verbose
+            New-AzResourceGroupDeployment -ResourceGroupName $global:spokeResources.ResourceGroup.Name -TemplateFile .\DeploymentFiles\azureDeployHubWithoutFW.bicep -TemplateParameterFile .\DeploymentFiles\azureDeployHubWithoutFW.parameters.json -Verbose
+        }
+        elseif ($DeploymentOption -eq "DeployHubwithFW") {
+            Write-Output "Deploying the hub and spoke resources"
+            New-AzResourceGroupDeployment -ResourceGroupName $global:spokeResources.ResourceGroup.Name -TemplateFile .\DeploymentFiles\azureDeploy.bicep -TemplateParameterFile .\DeploymentFiles\azureDeploy.parameters.json -Verbose
+            New-AzResourceGroupDeployment -ResourceGroupName $global:spokeResources.ResourceGroup.Name -TemplateFile .\DeploymentFiles\azureDeployHubWithFW.bicep -TemplateParameterFile .\DeploymentFiles\azureDeployHubWithFW.parameters.json -Verbose
+        }
+        else {
+            Write-Output "Unable to deploy resources"
+            exit
+        }
+
+    }
 }
 
 #endregion MainProcessing

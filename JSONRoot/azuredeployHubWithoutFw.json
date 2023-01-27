@@ -167,17 +167,6 @@
         "description": "Basic NSG that will be associated directly to the NIC of the Jump Server"
       }
     },
-    "azureEnvironment": {
-      "type": "string",
-      "metadata": {
-        "description": "<PLACE-HOLDER ONLY> RESERVED FOR POTENTIAL FUTURE USE: The Cloud environment, either AzureCloud or AzureUSGovernment will be used."
-      },
-      "allowedValues": [
-        "AzureCloud",
-        "AzureUSGovernment"
-      ],
-      "defaultValue": "AzureCloud"
-    },
     "startupScheduleName": {
       "type": "string",
       "metadata": {
@@ -342,7 +331,7 @@
       "comments": "01.02.01.createHubVnetWithoutFW.json",
       "name": "01.02.01.linkedDeploymentCreateHubVnetWithoutFW",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-11-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "01.00.00.linkedDeploymentCreateHubPublicIP",
         "01.01.00.linkedDeploymentCreateHubNSG"
