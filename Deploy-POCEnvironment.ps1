@@ -18,7 +18,7 @@ Param (
     #[Parameter(Mandatory = $true)]
     [ValidateSet("DeployAppOnly", "DeployHubWithoutFW", "DeployHubWithFW")][string] $DeploymentOption = "DeployHubWithoutFW",
     #[Parameter(Mandatory = $true)]
-    [ValidateSet("PowerShellOnly", "PowerShellWithJSON", "PowerShellWithBicep")][string] $TemplateLanguage = "PowerShellOnly",
+    [ValidateSet("PowerShellOnly", "PowerShellWithJSON", "PowerShellWithBicep", "AzCLI", "Terraform")][string] $TemplateLanguage = "PowerShellOnly",
     #[Parameter(Mandatory = $false)][string]$TenantId = "16b3c013-d300-468d-ac64-7eda0820b6d3",
     #[Parameter(Mandatory = $false)][string]$SubscriptionId = "ee9312f3-798c-4110-8c32-2cf6ce086f6f",
     [Parameter(Mandatory = $false)][string]$hubLocation = "eastus",
