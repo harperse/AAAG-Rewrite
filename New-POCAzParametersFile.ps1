@@ -1,19 +1,18 @@
-[hashtable]$hubParametersToFile = @{
-    hubdeploymentOption            = $DeploymentOption
+[hashtable]$commonParameters = @{
+    deploymentOption               = $DeploymentOption
     azureEnvironment               = $AzureEnvironment
-    hublocation                    = $azSpokeLocation
     randomInfix                    = $uniqueGuidIdentifier
-    staHubName                     = $global:hubProperties.storageAccountName
+    adminUserName                  = $global:credential.UserName
+    adminPassword                  = $global:credential.password
+    vmSize                         = $global:globalProperties.vmSize
     storageAccountName             = $global:spokeProperties.storageAccountName
     storageContainerName           = $global:globalProperties.storageAccountContainerName
     artifactsLocation              = $null
     _artifactsLocationSasToken     = $null
     storageDnsSuffix               = $null
     dnsNameLabelSuffix             = $null
-    adminUserName                  = $global:credential.UserName
-    adminPassword                  = $global:credential.Password
-    AutomationAccountName          = $global:hubProperties.aaName
-    azureLogAnalyticsWorkspaceName = $global:hubProperties.lawName
+    AutomationAccountName          = $global:spokeProperties.aaName
+    azureLogAnalyticsWorkspaceName = $global:spokeProperties.lawName
     aaaRegionFullName              = $global:globalProperties.aaLocation
     alaRegionFullName              = $global:globalProperties.lawLocation
     startupScheduleName            = $global:globalProperties.startSchedule
@@ -21,17 +20,32 @@
     shutdownScheduleName           = $global:globalProperties.stopSchedule
     scheduledStopTime              = $global:globalProperties.scheduledStopTime
     scheduledExpiryTime            = $global:globalProperties.scheduledExpiryTime
-    hubJumpServerName              = $global:hubProperties.JMPVMName
-    hubFwName                      = $global:hubProperties.FWName
-    hubJumpServerNic               = $global:hubProperties.JMPNicName
-    localMachinePublicIP           = $global:localMachinePublicIP
-    hubVnetName                    = $global:hubProperties.VnetName
-    hubVnetAddressSpace            = $global:hubProperties.VnetAddressPrefix
-    hubJmpSubnetName               = $global:hubProperties.SubnetNameJMP
-    hubJmpSubnetRange              = $global:hubProperties.SubnetAddressPrefixJMP
-    hubPublicIp                    = $null
-    hubJumpServerSize              = $global:globalProperties.vmSize
-    hubJumpSubnetNSG               = $global:hubProperties.NSGNameJMP
+}
+
+[hashtable]$spokeParametersToFile = @{
+    spokeLocation             = $azSpokeLocation
+    spokeRegionCode                = $selectedSpokeRegionCode
+    recoveryServicesVaultName = $global:spokeProperties.rsvName
+    devServerName             = $global:spokeProperties.vmNameDev
+    appVnetName               = $global:spokeProperties.VnetName
+    includeAds                = "no"
+}
+
+[hashtable]$hubParametersToFile = @{
+    hubLocation          = $azHubLocation
+    hubRegionCode        = $selectedHubRegionCode
+    hubStaName           = $global:hubProperties.storageAccountName
+    hubJumpServerName    = $global:hubProperties.JMPVMName
+    hubFwName            = $global:hubProperties.FWName
+    hubJumpServerNic     = $global:hubProperties.JMPNicName
+    localMachinePublicIP = $global:localMachinePublicIP
+    hubVnetName          = $global:hubProperties.VnetName
+    hubVnetAddressSpace  = $global:hubProperties.VnetAddressPrefix
+    hubJmpSubnetName     = $global:hubProperties.SubnetNameJMP
+    hubJmpSubnetRange    = $global:hubProperties.SubnetAddressPrefixJMP
+    hubPublicIp          = $null
+    hubJumpServerSize    = $global:globalProperties.vmSize
+    hubJumpSubnetNSG     = $global:hubProperties.NSGNameJMP
 }
 
 [hashtable]$hubParametersWithFirewallToFile = @{
@@ -89,46 +103,16 @@
     hubFwAppRule02TargetFqdn       = $global:hubProperties.ApplicationRule2.TargetFqdn
 }
 
-[hashtable]$spokeParametersToFile = @{
-    deploymentOption               = $DeploymentOption
-    azureEnvironment               = $AzureEnvironment
-    location                       = $azSpokeLocation
-    regionCode                     = $selectedSpokeRegionCode
-    randomInfix                    = $uniqueGuidIdentifier
-    storageAccountName             = $global:spokeProperties.storageAccountName
-    storageContainerName           = $global:globalProperties.storageAccountContainerName
-    artifactsLocation              = $null
-    _artifactsLocationSasToken     = $null
-    storageDnsSuffix               = $null
-    dnsNameLabelSuffix             = $null
-    recoveryServicesVaultName      = $global:spokeProperties.rsvName
-    AutomationAccountName          = $global:spokeProperties.aaName
-    azureLogAnalyticsWorkspaceName = $global:spokeProperties.lawName
-    aaaRegionFullName              = $global:globalProperties.aaLocation
-    alaRegionFullName              = $global:globalProperties.lawLocation
-    startupScheduleName            = $global:globalProperties.startSchedule
-    scheduledStartTime             = $global:globalProperties.scheduledStartTime
-    shutdownScheduleName           = $global:globalProperties.stopSchedule
-    scheduledStopTime              = $global:globalProperties.scheduledStopTime
-    scheduledExpiryTime            = $global:globalProperties.scheduledExpiryTime
-    vmSize                         = $global:globalProperties.vmSize
-    devServerName                  = $global:spokeProperties.vmNameDev
-    adminUserName                  = $global:credential.UserName
-    adminPassword                  = $global:credential.Password
-    appVnetName                    = $global:spokeProperties.VnetName
-    includeAds                     = "no"
-}
-
 switch ($DeploymentOption) {
     "DeployAppOnly" {
-        ConvertTo-Json -InputObject $spokeParametersToFile -Depth 10 | Out-File -FilePath ".\DeploymentFiles\azureDeploy.parameters.json"
+        ConvertTo-Json -InputObject $($commonParameters + $spokeParametersToFile) -Depth 10 | Out-File -FilePath ".\DeploymentFiles\azureDeploy.parameters.json"
     } 
     "DeployHubWithoutFW" {
-        ConvertTo-Json -InputObject $spokeParametersToFile -Depth 10 | Out-File -FilePath ".\DeploymentFiles\azureDeploy.parameters.json"
-        ConvertTo-Json -InputObject $hubParametersToFile -Depth 10 | Out-File -FilePath ".\DeploymentFiles\azureDeployHubWithoutFW.parameters.json"
+        ConvertTo-Json -InputObject $($commonParameters + $spokeParametersToFile) -Depth 10 | Out-File -FilePath ".\DeploymentFiles\azureDeploy.parameters.json"
+        ConvertTo-Json -InputObject $($commonParameters + $hubParametersToFile) -Depth 10 | Out-File -FilePath ".\DeploymentFiles\azureDeployHubWithoutFW.parameters.json"
     } 
     "DeployHubWithFW" {
-        ConvertTo-Json -InputObject $spokeParametersToFile -Depth 10 | Out-File -FilePath ".\DeploymentFiles\azureDeploy.parameters.json"
-        ConvertTo-Json -InputObject $($hubParametersToFile + $hubParametersWithFirewallToFile) -Depth 10 | Out-File -FilePath ".\DeploymentFiles\azureDeployHubWithFW.parameters.json"
+        ConvertTo-Json -InputObject $($commonParameters + $spokeParametersToFile) -Depth 10 | Out-File -FilePath ".\DeploymentFiles\azureDeploy.parameters.json"
+        ConvertTo-Json -InputObject $($commonParameters + $hubParametersToFile + $hubParametersWithFirewallToFile) -Depth 10 | Out-File -FilePath ".\DeploymentFiles\azureDeployHubWithFW.parameters.json"
     }
 }
