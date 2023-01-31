@@ -1,3 +1,4 @@
+/*
 @description('Auto-generated container in staging storage account to receive DSC scripts.')
 param _artifactsLocation string
 
@@ -25,18 +26,6 @@ param location string
 @minLength(8)
 @maxLength(8)
 param randomInfix string
-
-@description('The name for the Azure automation account that will be provisioned.')
-param AutomationAccountName string
-
-@description('The region for the Azure automation account that will be provisioned.')
-param aaaRegionFullName string
-
-@description('The name for the log analytics workspace that will be used for logging and diagnostics operations.')
-param azureLogAnalyticsWorkspaceName string
-
-@description('Log Analytics (OMS) region.')
-param alaRegionFullName string
 
 @description('The name for the recovery services vault for backup and site recovery operations.')
 param recoveryServicesVaultName string
@@ -73,6 +62,19 @@ param vmSize string
 
 @description('App/Spoke VNET name')
 param appVnetName string
+*/
+
+@description('The name for the Azure automation account that will be provisioned.')
+param AutomationAccountName string
+
+@description('The region for the Azure automation account that will be provisioned.')
+param aaaRegionFullName string
+
+@description('The name for the log analytics workspace that will be used for logging and diagnostics operations.')
+param azureLogAnalyticsWorkspaceName string
+
+@description('Log Analytics (OMS) region.')
+param alaRegionFullName string
 
 @description('Startup Schedule Name')
 param startupScheduleName string
@@ -89,7 +91,6 @@ param scheduledStartTime string
 @description('Scheduled Start Time')
 param scheduledExpiryTime string
 
-//var stageLocation = '${_artifactsLocation}/${storageContainerName}'
 var automationSchedule = {
   startupScheduleName: startupScheduleName
   shutdownScheduleName: shutdownScheduleName
@@ -98,8 +99,9 @@ var automationSchedule = {
   scheduledExpiryTime: scheduledExpiryTime
 }
 var autoAcctName = AutomationAccountName
-//var createAutoAcctUri = uri(stageLocation, 'nested/09.12.00.createAutoAcct.bicep${_artifactsLocationSasToken}')
 var omsWorkspaceName = azureLogAnalyticsWorkspaceName
+//var stageLocation = '${_artifactsLocation}/${storageContainerName}'
+//var createAutoAcctUri = uri(stageLocation, 'nested/09.12.00.createAutoAcct.bicep${_artifactsLocationSasToken}')
 //var createOmsWorkspaceUri = uri(stageLocation, 'nested/10.13.00.createOmsWorkspace.bicep${_artifactsLocationSasToken}')
 
 module _09_12_00_linkedDeploymentCreateAutoAcct 'nested/09.12.00.createAutoAcct.bicep' /*TODO: replace with correct path to [variables('createAutoAcctUri')]*/ = {
@@ -109,14 +111,13 @@ module _09_12_00_linkedDeploymentCreateAutoAcct 'nested/09.12.00.createAutoAcct.
     location: aaaRegionFullName
     automationSchedule: automationSchedule
   }
-  dependsOn: []
 }
 
-module _10_13_00_linkedDeploymentCreateOmsWorkspace '?' /*TODO: replace with correct path to [variables('createOmsWorkspaceUri')]*/ = {
+module _10_13_00_linkedDeploymentCreateOmsWorkspace 'nested/10.13.00.createOmsWorkspace.bicep' /*TODO: replace with correct path to [variables('createOmsWorkspaceUri')]*/ = {
   name: '10.13.00.linkedDeploymentCreateOmsWorkspace'
   params: {
     omsWorkspaceName: omsWorkspaceName
     alaRegionFullName: alaRegionFullName
-    autoAcctId: _09_12_00_linkedDeploymentCreateAutoAcct.properties.outputs.autoAcctId.value
+    autoAcctId: _09_12_00_linkedDeploymentCreateAutoAcct.outputs.autoAcctId
   }
 }

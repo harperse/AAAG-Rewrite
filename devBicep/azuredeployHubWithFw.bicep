@@ -383,6 +383,7 @@ module _01_00_00_linkedDeploymentCreateHubPublicIP 'nested/01.00.00.createHubPub
 module _01_01_00_linkedDeploymentCreateHubNSG 'nested/01.01.00.createHubNSG.bicep' /*TODO: replace with correct path to [variables('nsgObj').createHubNSGUri]*/ = {
   name: '01.01.00.linkedDeploymentCreateHubNSG'
   params: {
+    location: hubLocation
     nsgObj: nsgObj
   }
 }
@@ -405,6 +406,7 @@ module _01_02_02_linkedDeploymentCreateHubVnetWithFW 'nested/01.02.02.createHubV
 module _01_02_03_linkedDeploymentCreateHubAzureFw 'nested/01.02.03.createHubAzureFw.bicep' /*TODO: replace with correct path to [variables('hubFwObj').createHubAzureFwUri]*/ = {
   name: '01.02.03.linkedDeploymentCreateHubAzureFw'
   params: {
+    location: hubLocation
     hubFwObj: hubFwObj
     hubVnetObj: hubVnetObj
     jmpPublicIpResourceId: _01_00_00_linkedDeploymentCreateHubPublicIP.outputs.jmpPublicIpResourceId

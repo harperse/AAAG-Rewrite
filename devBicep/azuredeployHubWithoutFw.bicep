@@ -102,7 +102,6 @@ param scheduledExpiryTime string
 
 //var adminUserName_var = adminUserName
 //var adminPassword_var = adminPassword
-var resourceGroup = resourceGroup()
 var storageObj = {
   stageLocation: '${_artifactsLocation}/${storageContainerName}'
   saSku: 'Standard_LRS'
@@ -115,11 +114,11 @@ var ipObj = {
   afwDomainNameLabelPrefix: toLower('${hubFwName}-${randomInfix}-pip')
   jmpPublicIPAddressType: 'Static'
   fqdnLocationSuffix: toLower('.${hubLocation}${dnsNameLabelSuffix}')
-  location: resourceGroup().location
+  location: hubLocation
   prvIpJumpServer: '${substring(hubVnetObj.hubJmpSubnetRange, 0, 8)}4'
   prvIpAllocationMethod: 'Static'
   prvIPAddressVersion: 'IPv4'
-  createhubPublicIPUri: uri(storageObj.stageLocation, 'nested/01.00.00.createHubPublicIP.json${_artifactsLocationSasToken}')
+  createhubPublicIPUri: uri(storageObj.stageLocation, 'nested/01.00.00.createHubPublicIP.bicep${_artifactsLocationSasToken}')
 }
 var hubVnetObj = {
   hubVnetName: hubVnetName
@@ -127,13 +126,13 @@ var hubVnetObj = {
   hubJmpSubnetName: hubJmpSubnetName
   hubJmpSubnetRange: hubJmpSubnetRange
   hubJumpSubnetNSG: hubJumpSubnetNSG
-  location: resourceGroup().location
-  createHubVnetWithoutFWUri: uri(storageObj.stageLocation, 'nested/01.02.01.createHubVnetWithoutFW.json${_artifactsLocationSasToken}')
+  location: hubLocation
+  createHubVnetWithoutFWUri: uri(storageObj.stageLocation, 'nested/01.02.01.createHubVnetWithoutFW.bicep${_artifactsLocationSasToken}')
 }
 var sourceAddressPrefix = '${localMachinePublicIP}/32'
 var nsgObj = {
   hubJumpSubnetNSG: hubJumpSubnetNSG
-  location: resourceGroup().location
+  location: hubLocation
   nsgRule: {
     name: 'AllowRdpInbound'
     properties: {
@@ -148,33 +147,33 @@ var nsgObj = {
       sourcePortRange: '*'
     }
   }
-  createHubNSGUri: uri(storageObj.stageLocation, 'nested/01.01.00.createHubNSG.json${_artifactsLocationSasToken}')
+  createHubNSGUri: uri(storageObj.stageLocation, 'nested/01.01.00.createHubNSG.bicep${_artifactsLocationSasToken}')
 }
 var nicObj = {
   hubJumpServerNic: hubJumpServerNic
-  location: resourceGroup().location
-  createHubJmpServerNicUri: uri(storageObj.stageLocation, 'nested/01.04.00.createHubJmpServerNic.json${_artifactsLocationSasToken}')
+  location: hubLocation
+  createHubJmpServerNicUri: uri(storageObj.stageLocation, 'nested/01.04.00.createHubJmpServerNic.bicep${_artifactsLocationSasToken}')
 }
 var jmpServerObj = {
   credObj: {
-    adminUserName: adminUserName_var
-    adminPassword: adminPassword_var
+    adminUserName: adminUserName
+    adminPassword: adminPassword
   }
   hubJumpServerName: hubJumpServerName
   hubJumpServerSize: hubJumpServerSize
-  location: resourceGroup().location
+  location: hubLocation
   imagePublisher: 'MicrosoftWindowsServer'
   imageOffer: 'WindowsServer'
   imageSku: '2019-Datacenter-smalldisk'
   imageVersion: 'latest'
   diskNameOs: toUpper('${hubJumpServerName}-DSK-SYST')
   diskNameData: toUpper('${hubJumpServerName}-DSK-DTA1')
-  createHubJumpServerUri: uri(storageObj.stageLocation, 'nested/01.05.00.createHubJmpServer.json${_artifactsLocationSasToken}')
+  createHubJumpServerUri: uri(storageObj.stageLocation, 'nested/01.05.00.createHubJmpServer.bicep${_artifactsLocationSasToken}')
 }
 var autoAcctName = AutomationAccountName
-var createAutoAcctUri = uri(storageObj.stageLocation, 'nested/09.12.00.createAutoAcct.json${_artifactsLocationSasToken}')
+//var createAutoAcctUri = uri(storageObj.stageLocation, 'nested/09.12.00.createAutoAcct.bicep${_artifactsLocationSasToken}')
 var omsWorkspaceName = azureLogAnalyticsWorkspaceName
-var createOmsWorkspaceUri = uri(storageObj.stageLocation, 'nested/10.13.00.createOmsWorkspace.json${_artifactsLocationSasToken}')
+//var createOmsWorkspaceUri = uri(storageObj.stageLocation, 'nested/10.13.00.createOmsWorkspace.bicep${_artifactsLocationSasToken}')
 var automationSchedule = {
   startupScheduleName: startupScheduleName
   shutdownScheduleName: shutdownScheduleName
@@ -183,7 +182,7 @@ var automationSchedule = {
   scheduledExpiryTime: scheduledExpiryTime
 }
 
-module _01_00_00_linkedDeploymentCreateHubPublicIP '?' /*TODO: replace with correct path to [variables('ipObj').createhubPublicIPUri]*/ = {
+module _01_00_00_linkedDeploymentCreateHubPublicIP 'nested/01.00.00.createHubPublicIP.bicep' /*TODO: replace with correct path to [variables('ipObj').createhubPublicIPUri]*/ = {
   name: '01.00.00.linkedDeploymentCreateHubPublicIP'
   params: {
     ipObj: ipObj
@@ -191,18 +190,19 @@ module _01_00_00_linkedDeploymentCreateHubPublicIP '?' /*TODO: replace with corr
   }
 }
 
-module _01_01_00_linkedDeploymentCreateHubNSG '?' /*TODO: replace with correct path to [variables('nsgObj').createHubNSGUri]*/ = {
+module _01_01_00_linkedDeploymentCreateHubNSG 'nested/01.01.00.createHubNSG.bicep' = {
   name: '01.01.00.linkedDeploymentCreateHubNSG'
   params: {
+    location: hubLocation
     nsgObj: nsgObj
   }
 }
 
-module _01_02_01_linkedDeploymentCreateHubVnetWithoutFW '?' /*TODO: replace with correct path to [variables('hubVnetObj').createHubVnetWithoutFWUri]*/ = {
+module _01_02_01_linkedDeploymentCreateHubVnetWithoutFW 'nested/01.02.01.createHubVnetWithoutFW.bicep' = {
   name: '01.02.01.linkedDeploymentCreateHubVnetWithoutFW'
   params: {
     hubVnetObj: hubVnetObj
-    hubJmpSubnetNSGId1: _01_01_00_linkedDeploymentCreateHubNSG.properties.outputs.nsgResourceId1.value
+    hubJmpSubnetNSGId1: _01_01_00_linkedDeploymentCreateHubNSG.outputs.nsgResourceId1
   }
   dependsOn: [
     _01_00_00_linkedDeploymentCreateHubPublicIP
@@ -210,30 +210,29 @@ module _01_02_01_linkedDeploymentCreateHubVnetWithoutFW '?' /*TODO: replace with
   ]
 }
 
-module _01_04_00_linkedDeploymentCreateHubJmpServerNic '?' /*TODO: replace with correct path to [variables('nicObj').createHubJmpServerNicUri]*/ = {
+module _01_04_00_linkedDeploymentCreateHubJmpServerNic 'nested/01.04.00.createHubJmpServerNic.bicep' = {
   name: '01.04.00.linkedDeploymentCreateHubJmpServerNic'
   params: {
     nicObj: nicObj
     ipObj: ipObj
-    jmpPublicIpResourceId: _01_00_00_linkedDeploymentCreateHubPublicIP.properties.outputs.jmpPublicIpResourceId.value
-    subnetJmpId: _01_02_01_linkedDeploymentCreateHubVnetWithoutFW.properties.outputs.subnetJmpId.value
+    jmpPublicIpResourceId: _01_00_00_linkedDeploymentCreateHubPublicIP.outputs.jmpPublicIpResourceId
+    subnetJmpId: _01_02_01_linkedDeploymentCreateHubVnetWithoutFW.outputs.subnetJmpId
   }
 }
 
-module _01_05_00_linkedDeploymentCreateHubJmpServer '?' /*TODO: replace with correct path to [variables('jmpServerObj').createHubJumpServerUri]*/ = {
+module _01_05_00_linkedDeploymentCreateHubJmpServer 'nested/01.05.00.createHubJmpServer.bicep' = {
   name: '01.05.00.linkedDeploymentCreateHubJmpServer'
   params: {
     jmpServerObj: jmpServerObj
     storageObj: storageObj
-    hubJumpServerNicId: _01_04_00_linkedDeploymentCreateHubJmpServerNic.properties.outputs.hubJumpServerNicId.value
+    hubJumpServerNicId: _01_04_00_linkedDeploymentCreateHubJmpServerNic.outputs.hubJumpServerNicId
   }
   dependsOn: [
     _01_01_00_linkedDeploymentCreateHubNSG
-
   ]
 }
 
-module _09_12_00_linkedDeploymentCreateAutoAcct '?' /*TODO: replace with correct path to [variables('createAutoAcctUri')]*/ = if (hubDeploymentOption == 'DeployHubWithoutFW') {
+module _09_12_00_linkedDeploymentCreateAutoAcct 'nested/09.12.00.createAutoAcct.bicep' = if (hubDeploymentOption == 'DeployHubWithoutFW') {
   name: '09.12.00.linkedDeploymentCreateAutoAcct'
   params: {
     autoAcctName: autoAcctName
@@ -243,14 +242,14 @@ module _09_12_00_linkedDeploymentCreateAutoAcct '?' /*TODO: replace with correct
   dependsOn: []
 }
 
-module _10_13_00_linkedDeploymentCreateOmsWorkspace '?' /*TODO: replace with correct path to [variables('createOmsWorkspaceUri')]*/ = if (hubDeploymentOption == 'DeployHubWithoutFW') {
+module _10_13_00_linkedDeploymentCreateOmsWorkspace 'nested/10.13.00.createOmsWorkspace.bicep' = if (hubDeploymentOption == 'DeployHubWithoutFW') {
   name: '10.13.00.linkedDeploymentCreateOmsWorkspace'
   params: {
     omsWorkspaceName: omsWorkspaceName
     alaRegionFullName: alaRegionFullName
-    autoAcctId: _09_12_00_linkedDeploymentCreateAutoAcct.properties.outputs.autoAcctId.value
+    autoAcctId: _09_12_00_linkedDeploymentCreateAutoAcct.outputs.autoAcctId
   }
 }
 
-output jmpServerPublicIpFqdn string = _01_00_00_linkedDeploymentCreateHubPublicIP.properties.outputs.jmpServerPublicIpFqdn.value
-output nsgResourceId1 string = _01_01_00_linkedDeploymentCreateHubNSG.properties.outputs.nsgResourceId1.value
+output jmpServerPublicIpFqdn string = _01_00_00_linkedDeploymentCreateHubPublicIP.outputs.jmpServerPublicIpFqdn
+output nsgResourceId1 string = _01_01_00_linkedDeploymentCreateHubNSG.outputs.nsgResourceId1
