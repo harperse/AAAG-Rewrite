@@ -9,13 +9,13 @@ param adsNicIds array
 param saSku string
 param diagStorageUri string
 param domainName string
-param domainJoinOptions string
+//param domainJoinOptions string
 param dscArtifactsUrl string
 param dscUrlSasToken string
 param vmSize string
 param diskNameSuffix object
 
-var adsName02 = '${adsPrefix}2'
+var adsName02 = '${adsPrefix}${'2'}'
 var adsVmSize = vmSize
 var imagePublisher = 'MicrosoftWindowsServer'
 var imageOffer = 'WindowsServer'
@@ -41,7 +41,7 @@ resource ads02 'Microsoft.Compute/virtualMachines@2017-03-30' = {
         version: 'latest'
       }
       osDisk: {
-        name: concat(adsName02, diskNameSuffix.syst)
+        name: '${adsName02}${diskNameSuffix.syst}'
         caching: 'ReadWrite'
         createOption: 'FromImage'
         managedDisk: {
@@ -51,7 +51,7 @@ resource ads02 'Microsoft.Compute/virtualMachines@2017-03-30' = {
       dataDisks: [
         {
           lun: 0
-          name: concat(adsName02, diskNameSuffix.data)
+          name: '${adsName02}${diskNameSuffix.data}'
           caching: 'None'
           createOption: 'Empty'
           diskSizeGB: 32

@@ -1,11 +1,11 @@
 param staHubName string
+param location string
 
 resource staHub 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: staHubName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: 'Standard_LRS'
-    tier: 'Standard'
   }
   kind: 'StorageV2'
   properties: {

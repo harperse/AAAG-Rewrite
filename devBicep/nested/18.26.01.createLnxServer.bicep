@@ -11,24 +11,24 @@ param diagStorageUri string
 param vmSize string
 param diskNameSuffix object
 
-var lnx01name_var = concat(lnxPrefix, 1)
+var lnx01name = '${lnxPrefix}${1}'
 var lnxVmSize = vmSize
 var imagePublisher = 'OpenLogic'
 var imageOffer = 'CentOS'
 var imageSku = '8_4'
 var version = 'latest'
-var diskNameOs = toUpper(concat(lnx01name_var, diskNameSuffix.syst))
-var diskNameData = toUpper(concat(lnx01name_var, diskNameSuffix.data))
+var diskNameOs = toUpper('${lnx01name}${diskNameSuffix.syst}')
+var diskNameData = toUpper('${lnx01name}${diskNameSuffix.data}')
 
-resource lnx01name 'Microsoft.Compute/virtualMachines@2017-03-30' = {
-  name: lnx01name_var
+resource lnx01vm 'Microsoft.Compute/virtualMachines@2017-03-30' = {
+  name: lnx01name
   location: location
   properties: {
     hardwareProfile: {
       vmSize: lnxVmSize
     }
     osProfile: {
-      computerName: lnx01name_var
+      computerName: lnx01name
       adminUsername: adminUserName
       adminPassword: adminPassword
     }

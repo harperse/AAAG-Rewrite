@@ -1,12 +1,12 @@
 param staName string
 param storageContainerName string
+param location string
 
 resource sta 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: staName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: 'Standard_LRS'
-    tier: 'Standard'
   }
   kind: 'StorageV2'
   properties: {
@@ -42,10 +42,6 @@ resource sta 'Microsoft.Storage/storageAccounts@2021-06-01' = {
 resource staName_default 'Microsoft.Storage/storageAccounts/blobServices@2021-06-01' = {
   parent: sta
   name: 'default'
-  sku: {
-    name: 'Standard_LRS'
-    tier: 'Standard'
-  }
   properties: {
     cors: {
       corsRules: []
@@ -77,8 +73,4 @@ resource staName_default_storageContainer 'Microsoft.Storage/storageAccounts/blo
     denyEncryptionScopeOverride: false
     publicAccess: 'None'
   }
-  dependsOn: [
-
-    sta
-  ]
 }

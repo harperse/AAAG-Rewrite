@@ -29,7 +29,6 @@ resource nicObj_hubJumpServerNic 'Microsoft.Network/networkInterfaces@2017-10-01
               publicIPAddressVersion: ipObj.prvIPAddressVersion
               dnsSettings: {
               }
-              ipTags: []
             }
           }
           privateIPAddress: ipObj.prvIpJumpServer

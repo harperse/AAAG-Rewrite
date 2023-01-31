@@ -5,7 +5,6 @@ param rsvName string
 param location string
 
 var rsvSkuName = 'RS0'
-var rsvSkuTier = 'Standard'
 
 resource rsv 'Microsoft.RecoveryServices/vaults@2016-06-01' = {
   name: rsvName
@@ -16,6 +15,5 @@ resource rsv 'Microsoft.RecoveryServices/vaults@2016-06-01' = {
   }
   sku: {
     name: rsvSkuName
-    tier: rsvSkuTier
   }
 }

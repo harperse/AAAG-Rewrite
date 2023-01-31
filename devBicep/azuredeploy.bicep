@@ -26,18 +26,6 @@ param location string
 @maxLength(8)
 param randomInfix string
 
-@description('The name for the Azure automation account that will be provisioned.')
-param AutomationAccountName string
-
-@description('The region for the Azure automation account that will be provisioned.')
-param aaaRegionFullName string
-
-@description('The name for the log analytics workspace that will be used for logging and diagnostics operations.')
-param azureLogAnalyticsWorkspaceName string
-
-@description('Log Analytics (OMS) region.')
-param alaRegionFullName string
-
 @description('The name for the recovery services vault for backup and site recovery operations.')
 param recoveryServicesVaultName string
 
@@ -53,14 +41,6 @@ param storageAccountName string
 @description('The storage container name where artifacts will be.')
 param storageContainerName string
 
-@description('RESERVED FOR POTENTIAL FUTURE USE: Allows automation of hub network deployment with or without Azure Firewall.')
-@allowed([
-  'DeployAppOnly'
-  'DeployHubWithoutFW'
-  'DeployHubWithFW'
-])
-param deploymentOption string = 'DeployAppOnly'
-
 @description('<PLACE-HOLDER ONLY> RESERVED FOR POTENTIAL FUTURE USE: The Cloud environment, either AzureCloud or AzureUSGovernment will be used.')
 @allowed([
   'AzureCloud'
@@ -73,6 +53,30 @@ param vmSize string
 
 @description('App/Spoke VNET name')
 param appVnetName string
+
+@description('Should replica domain controllers be deployed? [yes|no]')
+param includeAds string
+
+/*
+@description('RESERVED FOR POTENTIAL FUTURE USE: Allows automation of hub network deployment with or without Azure Firewall.')
+@allowed([
+  'DeployAppOnly'
+  'DeployHubWithoutFW'
+  'DeployHubWithFW'
+])
+param deploymentOption string = 'DeployAppOnly'
+
+@description('The name for the Azure automation account that will be provisioned.')
+param AutomationAccountName string
+
+@description('The region for the Azure automation account that will be provisioned.')
+param aaaRegionFullName string
+
+@description('The name for the log analytics workspace that will be used for logging and diagnostics operations.')
+param azureLogAnalyticsWorkspaceName string
+
+@description('Log Analytics (OMS) region.')
+param alaRegionFullName string
 
 @description('Startup Schedule Name')
 param startupScheduleName string
@@ -88,18 +92,14 @@ param scheduledStartTime string
 
 @description('Scheduled Start Time')
 param scheduledExpiryTime string
+*/
 
-@description('Should replica domain controllers be deployed? [yes|no]')
-param includeAds string
-
-var adminUserName_var = adminUserName
-var adminPassword_var = adminPassword
 var saName = storageAccountName
 var stageLocation = '${_artifactsLocation}/${storageContainerName}'
 var saSku = 'Standard_LRS'
 var saUrlSuffix = storageDnsSuffix
 var diagStorageUri = 'https://${saName}${saUrlSuffix}'
-var createPublicIPUri = uri(stageLocation, 'nested/04.36.00.createPublicIP.json')
+
 var devPublicIPAddressName = toLower('${devServerName}-pip')
 var devDomainNameLabelPrefix = '${devPublicIPAddressName}-${randomInfix}'
 var devPublicIPAddressType = 'Static'
@@ -113,7 +113,6 @@ var avSet = [
   '${regionCode}-DEV-${avSetSuffix}'
   '${regionCode}-LNX-${avSetSuffix}'
 ]
-var createAvSetUri = uri(stageLocation, 'nested/05.08.00.createAvSet.json')
 var subnet01 = '${regionCode}-ADC-NP-SUB-01'
 var subnet02 = '${regionCode}-SRV-NP-SUB-02'
 var nsgADDS = '${regionCode}-ADC-NP-NSG-01'
@@ -122,7 +121,6 @@ var nsgCollection = [
   nsgADDS
   nsgSRVS
 ]
-var createNSGUri = uri(stageLocation, 'nested/06.06.00.createNSG.json')
 var netPrefix = '10.20.10'
 var netSuffixVNET = '.0/26'
 var netSuffixADDS = '.0/28'
@@ -134,19 +132,12 @@ var subnet1Name = subnet01
 var subnet1Prefix = '${netPrefix}${netSuffixADDS}'
 var subnet2Name = subnet02
 var subnet2Prefix = '${netPrefix}${netSuffixSRVS}'
-var createVnetUri = uri(stageLocation, 'nested/07.03.00.createVnet.json')
 var vnet = {
   name: vnet1Name
   location: vnet1Location
   addressPrefix: vnet1AddressPrefix
 }
-var automationSchedule = {
-  startupScheduleName: startupScheduleName
-  shutdownScheduleName: shutdownScheduleName
-  scheduledStopTime: scheduledStopTime
-  scheduledStartTime: scheduledStartTime
-  scheduledExpiryTime: scheduledExpiryTime
-}
+
 var subnetNameCollection = [
   subnet1Name
   subnet2Name
@@ -155,11 +146,7 @@ var subnetPrefixCollection = [
   subnet1Prefix
   subnet2Prefix
 ]
-var autoAcctName = AutomationAccountName
-var createAutoAcctUri = uri(stageLocation, 'nested/09.12.00.createAutoAcct.json')
-var omsWorkspaceName = azureLogAnalyticsWorkspaceName
-var createOmsWorkspaceUri = uri(stageLocation, 'nested/10.13.00.createOmsWorkspace.json')
-var createRsvUri = uri(stageLocation, 'nested/11.14.00.createRecoveryServicesVault.json')
+
 var rsvName = recoveryServicesVaultName
 var roleCodeAds = 'APPNPADC'
 var roleCodeWeb = 'APPNPWES'
@@ -175,6 +162,7 @@ var lnxPrefix = '${regionCode}${roleCodeLnx}${seriesPrefix}'
 var fqdnContosoDev = ((azureEnvironment == 'AzureCloud') ? 'dev.contoso.com' : 'dev.contoso.gov')
 var domainJoinOptions = '3'
 var dcNicIpPrefix = netPrefix
+var adsVmSize = 'Standard_B2s'
 var adsPrivateIps = {
   ads01PrivIp: '${dcNicIpPrefix}.4'
   ads02PrivIp: '${dcNicIpPrefix}.5'
@@ -183,7 +171,6 @@ var diskNameSuffix = {
   syst: '-DSK-SYST'
   data: '-DSK-DTA1'
 }
-var createNetworkInterfacesUri = uri(stageLocation, 'nested/11.14.01.createNetworkInterfaces.json')
 var nicSuffix = '-NIC'
 var nicCollection = {
   ads01nic: {
@@ -211,16 +198,36 @@ var nicCollection = {
     name: toUpper('${lnxPrefix}1${nicSuffix}')
   }
 }
-var createAds01Uri = uri(stageLocation, 'nested/03.15.00.createDomainController.json')
-var createDev01Uri = uri(stageLocation, 'nested/14.17.00.createDevServer.json')
-var createWebServersUri = uri(stageLocation, 'nested/15.21.00.createWebServers.json')
-var createSqlServersUri = uri(stageLocation, 'nested/16.23.00.createSqlServers.json')
-var createAdsServersUri = uri(stageLocation, 'nested/17.25.00.createAdsServers.json')
-var createLnx01Uri = uri(stageLocation, 'nested/18.26.01.createLnxServer.json')
-var updateVnetWithDNSuri = uri(stageLocation, 'nested/03.16.00.updateVnetWithDNS.json')
-var adsVmSize = 'Standard_B2s'
+/*
+var adminUserName = adminUserName
+var adminPassword = adminPassword
+var autoAcctName = AutomationAccountName
+var omsWorkspaceName = azureLogAnalyticsWorkspaceName
+var automationSchedule = {
+  startupScheduleName: startupScheduleName
+  shutdownScheduleName: shutdownScheduleName
+  scheduledStopTime: scheduledStopTime
+  scheduledStartTime: scheduledStartTime
+  scheduledExpiryTime: scheduledExpiryTime
+}
+var createPublicIPUri = uri(stageLocation, 'nested/04.36.00.createPublicIP.bicep')
+var createAvSetUri = uri(stageLocation, 'nested/05.08.00.createAvSet.bicep')
+var createNSGUri = uri(stageLocation, 'nested/06.06.00.createNSG.bicep')
+var createVnetUri = uri(stageLocation, 'nested/07.03.00.createVnet.bicep')
+var createAutoAcctUri = uri(stageLocation, 'nested/09.12.00.createAutoAcct.bicep')
+var createOmsWorkspaceUri = uri(stageLocation, 'nested/10.13.00.createOmsWorkspace.bicep')
+var createRsvUri = uri(stageLocation, 'nested/11.14.00.createRecoveryServicesVault.bicep')
+var createNetworkInterfacesUri = uri(stageLocation, 'nested/11.14.01.createNetworkInterfaces.bicep')
+var createAds01Uri = uri(stageLocation, 'nested/03.15.00.createDomainController.bicep')
+var createDev01Uri = uri(stageLocation, 'nested/14.17.00.createDevServer.bicep')
+var createWebServersUri = uri(stageLocation, 'nested/15.21.00.createWebServers.bicep')
+var createSqlServersUri = uri(stageLocation, 'nested/16.23.00.createSqlServers.bicep')
+var createAdsServersUri = uri(stageLocation, 'nested/17.25.00.createAdsServers.bicep')
+var createLnx01Uri = uri(stageLocation, 'nested/18.26.01.createLnxServer.bicep')
+var updateVnetWithDNSuri = uri(stageLocation, 'nested/03.16.00.updateVnetWithDNS.bicep')
+*/
 
-module _04_36_00_linkedDeploymentCreatePublicIP 'nested/04.36.00.createPublicIP.json' /*TODO: replace with correct path to [variables('createPublicIPUri')]*/ = {
+module _04_36_00_linkedDeploymentCreatePublicIP 'nested/04.36.00.createPublicIP.bicep' = {
   name: '04.36.00.linkedDeploymentCreatePublicIP'
   params: {
     location: location
@@ -230,7 +237,7 @@ module _04_36_00_linkedDeploymentCreatePublicIP 'nested/04.36.00.createPublicIP.
   }
 }
 
-module _05_08_00_linkedDeploymentCreateAvSet 'nested/05.08.00.createAvSet.json' /*TODO: replace with correct path to [variables('createAvSetUri')]*/ = {
+module _05_08_00_linkedDeploymentCreateAvSet 'nested/05.08.00.createAvSet.bicep' = {
   name: '05.08.00.linkedDeploymentCreateAvSet'
   params: {
     location: location
@@ -238,16 +245,16 @@ module _05_08_00_linkedDeploymentCreateAvSet 'nested/05.08.00.createAvSet.json' 
   }
 }
 
-module _06_06_00_linkedDeploymentCreateNSG 'nested/06.06.00.createNSG.json' /*TODO: replace with correct path to [variables('createNSGUri')]*/ = {
+module _06_06_00_linkedDeploymentCreateNSG 'nested/06.06.00.createNSG.bicep' /*TODO: replace with correct path to [variables('createNSGUri')]*/ = {
   name: '06.06.00.linkedDeploymentCreateNSG'
   params: {
     location: location
-    vnet1AddressPrefix: vnet1AddressPrefix
+    //vnet1AddressPrefix: vnet1AddressPrefix
     nsgCollection: nsgCollection
   }
 }
 
-module _07_03_00_linkedDeploymentCreateVnet 'nested/07.03.00.createVnet.json' /*TODO: replace with correct path to [variables('createVnetUri')]*/ = {
+module _07_03_00_linkedDeploymentCreateVnet 'nested/07.03.00.createVnet.bicep' /*TODO: replace with correct path to [variables('createVnetUri')]*/ = {
   name: '07.03.00.linkedDeploymentCreateVnet'
   params: {
     vnet: vnet
@@ -258,7 +265,7 @@ module _07_03_00_linkedDeploymentCreateVnet 'nested/07.03.00.createVnet.json' /*
   }
 }
 
-module _11_14_00_linkedDeploymentCreateRecoveryServicesVault 'nested/11.14.00.createRecoveryServicesVault.json' /*TODO: replace with correct path to [variables('createRsvUri')]*/ = {
+module _11_14_00_linkedDeploymentCreateRecoveryServicesVault 'nested/11.14.00.createRecoveryServicesVault.bicep' /*TODO: replace with correct path to [variables('createRsvUri')]*/ = {
   name: '11.14.00.linkedDeploymentCreateRecoveryServicesVault'
   params: {
     rsvName: rsvName
@@ -267,7 +274,7 @@ module _11_14_00_linkedDeploymentCreateRecoveryServicesVault 'nested/11.14.00.cr
   dependsOn: []
 }
 
-module _11_14_01_linkedDeploymentCreateNetworkInterfaces 'nested/11.14.01.createNetworkInterfaces.json' /*TODO: replace with correct path to [variables('createNetworkInterfacesUri')]*/ = {
+module _11_14_01_linkedDeploymentCreateNetworkInterfaces 'nested/11.14.01.createNetworkInterfaces.bicep' /*TODO: replace with correct path to [variables('createNetworkInterfacesUri')]*/ = {
   name: '11.14.01.linkedDeploymentCreateNetworkInterfaces'
   params: {
     nicCollection: nicCollection
@@ -280,31 +287,29 @@ module _11_14_01_linkedDeploymentCreateNetworkInterfaces 'nested/11.14.01.create
   }
 }
 
-module _03_15_00_linkedDeploymentCreateDomainController 'nested/03.15.00.createDomainController.json' /*TODO: replace with correct path to [variables('createAds01Uri')]*/ = {
+module _03_15_00_linkedDeploymentCreateDomainController 'nested/03.15.00.createDomainController.bicep' /*TODO: replace with correct path to [variables('createAds01Uri')]*/ = {
   name: '03.15.00.linkedDeploymentCreateDomainController'
   params: {
     adsPrefix: adsPrefix
     location: location
-    adminUserName: adminUserName_var
-    adminPassword: adminPassword_var
+    adminUserName: adminUserName
+    adminPassword: adminPassword
     adsAvSetId: _05_08_00_linkedDeploymentCreateAvSet.outputs.adsAvSetID
     ads01nicId: _11_14_01_linkedDeploymentCreateNetworkInterfaces.outputs.ads01NicId
     saSku: saSku
     diagStorageUri: diagStorageUri
-    domainName: fqdnContosoDev
+    //domainName: fqdnContosoDev
     dscArtifactsUrl: _artifactsLocation
     dscUrlSasToken: _artifactsLocationSasToken
     vmSize: adsVmSize
     diskNameSuffix: diskNameSuffix
   }
   dependsOn: [
-
     _07_03_00_linkedDeploymentCreateVnet
-
   ]
 }
 
-module _03_16_00_linkedDeploymentUpdateVnetWithDNS 'nested/03.16.00.updateVnetWithDNS.json' /*TODO: replace with correct path to [variables('updateVnetWithDNSuri')]*/ = {
+module _03_16_00_linkedDeploymentUpdateVnetWithDNS 'nested/03.16.00.updateVnetWithDNS.bicep' /*TODO: replace with correct path to [variables('updateVnetWithDNSuri')]*/ = {
   name: '03.16.00.linkedDeploymentUpdateVnetWithDNS'
   params: {
     vnet: vnet
@@ -317,13 +322,13 @@ module _03_16_00_linkedDeploymentUpdateVnetWithDNS 'nested/03.16.00.updateVnetWi
   ]
 }
 
-module _14_17_00_linkedDeploymentCreateDevServer 'nested/14.17.00.createDevServer.json' /*TODO: replace with correct path to [variables('createDev01Uri')]*/ = {
+module _14_17_00_linkedDeploymentCreateDevServer 'nested/14.17.00.createDevServer.bicep' /*TODO: replace with correct path to [variables('createDev01Uri')]*/ = {
   name: '14.17.00.linkedDeploymentCreateDevServer'
   params: {
     devPrefix: devPrefix
     location: location
-    adminUserName: adminUserName_var
-    adminPassword: adminPassword_var
+    adminUserName: adminUserName
+    adminPassword: adminPassword
     devAvSetId: _05_08_00_linkedDeploymentCreateAvSet.outputs.devAvSetID
     dev01nicId: _11_14_01_linkedDeploymentCreateNetworkInterfaces.outputs.dev01NicId
     saSku: saSku
@@ -338,13 +343,13 @@ module _14_17_00_linkedDeploymentCreateDevServer 'nested/14.17.00.createDevServe
   ]
 }
 
-module _15_21_00_linkedDeploymentCreateWebServers 'nested/15.21.00.createWebServers.json' /*TODO: replace with correct path to [variables('createWebServersUri')]*/ = {
+module _15_21_00_linkedDeploymentCreateWebServers 'nested/15.21.00.createWebServers.bicep' /*TODO: replace with correct path to [variables('createWebServersUri')]*/ = {
   name: '15.21.00.linkedDeploymentCreateWebServers'
   params: {
     webPrefix: webPrefix
     location: location
-    adminUserName: adminUserName_var
-    adminPassword: adminPassword_var
+    adminUserName: adminUserName
+    adminPassword: adminPassword
     webAvSetId: _05_08_00_linkedDeploymentCreateAvSet.outputs.webAvSetID
     webNicIds: _11_14_01_linkedDeploymentCreateNetworkInterfaces.outputs.webNicIds
     saSku: saSku
@@ -359,13 +364,13 @@ module _15_21_00_linkedDeploymentCreateWebServers 'nested/15.21.00.createWebServ
   ]
 }
 
-module _16_23_00_linkedDeploymentCreateSqlServers 'nested/16.23.00.createSqlServers.json' /*TODO: replace with correct path to [variables('createSqlServersUri')]*/ = {
+module _16_23_00_linkedDeploymentCreateSqlServers 'nested/16.23.00.createSqlServers.bicep' = {
   name: '16.23.00.linkedDeploymentCreateSqlServers'
   params: {
     sqlPrefix: sqlPrefix
     location: location
-    adminUserName: adminUserName_var
-    adminPassword: adminPassword_var
+    adminUserName: adminUserName
+    adminPassword: adminPassword
     sqlAvSetId: _05_08_00_linkedDeploymentCreateAvSet.outputs.sqlAvSetID
     sqlNicIds: _11_14_01_linkedDeploymentCreateNetworkInterfaces.outputs.sqlNicIds
     saSku: saSku
@@ -382,19 +387,19 @@ module _16_23_00_linkedDeploymentCreateSqlServers 'nested/16.23.00.createSqlServ
   ]
 }
 
-module _17_25_00_linkedDeploymentCreateAdsServers 'nested/17.25.00.createAdsServers.json' /*TODO: replace with correct path to [variables('createAdsServersUri')]*/ = if (includeAds == 'yes') {
+module _17_25_00_linkedDeploymentCreateAdsServers 'nested/17.25.00.createAdsServers.bicep' /*TODO: replace with correct path to [variables('createAdsServersUri')]*/ = if (includeAds == 'yes') {
   name: '17.25.00.linkedDeploymentCreateAdsServers'
   params: {
     adsPrefix: adsPrefix
     location: location
-    adminUserName: adminUserName_var
-    adminPassword: adminPassword_var
+    adminUserName: adminUserName
+    adminPassword: adminPassword
     adsAvSetId: _05_08_00_linkedDeploymentCreateAvSet.outputs.adsAvSetID
     adsNicIds: _11_14_01_linkedDeploymentCreateNetworkInterfaces.outputs.adsNicIds
     saSku: saSku
     diagStorageUri: diagStorageUri
     domainName: fqdnContosoDev
-    domainJoinOptions: domainJoinOptions
+    //domainJoinOptions: domainJoinOptions
     dscArtifactsUrl: _artifactsLocation
     dscUrlSasToken: _artifactsLocationSasToken
     vmSize: adsVmSize
@@ -405,13 +410,13 @@ module _17_25_00_linkedDeploymentCreateAdsServers 'nested/17.25.00.createAdsServ
   ]
 }
 
-module _18_26_01_linkedDeploymentCreateLnxServer 'nested/18.26.01.createLnxServer.json' /*TODO: replace with correct path to [variables('createLnx01Uri')]*/ = {
+module _18_26_01_linkedDeploymentCreateLnxServer 'nested/18.26.01.createLnxServer.bicep' /*TODO: replace with correct path to [variables('createLnx01Uri')]*/ = {
   name: '18.26.01.linkedDeploymentCreateLnxServer'
   params: {
     lnxPrefix: lnxPrefix
     location: location
-    adminUserName: adminUserName_var
-    adminPassword: adminPassword_var
+    adminUserName: adminUserName
+    adminPassword: adminPassword
     lnxAvSetId: _05_08_00_linkedDeploymentCreateAvSet.outputs.lnxAvSetID
     lnx01nicId: _11_14_01_linkedDeploymentCreateNetworkInterfaces.outputs.lnx01NicId
     saSku: saSku

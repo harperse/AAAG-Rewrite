@@ -13,23 +13,23 @@ param dscUrlSasToken string
 param vmSize string
 param diskNameSuffix object
 
-var ads01name_var = concat(adsPrefix, 1)
+var ads01name = '${adsPrefix}${1}'
 var adsVmSize = vmSize
 var imagePublisher = 'MicrosoftWindowsServer'
 var imageOffer = 'WindowsServer'
 var imageSku = '2019-Datacenter-Core-smalldisk'
-var diskNameOs = toUpper(concat(ads01name_var, diskNameSuffix.syst))
-var diskNameData = toUpper(concat(ads01name_var, diskNameSuffix.data))
+var diskNameOs = toUpper('${ads01name}${diskNameSuffix.syst}')
+var diskNameData = toUpper('${ads01name}${diskNameSuffix.data}')
 
-resource ads01name 'Microsoft.Compute/virtualMachines@2017-03-30' = {
-  name: ads01name_var
+resource ads01vm 'Microsoft.Compute/virtualMachines@2017-03-30' = {
+  name: ads01name
   location: location
   properties: {
     hardwareProfile: {
       vmSize: adsVmSize
     }
     osProfile: {
-      computerName: ads01name_var
+      computerName: ads01name
       adminUsername: adminUserName
       adminPassword: adminPassword
     }
@@ -81,7 +81,7 @@ resource ads01name 'Microsoft.Compute/virtualMachines@2017-03-30' = {
 }
 
 resource ads01name_03_15_01_configureDC01 'Microsoft.Compute/virtualMachines/extensions@2017-03-30' = {
-  parent: ads01name
+  parent: ads01vm
   name: '03.15.01.configureDC01'
   location: location
   properties: {

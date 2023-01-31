@@ -1,11 +1,12 @@
 @description('NSG object to provision')
 param nsgObj object
+param location string
 
 var nsgName = nsgObj.hubJumpSubnetNSG
 
 resource nsgObj_hubJumpSubnetNSG 'Microsoft.Network/networkSecurityGroups@2017-10-01' = {
   name: nsgObj.hubJumpSubnetNSG
-  location: resourceGroup().location
+  location: location
   properties: {
     securityRules: [
       {

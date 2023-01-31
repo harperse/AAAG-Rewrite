@@ -3,10 +3,11 @@ param hubVnetObj object
 param jmpPublicIpResourceId string
 param jmpPublicIpAddr string
 param localPIP string
+param location string
 
 resource hubFwObj_fw 'Microsoft.Network/azureFirewalls@2019-04-01' = {
   name: hubFwObj.fwName
-  location: resourceGroup().location
+  location: location
   tags: {
   }
   properties: {
@@ -14,7 +15,7 @@ resource hubFwObj_fw 'Microsoft.Network/azureFirewalls@2019-04-01' = {
       {
         name: 'IpConfig1'
         properties: {
-          privateIPAddress: concat(hubFwObj.hubFwPrvIp)
+          //privateIPAddress: hubFwObj.hubFwPrvIp
           subnet: {
             id: resourceId('Microsoft.Network/virtualNetworks/subnets', hubVnetObj.hubVnetName, hubFwObj.fwSubnetName)
           }

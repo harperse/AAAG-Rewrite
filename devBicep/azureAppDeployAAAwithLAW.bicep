@@ -89,7 +89,7 @@ param scheduledStartTime string
 @description('Scheduled Start Time')
 param scheduledExpiryTime string
 
-var stageLocation = '${_artifactsLocation}/${storageContainerName}'
+//var stageLocation = '${_artifactsLocation}/${storageContainerName}'
 var automationSchedule = {
   startupScheduleName: startupScheduleName
   shutdownScheduleName: shutdownScheduleName
@@ -98,11 +98,11 @@ var automationSchedule = {
   scheduledExpiryTime: scheduledExpiryTime
 }
 var autoAcctName = AutomationAccountName
-var createAutoAcctUri = uri(stageLocation, 'nested/09.12.00.createAutoAcct.json${_artifactsLocationSasToken}')
+//var createAutoAcctUri = uri(stageLocation, 'nested/09.12.00.createAutoAcct.bicep${_artifactsLocationSasToken}')
 var omsWorkspaceName = azureLogAnalyticsWorkspaceName
-var createOmsWorkspaceUri = uri(stageLocation, 'nested/10.13.00.createOmsWorkspace.json${_artifactsLocationSasToken}')
+//var createOmsWorkspaceUri = uri(stageLocation, 'nested/10.13.00.createOmsWorkspace.bicep${_artifactsLocationSasToken}')
 
-module _09_12_00_linkedDeploymentCreateAutoAcct '?' /*TODO: replace with correct path to [variables('createAutoAcctUri')]*/ = {
+module _09_12_00_linkedDeploymentCreateAutoAcct 'nested/09.12.00.createAutoAcct.bicep' /*TODO: replace with correct path to [variables('createAutoAcctUri')]*/ = {
   name: '09.12.00.linkedDeploymentCreateAutoAcct'
   params: {
     autoAcctName: autoAcctName

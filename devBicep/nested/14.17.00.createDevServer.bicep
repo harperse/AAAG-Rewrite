@@ -13,23 +13,23 @@ param domainJoinOptions string
 param vmSize string
 param diskNameSuffix object
 
-var dev01name_var = concat(devPrefix, 1)
+var dev01name = '${devPrefix}${1}'
 var devVmSize = vmSize
 var imagePublisher = 'MicrosoftWindowsServer'
 var imageOffer = 'WindowsServer'
 var imageSku = '2019-Datacenter-smalldisk'
-var diskNameOs = toUpper(concat(dev01name_var, diskNameSuffix.syst))
-var diskNameData = toUpper(concat(dev01name_var, diskNameSuffix.data))
+var diskNameOs = toUpper('${dev01name}${diskNameSuffix.syst}')
+var diskNameData = toUpper('${dev01name}${diskNameSuffix.data}')
 
-resource dev01name 'Microsoft.Compute/virtualMachines@2017-03-30' = {
-  name: dev01name_var
+resource dev01vm 'Microsoft.Compute/virtualMachines@2017-03-30' = {
+  name: dev01name
   location: location
   properties: {
     hardwareProfile: {
       vmSize: devVmSize
     }
     osProfile: {
-      computerName: dev01name_var
+      computerName: dev01name
       adminUsername: adminUserName
       adminPassword: adminPassword
     }
@@ -81,7 +81,7 @@ resource dev01name 'Microsoft.Compute/virtualMachines@2017-03-30' = {
 }
 
 resource dev01name_joindomain 'Microsoft.Compute/virtualMachines/extensions@2017-12-01' = {
-  parent: dev01name
+  parent: dev01vm
   name: 'joindomain'
   location: location
   tags: {
@@ -91,7 +91,7 @@ resource dev01name_joindomain 'Microsoft.Compute/virtualMachines/extensions@2017
     publisher: 'Microsoft.Compute'
     type: 'JsonADDomainExtension'
     typeHandlerVersion: '1.3'
-    autoUpgradeMinorVersion: 'true'
+    autoUpgradeMinorVersion: true
     settings: {
       Name: domainName
       User: '${adminUserName}@${domainName}'

@@ -20,14 +20,15 @@ var imageOffer = 'WindowsServer'
 var imageSku = '2019-Datacenter-Core-smalldisk'
 
 resource webPrefix_1 'Microsoft.Compute/virtualMachines@2017-03-30' = [for i in range(0, webServerInstances): {
-  name: concat(webPrefix, (i + 1))
+  //name: '${webPrefix}${i+1}'
+  name: '${webPrefix}${i+1}'
   location: location
   properties: {
     hardwareProfile: {
       vmSize: webVmSize
     }
     osProfile: {
-      computerName: concat(webPrefix, (i + 1))
+      computerName: '${webPrefix}${i+1}'
       adminUsername: adminUserName
       adminPassword: adminPassword
     }
@@ -39,7 +40,7 @@ resource webPrefix_1 'Microsoft.Compute/virtualMachines@2017-03-30' = [for i in 
         version: 'latest'
       }
       osDisk: {
-        name: concat(webPrefix, (i + 1), diskNameSuffix.syst)
+        name: '${webPrefix}{$i+1}${diskNameSuffix.syst}'
         caching: 'ReadWrite'
         createOption: 'FromImage'
         managedDisk: {
@@ -49,7 +50,7 @@ resource webPrefix_1 'Microsoft.Compute/virtualMachines@2017-03-30' = [for i in 
       dataDisks: [
         {
           lun: 0
-          name: concat(webPrefix, (i + 1), diskNameSuffix.data)
+          name: '${webPrefix}{$i+1}${diskNameSuffix.data}'
           caching: 'None'
           createOption: 'Empty'
           diskSizeGB: 32
@@ -88,7 +89,7 @@ resource webPrefix_1_joindomain 'Microsoft.Compute/virtualMachines/extensions@20
     publisher: 'Microsoft.Compute'
     type: 'JsonADDomainExtension'
     typeHandlerVersion: '1.3'
-    autoUpgradeMinorVersion: 'true'
+    autoUpgradeMinorVersion: true
     settings: {
       Name: domainName
       User: '${adminUserName}@${domainName}'
@@ -99,7 +100,9 @@ resource webPrefix_1_joindomain 'Microsoft.Compute/virtualMachines/extensions@20
       Password: adminPassword
     }
   }
+  /*
   dependsOn: [
     'Microsoft.Compute/virtualMachines/${webPrefix}${(i + 1)}'
   ]
+  */
 }]

@@ -25,7 +25,8 @@ resource vnet_name 'Microsoft.Network/virtualNetworks@2017-10-01' = {
       properties: {
         addressPrefix: subnetPrefixes[j]
         networkSecurityGroup: {
-          id: nsgIds[j]
+          //id: nsgIds[j]
+          id: resourceId('Microsoft.Network/networkSecurityGroups', '${nsgIds[j]}')
         }
       }
     }]

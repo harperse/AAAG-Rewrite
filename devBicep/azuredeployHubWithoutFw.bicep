@@ -99,8 +99,10 @@ param scheduledStartTime string
 @description('Scheduled Start Time')
 param scheduledExpiryTime string
 
-var adminUserName_var = adminUserName
-var adminPassword_var = adminPassword
+
+//var adminUserName_var = adminUserName
+//var adminPassword_var = adminPassword
+var resourceGroup = resourceGroup()
 var storageObj = {
   stageLocation: '${_artifactsLocation}/${storageContainerName}'
   saSku: 'Standard_LRS'

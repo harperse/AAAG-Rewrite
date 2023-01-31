@@ -1,20 +1,19 @@
 param ipObj object
 param hubDeploymentOption string
 
-var publicIpLabel_var = ((toLower(hubDeploymentOption) == 'deployhubwithfw') ? ipObj.afwDomainNameLabelPrefix : ipObj.jmpDomainNameLabelPrefix)
+var publicIpLabel = ((toLower(hubDeploymentOption) == 'deployhubwithfw') ? ipObj.afwDomainNameLabelPrefix : ipObj.jmpDomainNameLabelPrefix)
 
 resource publicIplabel 'Microsoft.Network/publicIPAddresses@2017-10-01' = {
-  name: publicIpLabel_var
+  name: publicIpLabel
   location: ipObj.location
   sku: {
     name: 'Standard'
-    tier: 'Regional'
   }
   properties: {
     publicIPAllocationMethod: ipObj.jmpPublicIPAddressType
     dnsSettings: {
-      domainNameLabel: publicIpLabel_var
-      fqdn: concat(publicIpLabel_var, ipObj.fqdnLocationSuffix)
+      domainNameLabel: publicIpLabel
+      fqdn: '${publicIpLabel}${ipObj.fqdnLocationSuffix}'
     }
   }
 }

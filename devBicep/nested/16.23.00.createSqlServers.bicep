@@ -22,14 +22,14 @@ var imageOffer = 'WindowsServer'
 var imageSku = '2019-Datacenter-smalldisk'
 
 resource sqlPrefix_1 'Microsoft.Compute/virtualMachines@2017-03-30' = [for i in range(0, sqlServerInstances): {
-  name: concat(sqlPrefix, (i + 1))
+  name: '${sqlPrefix}${i+1}'
   location: location
   properties: {
     hardwareProfile: {
       vmSize: sqlVmSize
     }
     osProfile: {
-      computerName: concat(sqlPrefix, (i + 1))
+      computerName: '${sqlPrefix}${i+1}'
       adminUsername: adminUserName
       adminPassword: adminPassword
     }
@@ -41,7 +41,7 @@ resource sqlPrefix_1 'Microsoft.Compute/virtualMachines@2017-03-30' = [for i in 
         version: 'latest'
       }
       osDisk: {
-        name: concat(sqlPrefix, (i + 1), diskNameSuffix.syst)
+        name: '${sqlPrefix}${i+1}${diskNameSuffix.syst}'
         caching: 'ReadWrite'
         createOption: 'FromImage'
         managedDisk: {
@@ -51,7 +51,7 @@ resource sqlPrefix_1 'Microsoft.Compute/virtualMachines@2017-03-30' = [for i in 
       dataDisks: [
         {
           lun: 0
-          name: concat(sqlPrefix, (i + 1), diskNameSuffix.data)
+          name: '${sqlPrefix}${i+1}${diskNameSuffix.data}'
           caching: 'None'
           createOption: 'Empty'
           diskSizeGB: 32
@@ -90,7 +90,7 @@ resource sqlPrefix_1_joindomain 'Microsoft.Compute/virtualMachines/extensions@20
     publisher: 'Microsoft.Compute'
     type: 'JsonADDomainExtension'
     typeHandlerVersion: '1.3'
-    autoUpgradeMinorVersion: 'true'
+    autoUpgradeMinorVersion: true
     settings: {
       Name: domainName
       User: '${adminUserName}@${domainName}'
@@ -101,14 +101,16 @@ resource sqlPrefix_1_joindomain 'Microsoft.Compute/virtualMachines/extensions@20
       Password: adminPassword
     }
   }
+  /*
   dependsOn: [
     'Microsoft.Compute/virtualMachines/${sqlPrefix}${(i + 1)}'
   ]
+  */
 }]
 
 resource sqlPrefix_1_installAppsAndFeatures 'Microsoft.Compute/virtualMachines/extensions@2019-07-01' = [for i in range(0, sqlServerInstances): {
   name: '${sqlPrefix}${(i + 1)}/installAppsAndFeatures'
-  location: resourceGroup().location
+  location: location
   tags: {
     displayName: 'sqlServersCSE'
   }
@@ -124,7 +126,9 @@ resource sqlPrefix_1_installAppsAndFeatures 'Microsoft.Compute/virtualMachines/e
       commandToExecute: 'powershell -ExecutionPolicy Unrestricted -File ${appLockerPrepScript}'
     }
   }
+  /*
   dependsOn: [
     'Microsoft.Compute/virtualMachines/${sqlPrefix}${(i + 1)}/extensions/joindomain'
   ]
+  */
 }]
