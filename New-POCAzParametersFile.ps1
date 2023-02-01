@@ -24,7 +24,7 @@
 
 [hashtable]$spokeParametersToFile = @{
     spokeLocation             = $azSpokeLocation
-    spokeRegionCode                = $selectedSpokeRegionCode
+    spokeRegionCode           = $selectedSpokeRegionCode
     recoveryServicesVaultName = $global:spokeProperties.rsvName
     devServerName             = $global:spokeProperties.vmNameDev
     appVnetName               = $global:spokeProperties.VnetName
